@@ -4,725 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acer Books · Montréal independent publisher</title>
-    <!-- favicon (logo) -->
     <link rel="icon" type="image/png" href="./zhijian/Image_20260305124426_25_399.png">
-    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Google Fonts: Inter (sans) for tech, Lora (serif) for elegance -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
-    <style>
-        /* (All existing styles remain exactly the same, only modal-related styles are added/changed below) */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #ffffff;
-            color: #1e1e1e;
-            line-height: 1.5;
-        }
-
-        h1, h2, h3, h4 {
-            font-family: 'Lora', serif;
-            font-weight: 500;
-            letter-spacing: -0.02em;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .accent-red {
-            color: #ff0000;
-        }
-        .bg-red {
-            background-color: #ff0000;
-        }
-        .border-red {
-            border-color: #ff0000;
-        }
-        .btn-red {
-            background-color: #ff0000;
-            color: white;
-            border: none;
-            padding: 0.5rem 1.5rem;
-            font-weight: 500;
-            border-radius: 2px;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-        .btn-red:hover {
-            background-color: #cc0000;
-        }
-        .btn-outline-red {
-            background: transparent;
-            border: 1px solid #ff0000;
-            color: #ff0000;
-            padding: 0.5rem 1.5rem;
-            border-radius: 2px;
-            font-weight: 500;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-        .btn-outline-red:hover {
-            background: #ff0000;
-            color: white;
-        }
-        .grey-bg {
-            background-color: #f5f5f5;
-        }
-        .grey-light {
-            background-color: #fafafa;
-        }
-        .text-grey {
-            color: #5a5a5a;
-        }
-
-        /* navbar */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem 0;
-            border-bottom: 1px solid #eaeaea;
-        }
-        .logo a {
-            display: block;
-            text-decoration: none;
-        }
-        .logo img {
-            height: 60px;
-            width: auto;
-            display: block;
-        }
-        .nav-links {
-            display: flex;
-            gap: 2.5rem;
-            align-items: center;
-        }
-        .nav-links a {
-            text-decoration: none;
-            color: #2d2d2d;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: color 0.2s;
-        }
-        .nav-links a:hover {
-            color: #ff0000;
-        }
-        .lang-cart {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        .lang-switch {
-            display: flex;
-            gap: 0.4rem;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-        .lang-switch a {
-            text-decoration: none;
-            color: #5a5a5a;
-            padding: 0.2rem 0.4rem;
-            cursor: pointer;
-        }
-        .lang-switch a.active {
-            color: #ff0000;
-            background: #f0f0f0;
-            border-radius: 3px;
-        }
-        .cart-icon {
-            position: relative;
-            font-size: 1.3rem;
-            color: #2d2d2d;
-            cursor: pointer;
-        }
-        .cart-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #ff0000;
-            color: white;
-            font-size: 0.7rem;
-            padding: 0.1rem 0.4rem;
-            border-radius: 20px;
-        }
-        .admin-toggle {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-left: 1rem;
-            font-size: 0.85rem;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 22px;
-            background-color: #ccc;
-            border-radius: 30px;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-        .switch:after {
-            content: '';
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background-color: white;
-            top: 2px;
-            left: 2px;
-            transition: 0.2s;
-        }
-        .switch.active {
-            background-color: #ff0000;
-        }
-        .switch.active:after {
-            left: 24px;
-        }
-
-        /* hero */
-        .hero {
-            margin: 2.5rem 0 3rem;
-            background: linear-gradient(97deg, #f0f0f0 0%, #dbd7d2 100%);
-            min-height: 380px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .hero-image {
-            position: absolute;
-            right: 0;
-            top: 0;
-            width: 55%;
-            height: 100%;
-            background-image: url('https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1886&auto=format&fit=crop');
-            background-size: cover;
-            background-position: 70% 30%;
-            opacity: 0.4;
-            mix-blend-mode: multiply;
-        }
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            width: 55%;
-            padding: 3rem;
-        }
-        .hero-content h1 {
-            font-size: 3.2rem;
-            line-height: 1.1;
-            margin-bottom: 1rem;
-            color: #1e1e1e;
-        }
-        .hero-content p {
-            font-size: 1.2rem;
-            color: #3a3a3a;
-            max-width: 500px;
-            margin-bottom: 2rem;
-        }
-
-        /* section headings */
-        .section-heading {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin: 2.5rem 0 1.5rem;
-        }
-        .section-heading h2 {
-            font-size: 2rem;
-            font-weight: 400;
-            border-left: 6px solid #ff0000;
-            padding-left: 1rem;
-        }
-        .view-link {
-            color: #ff0000;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-
-        /* book grid */
-        .book-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 2rem 1.5rem;
-        }
-        .book-card {
-            background: white;
-            transition: transform 0.15s ease, box-shadow 0.2s;
-            border-radius: 8px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            cursor: pointer;
-        }
-        .book-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px -8px rgba(0,0,0,0.15);
-        }
-        .book-cover {
-            aspect-ratio: 2 / 3;
-            background-color: #2d2d2d;
-            border-radius: 6px 6px 2px 2px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 1rem;
-            color: white;
-            text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-            font-family: 'Lora', serif;
-            font-weight: 600;
-            font-size: 1rem;
-            line-height: 1.3;
-            box-shadow: inset 0 -30px 40px rgba(0,0,0,0.3);
-            border: 1px solid #ddd;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-        .book-meta {
-            padding: 0.75rem 0 0.2rem;
-        }
-        .book-title {
-            font-weight: 600;
-            font-size: 1rem;
-            font-family: 'Lora', serif;
-            margin-bottom: 0.15rem;
-        }
-        .book-author {
-            font-size: 0.85rem;
-            color: #5a5a5a;
-            margin-bottom: 0.2rem;
-        }
-        .admin-controls {
-            display: flex;
-            gap: 0.3rem;
-            margin-top: 0.3rem;
-        }
-        .admin-controls button {
-            background: transparent;
-            border: none;
-            color: #9e9e9e;
-            cursor: pointer;
-            font-size: 0.9rem;
-            padding: 0.2rem;
-        }
-        .admin-controls button:hover {
-            color: #ff0000;
-        }
-
-        /* about panel */
-        .about-panel {
-            background-color: #f5f5f5;
-            border-radius: 24px;
-            padding: 2.5rem;
-            margin: 3rem 0;
-            display: flex;
-            gap: 3rem;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .about-text {
-            flex: 2;
-            min-width: 280px;
-        }
-        .about-text h3 {
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-        }
-        .about-text p {
-            color: #3a3a3a;
-            margin-bottom: 1rem;
-            max-width: 600px;
-        }
-        .about-photo {
-            flex: 1;
-            background: #c0bcb5;
-            border-radius: 18px;
-            height: 200px;
-            background-image: url('https://images.unsplash.com/photo-1578632354203-0254d97d3bf4?q=80&w=1887&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-            border: 3px solid white;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.1);
-        }
-
-        /* news grid with images */
-        .news-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            margin: 2rem 0;
-        }
-        .news-item {
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 1.2rem;
-            background: white;
-            transition: 0.1s;
-        }
-        .news-image {
-            width: 100%;
-            height: 140px;
-            background-color: #ddd;
-            background-size: cover;
-            background-position: center;
-            border-radius: 8px 8px 0 0;
-            margin-bottom: 0.8rem;
-        }
-        .news-date {
-            font-size: 0.85rem;
-            color: #ff0000;
-            font-weight: 500;
-        }
-        .news-title {
-            font-weight: 600;
-            font-size: 1.2rem;
-            margin: 0.3rem 0 0.5rem;
-        }
-        .news-summary {
-            color: #5a5a5a;
-            font-size: 0.9rem;
-        }
-        .news-footer {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 0.5rem;
-        }
-
-        /* admin toolbox */
-        .toolbox {
-            background: #1e1e1e;
-            color: #efefef;
-            border-radius: 30px;
-            padding: 2rem;
-            margin: 3rem 0 1rem;
-            transition: all 0.2s;
-        }
-        .toolbox.hidden {
-            display: none;
-        }
-        .toolbox h3 {
-            color: white;
-            font-size: 1.5rem;
-            margin: 1.5rem 0 1rem;
-        }
-        .toolbox h3:first-of-type {
-            margin-top: 0;
-        }
-        .toolbox .form-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: flex-end;
-            margin-bottom: 1rem;
-        }
-        .toolbox input, .toolbox select, .toolbox .file-label {
-            padding: 0.6rem 1rem;
-            border-radius: 40px;
-            border: none;
-            background: #3f3f3f;
-            color: white;
-            flex: 1 1 150px;
-            font-size: 0.9rem;
-        }
-        .toolbox input::placeholder {
-            color: #aaa;
-        }
-        .toolbox .file-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: #3f3f3f;
-            cursor: pointer;
-            flex: 1 1 auto;
-        }
-        .toolbox input[type="file"] {
-            display: none;
-        }
-        .toolbox button {
-            background: #ff0000;
-            border: none;
-            color: white;
-            padding: 0.6rem 2rem;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.15s;
-        }
-        .toolbox button:hover {
-            background: #cc0000;
-        }
-        .toolbox .file-name {
-            color: #ccc;
-            font-size: 0.85rem;
-            margin-left: 0.5rem;
-        }
-        .hr-light {
-            border: 0.5px solid #3f3f3f;
-            margin: 2rem 0;
-        }
-
-        /* footer */
-        footer {
-            margin-top: 4rem;
-            padding: 2rem 0;
-            border-top: 1px solid #eaeaea;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            color: #5a5a5a;
-        }
-        .footer-links a {
-            color: #2d2d2d;
-            text-decoration: none;
-            margin-left: 2rem;
-        }
-        .footer-links a:hover {
-            color: #ff0000;
-        }
-
-        /* ----- Book Detail Modal (Harvard style) ----- */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-overlay.active {
-            display: flex;
-        }
-        .modal-content {
-            background: white;
-            max-width: 1000px; /* wider to accommodate content */
-            width: 95%;
-            max-height: 85vh;
-            overflow-y: auto;
-            border-radius: 24px;
-            padding: 2rem;
-            position: relative;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            display: flex;
-            gap: 2rem;
-            flex-wrap: wrap;
-        }
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #5a5a5a;
-            transition: color 0.2s;
-            z-index: 10;
-        }
-        .modal-close:hover {
-            color: #ff0000;
-        }
-        .modal-left {
-            flex: 1 1 250px;
-        }
-        .modal-cover {
-            width: 100%;
-            aspect-ratio: 2 / 3;
-            background-color: #2d2d2d;
-            border-radius: 12px;
-            background-size: cover;
-            background-position: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        }
-        .modal-right {
-            flex: 2 1 450px;
-        }
-
-        /* Modal typography */
-        .modal-title {
-            font-size: 1.8rem;
-            font-family: 'Lora', serif;
-            font-weight: 600;
-            line-height: 1.2;
-            margin-bottom: 0.5rem;
-            padding-right: 2rem;
-        }
-        .modal-author {
-            font-size: 1rem;
-            color: #5a5a5a;
-            margin-bottom: 1rem;
-            font-style: normal;
-            font-weight: 400;
-        }
-        .modal-price {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #1e1e1e;
-            margin-bottom: 0.5rem;
-        }
-        .modal-availability {
-            font-size: 0.9rem;
-            color: #5a5a5a;
-            background: #f5f5f5;
-            padding: 0.5rem 1rem;
-            border-radius: 40px;
-            margin-bottom: 1.5rem;
-            display: inline-block;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-        .btn-primary {
-            background-color: #ff0000;
-            color: white;
-            border: none;
-            padding: 0.7rem 2rem;
-            font-weight: 600;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-size: 1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn-primary:hover {
-            background-color: #cc0000;
-        }
-        .btn-secondary {
-            background: transparent;
-            border: 1px solid #ff0000;
-            color: #ff0000;
-            padding: 0.7rem 2rem;
-            font-weight: 600;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn-secondary:hover {
-            background: #ff0000;
-            color: white;
-        }
-
-        /* Tabs */
-        .modal-tabs {
-            display: flex;
-            border-bottom: 1px solid #eaeaea;
-            margin-bottom: 1.5rem;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-        .modal-tab {
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-            color: #5a5a5a;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-            font-size: 0.95rem;
-        }
-        .modal-tab:hover {
-            color: #1e1e1e;
-        }
-        .modal-tab.active {
-            color: #ff0000;
-            border-bottom-color: #ff0000;
-        }
-
-        /* Tab content */
-        .modal-tab-content {
-            min-height: 200px;
-        }
-        .tab-pane {
-            display: none;
-        }
-        .tab-pane.active {
-            display: block;
-        }
-
-        /* Details tab */
-        .categories-section {
-            margin-bottom: 1.5rem;
-        }
-        .categories-section h4 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-family: 'Inter', sans-serif;
-        }
-        .category-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        .category-tag {
-            background: #f0f0f0;
-            padding: 0.3rem 1rem;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            color: #1e1e1e;
-        }
-
-        .product-details {
-            border-top: 1px solid #eaeaea;
-            padding-top: 1.5rem;
-        }
-        .product-details h4 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            font-family: 'Inter', sans-serif;
-        }
-        .detail-row {
-            display: flex;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-        .detail-label {
-            font-weight: 600;
-            width: 120px;
-            color: #1e1e1e;
-        }
-        .detail-value {
-            color: #5a5a5a;
-        }
-
-        /* About author & reviews (placeholders) */
-        .author-bio {
-            color: #3a3a3a;
-            line-height: 1.6;
-        }
-        .reviews-placeholder {
-            color: #5a5a5a;
-            font-style: italic;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <!-- header (unchanged) -->
+        <!-- Navbar -->
         <nav class="navbar">
             <div class="logo">
-                <a href="#">
-                    <img src="./zhijian/Image_20260305124426_25_399.png" alt="Acer Books">
-                </a>
+                <a href="#"><img src="./zhijian/Image_20260305124426_25_399.png" alt="Acer Books"></a>
             </div>
             <div class="nav-links">
                 <a href="#" id="navHome" data-i18n="navHome">HOME</a>
@@ -739,6 +31,7 @@
                         <span class="cart-badge">0</span>
                     </div>
                 </div>
+                <div id="userSection" class="user-info"></div>
                 <div class="admin-toggle">
                     <span style="font-size:0.8rem;">📘 Admin</span>
                     <span id="adminSwitch" class="switch" role="switch" tabindex="0"></span>
@@ -746,7 +39,7 @@
             </div>
         </nav>
 
-        <!-- hero (unchanged) -->
+        <!-- Hero -->
         <div class="hero">
             <div class="hero-image"></div>
             <div class="hero-content">
@@ -760,14 +53,14 @@
             </div>
         </div>
 
-        <!-- featured books section (unchanged) -->
+        <!-- Featured books -->
         <div class="section-heading">
             <h2 data-i18n="sectionRecent">recent & recommended</h2>
             <a href="#" class="view-link" data-i18n="viewAll">view all <i class="fas fa-chevron-right"></i></a>
         </div>
         <div id="bookGrid" class="book-grid"></div>
 
-        <!-- about Acer (unchanged) -->
+        <!-- About panel -->
         <div class="about-panel">
             <div class="about-text">
                 <h3 data-i18n="aboutTitle">Acer Books · founded by Tao Zhijian, PhD</h3>
@@ -778,14 +71,14 @@
             <div class="about-photo"></div>
         </div>
 
-        <!-- news / events (unchanged) -->
+        <!-- News grid -->
         <div class="section-heading">
             <h2 data-i18n="sectionNews">news & events</h2>
             <a href="#" class="view-link" data-i18n="moreNews">more</a>
         </div>
         <div id="newsGrid" class="news-grid"></div>
 
-        <!-- admin toolbox (unchanged) -->
+        <!-- Admin toolbox (hidden by default) -->
         <div id="toolbox" class="toolbox hidden">
             <h3><i class="fas fa-pen-fancy"></i> <span data-i18n="toolboxTitle">Publisher's control — add a new book (with cover upload)</span></h3>
             <div class="form-row">
@@ -806,10 +99,8 @@
                 <span id="file-name" class="file-name">No file chosen</span>
                 <button id="addBookBtn"><i class="fas fa-plus-circle"></i> <span data-i18n="addBtn">Add to catalogue</span></button>
             </div>
-
             <hr class="hr-light">
-
-            <h3><i class="far fa-newspaper"></i> Manage news & events</h3>
+            <h3><i class="far fa-newspaper"></i><span data-i18n="manageNews">Manage news & events</span></h3>
             <div class="form-row">
                 <input type="text" id="newsDate" placeholder="Date (e.g. June 15, 2024)" value="June 15, 2024">
                 <input type="text" id="newsTitle" placeholder="Title" value="New poetry reading">
@@ -821,12 +112,12 @@
                     <input type="file" id="newsImageUpload" accept="image/*">
                 </label>
                 <span id="news-file-name" class="file-name">No file chosen</span>
-                <button id="addNewsBtn"><i class="fas fa-plus-circle"></i> Add news</button>
+                <button id="addNewsBtn"><i class="fas fa-plus-circle"></i> <span data-i18n="addNewsBtn">Add news</span></button>
             </div>
             <p style="font-size:0.85rem; margin-top:1rem; color:#b5b5b5;"><i class="fas fa-info-circle"></i> <span data-i18n="toolboxNote">Uploaded images are stored as data URLs in this demo. In a real CMS, they would be saved permanently.</span></p>
         </div>
 
-        <!-- footer (unchanged) -->
+        <!-- Footer -->
         <footer>
             <div data-i18n="footerAddr">© 2025 Acer Books — 5470 rue Saint-Laurent, Montreal</div>
             <div class="footer-links">
@@ -837,7 +128,7 @@
         </footer>
     </div>
 
-    <!-- Book Detail Modal (Harvard style) -->
+    <!-- Book Detail Modal -->
     <div id="bookModal" class="modal-overlay">
         <div class="modal-content">
             <span class="modal-close" id="modalClose"><i class="fas fa-times"></i></span>
@@ -845,495 +136,58 @@
                 <div id="modalCover" class="modal-cover"></div>
             </div>
             <div class="modal-right">
-                <!-- Title, author, price, availability -->
                 <div class="modal-title" id="modalTitle"></div>
                 <div class="modal-author" id="modalAuthor"></div>
                 <div class="modal-price" id="modalPrice"></div>
                 <div class="modal-availability" id="modalAvailability">At Distributor - We Can Usually Get It in 3-8 Days! NON-RETURNABLE - Arrival Times Vary, Often 1-2 Weeks</div>
-
-                <!-- Action buttons -->
                 <div class="modal-actions">
                     <button class="btn-primary" id="modalAddToCart"><i class="fas fa-shopping-cart"></i> ADD TO CART</button>
                     <button class="btn-secondary" id="modalAddToWishList"><i class="fas fa-heart"></i> ADD TO WISH LIST</button>
                 </div>
-
-                <!-- Tabs -->
                 <div class="modal-tabs">
                     <div class="modal-tab active" data-tab="description">DESCRIPTION</div>
                     <div class="modal-tab" data-tab="author">ABOUT THE AUTHOR</div>
                     <div class="modal-tab" data-tab="details">DETAILS</div>
                     <div class="modal-tab" data-tab="reviews">REVIEWS & MEDIA</div>
                 </div>
-
-                <!-- Tab panes -->
                 <div class="modal-tab-content">
-                    <div class="tab-pane active" id="tab-description">
-                        <div id="modalDescription" class="modal-description"></div>
-                    </div>
-                    <div class="tab-pane" id="tab-author">
-                        <div id="modalAuthorBio" class="author-bio"></div>
-                    </div>
+                    <div class="tab-pane active" id="tab-description"><div id="modalDescription" class="modal-description"></div></div>
+                    <div class="tab-pane" id="tab-author"><div id="modalAuthorBio" class="author-bio"></div></div>
                     <div class="tab-pane" id="tab-details">
-                        <!-- Categories -->
                         <div class="categories-section">
                             <h4>Categories</h4>
                             <div class="category-list" id="modalCategories"></div>
                         </div>
-                        <!-- Product Details -->
                         <div class="product-details">
                             <h4>Product Details</h4>
-                            <div class="detail-row">
-                                <span class="detail-label">ISBN:</span>
-                                <span class="detail-value" id="modalIsbn"></span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Publisher:</span>
-                                <span class="detail-value" id="modalPublisher">Acer Books</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Publication Date:</span>
-                                <span class="detail-value" id="modalPubDate"></span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Pages:</span>
-                                <span class="detail-value" id="modalPages"></span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Language:</span>
-                                <span class="detail-value" id="modalLanguage"></span>
-                            </div>
+                            <div class="detail-row"><span class="detail-label">ISBN:</span><span class="detail-value" id="modalIsbn"></span></div>
+                            <div class="detail-row"><span class="detail-label">Publisher:</span><span class="detail-value" id="modalPublisher">Acer Books</span></div>
+                            <div class="detail-row"><span class="detail-label">Publication Date:</span><span class="detail-value" id="modalPubDate"></span></div>
+                            <div class="detail-row"><span class="detail-label">Pages:</span><span class="detail-value" id="modalPages"></span></div>
+                            <div class="detail-row"><span class="detail-label">Language:</span><span class="detail-value" id="modalLanguage"></span></div>
                         </div>
                     </div>
-                    <div class="tab-pane" id="tab-reviews">
-                        <div id="modalReviews" class="reviews-placeholder">No reviews yet.</div>
-                    </div>
+                    <div class="tab-pane" id="tab-reviews"><div id="modalReviews" class="reviews-placeholder">No reviews yet.</div></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        (function() {
-            const ADMIN_PASSWORD = "acer2025";
+    <!-- Login Modal -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-modal">
+            <span class="login-close" id="loginClose"><i class="fas fa-times"></i></span>
+            <h2 class="login-title" data-i18n="login">Login</h2>
+            <input type="text" id="loginUsername" class="login-input" placeholder="Username" value="user">
+            <input type="password" id="loginPassword" class="login-input" placeholder="Password" value="pass">
+            <button id="loginBtn" class="login-btn" data-i18n="loginBtn">Sign In</button>
+            <div id="loginError" class="login-error"></div>
+        </div>
+    </div>
 
-            // ---------- Enhanced book data with all fields from the target page ----------
-            let books = [
-                { id: 'b1', title: '荒原·情歌 (The Waste Land / Love Song)', author: 'T.S. Eliot / Tao Zhijian (tr.)', price: '18.00', lang: 'en-zh', cover: 'zhijian/Image_20260305124559_31_399.jpg', isbn: '978-1-7381938-1-3', publisher: 'Acer Books', pubDate: 'March 15, 2024', pages: 160, language: 'Chinese-English', categories: ['American', 'Poetry'], description: 'A landmark translation of Eliot’s masterpiece, capturing the modernist spirit in Chinese.', authorBio: 'T.S. Eliot was a poet, essayist, publisher, playwright, and literary critic. Tao Zhijian is a translator and scholar based in Montreal.', format: 'Paperback' },
-                { id: 'b2', title: '野花·繁星 (Wild Flowers & Bright Stars)', author: 'Tang Weibin (tr.)', price: '16.99', lang: 'en-zh', cover: 'zhijian/Image_20260305124602_33_399.jpg', isbn: '978-1-7381938-2-0', publisher: 'Acer Books', pubDate: 'April 10, 2024', pages: 200, language: 'Chinese-English', categories: ['European - English, Irish, Scottish, Welsh'], description: 'Classic English poems rendered into traditional Chinese forms, preserving rhyme and metre.', authorBio: 'Tang Weibin is a poet and translator specializing in classical Chinese poetry forms.', format: 'Paperback' },
-                { id: 'b3', title: '心灵独白 (Voices from my Heart)', author: 'Li Yang', price: '21.00', lang: 'zh', cover: 'zhijian/Image_20260305124612_39_399.jpg', isbn: '978-1-7381938-3-7', publisher: 'Acer Books', pubDate: 'February 22, 2024', pages: 180, language: 'Chinese', categories: ['Poetry', 'Canadian'], description: 'An intimate collection of original Chinese poetry, reflecting on love, loss, and nature.', authorBio: 'Li Yang is a Montreal-based poet and member of the Chinese Writers Association in Quebec.', format: 'Paperback' },
-                { id: 'b4', title: '从北极到南极 (From Arctic to Antarctic)', author: 'Wen Di', price: '18.00', lang: 'zh', cover: 'zhijian/Image_20260305124609_37_399.jpg', isbn: '978-1-7381938-4-4', publisher: 'Acer Books', pubDate: 'January 5, 2024', pages: 220, language: 'Chinese', categories: ['Travel', 'Photography'], description: 'A photographic and poetic journey across the hemispheres, with bilingual captions.', authorBio: 'Wen Di is a photographer and writer whose work explores the relationship between landscape and memory.', format: 'Paperback' },
-                { id: 'b5', title: '诗意地居住在蒙特利尔 (Living Montreal Like a Poem)', author: 'Zhang Yuntao', price: '20.00', lang: 'en-zh', cover: 'zhijian/Image_20260305124605_35_399.jpg', isbn: '978-1-7381938-5-1', publisher: 'Acer Books', pubDate: 'May 18, 2024', pages: 190, language: 'Chinese-English', categories: ['Essays', 'Canadian'], description: 'Essays and images exploring Montreal’s creative life through a poetic lens.', authorBio: 'Zhang Yuntao is an essayist and photographer living in Montreal.', format: 'Paperback' },
-                { id: 'b6', title: '英诗汉韵--译诗如诗探步: English Poems in Chinese Poetic Forms (Paperback)', author: 'By 陶志健 Tao Zhijian, 陶志健 (Translator)', price: '18.99', lang: 'en-zh', cover: 'zhijian/Image_20260305124610_38_399.jpg', isbn: '978-1-7381938-6-8', publisher: 'Acer Books', pubDate: 'March 17th, 2024', pages: 170, language: 'Chinese', categories: ['American', 'European - English, Irish, Scottish, Welsh', 'Canadian'], description: 'A masterful translation that bridges cultures. This edition presents the original text alongside the Chinese version, with insightful commentary.', authorBio: '陶志健 (Tao Zhijian) is a translator, scholar, and member of the Chinese Writers Association in Quebec. He founded Acer Books to promote cross-cultural literary exchange.', format: 'Paperback' }
-            ];
-
-            let newsItems = [
-                { id: 'n1', date: 'June 15, 2024', title: 'Red Maple Series launch', summary: 'Nine new titles presented at Hôtel Brossard, with over 80 readers and authors.', image: 'zhijian/Image_20260305124446_29_399.jpg' },
-                { id: 'n2', date: 'May 2024', title: 'Now at Harvard Book Store', summary: 'Tao Zhijian\'s translations of Eliot and anthologies available on Harvard\'s shelves.', image: 'zhijian/Image_20260305124511_30_399.jpg' },
-                { id: 'n3', date: 'Coming Oct 2024', title: 'Montréal en lumière', summary: 'Acer Books will host a reading at the McCord Museum — photographers welcome.', image: 'zhijian/Image_20260305124431_28_399.jpg' }
-            ];
-
-            const langPack = {
-                en: {
-                    navHome: 'HOME', navBooks: 'BOOKS', navAbout: 'ABOUT', navNews: 'NEWS',
-                    heroPart1: 'where poetry', heroAccent: 'meets', heroPart2: 'the lens',
-                    heroDesc: 'Montreal-based independent publisher — red maple series, translation, and visual arts.',
-                    heroBtn: 'discover our books  ',
-                    sectionRecent: 'recent & recommended',
-                    viewAll: 'view all  ',
-                    aboutTitle: 'Acer Books · founded by Tao Zhijian, PhD',
-                    aboutP1: 'Translator, scholar, and member of the Chinese Writers Association in Quebec. After publishing the acclaimed <em>The Waste Land / The Love Song</em> and <em>English Poems in Chinese Poetic Forms</em>, Tao launched Acer Books to bridge cultures through finely crafted editions. Every cover reflects an artist\'s eye — many photographs you see here are his own.',
-                    aboutP2: 'Montreal · distributed worldwide including Harvard Book Store, Hatchards, and Amazon.',
-                    aboutBtn: 'read more  ',
-                    sectionNews: 'news & events',
-                    moreNews: 'more',
-                    toolboxTitle: 'Publisher\'s control — add a new book (with cover upload)',
-                    chooseFile: 'Choose cover image',
-                    chooseNewsImage: 'Choose news image',
-                    addBtn: 'Add to catalogue',
-                    toolboxNote: 'Uploaded images are stored as data URLs in this demo. In a real CMS, they would be saved permanently.',
-                    footerAddr: '© 2025 Acer Books — 5470 rue Saint-Laurent, Montreal',
-                    footerNews: 'newsletter',
-                    format: 'Format',
-                    publisher: 'Publisher',
-                    isbn: 'ISBN',
-                    addToCart: 'Add to cart',
-                    bookDescription: 'A masterful translation that bridges cultures. This edition presents the original text alongside the Chinese version, with insightful commentary.'
-                },
-                fr: {
-                    navHome: 'ACCUEIL', navBooks: 'LIVRES', navAbout: 'À PROPOS', navNews: 'ACTUALITÉS',
-                    heroPart1: 'où la poésie', heroAccent: 'rencontre', heroPart2: "l'objectif",
-                    heroDesc: 'Maison d’édition indépendante montréalaise — série érable rouge, traduction et arts visuels.',
-                    heroBtn: 'découvrir nos livres  ',
-                    sectionRecent: 'récents & recommandés',
-                    viewAll: 'voir tout  ',
-                    aboutTitle: 'Acer Books · fondé par Tao Zhijian, PhD',
-                    aboutP1: 'Traducteur, universitaire et membre de l’Association des écrivains chinois du Québec. Après avoir publié <em>The Waste Land / The Love Song</em> et <em>English Poems in Chinese Poetic Forms</em>, Tao a lancé Acer Books pour jeter des ponts entre les cultures. Chaque couverture reflète un regard d’artiste — plusieurs photos que vous voyez ici sont les siennes.',
-                    aboutP2: 'Montréal · distribué dans le monde entier, dont Harvard Book Store, Hatchards et Amazon.',
-                    aboutBtn: 'lire la suite  ',
-                    sectionNews: 'actualités & événements',
-                    moreNews: 'plus',
-                    toolboxTitle: 'Contrôle de l’éditeur — ajouter un livre (avec couverture)',
-                    chooseFile: 'Choisir une image de couverture',
-                    chooseNewsImage: 'Choisir une image pour l\'actualité',
-                    addBtn: 'Ajouter au catalogue',
-                    toolboxNote: 'Les images téléchargées sont stockées sous forme de data URLs dans cette démo. Dans un vrai CMS, elles seraient permanentes.',
-                    footerAddr: '© 2025 Acer Books — 5470 rue Saint-Laurent, Montréal',
-                    footerNews: 'infolettre',
-                    format: 'Format',
-                    publisher: 'Éditeur',
-                    isbn: 'ISBN',
-                    addToCart: 'Ajouter au panier',
-                    bookDescription: 'Une traduction magistrale qui fait le pont entre les cultures. Cette édition présente le texte original et la version chinoise, avec des commentaires éclairants.'
-                }
-            };
-
-            let currentLang = 'en';
-            let adminMode = false;
-
-            // DOM elements
-            const grid = document.getElementById('bookGrid');
-            const newsGrid = document.getElementById('newsGrid');
-            const toolbox = document.getElementById('toolbox');
-            const adminSwitch = document.getElementById('adminSwitch');
-
-            const addBtn = document.getElementById('addBookBtn');
-            const newTitle = document.getElementById('newTitle');
-            const newAuthor = document.getElementById('newAuthor');
-            const newPrice = document.getElementById('newPrice');
-            const newLang = document.getElementById('newLang');
-            const coverUpload = document.getElementById('coverUpload');
-            const fileNameSpan = document.getElementById('file-name');
-
-            const newsDate = document.getElementById('newsDate');
-            const newsTitle = document.getElementById('newsTitle');
-            const newsSummary = document.getElementById('newsSummary');
-            const newsImageUpload = document.getElementById('newsImageUpload');
-            const newsFileNameSpan = document.getElementById('news-file-name');
-            const addNewsBtn = document.getElementById('addNewsBtn');
-
-            const langEn = document.getElementById('langEn');
-            const langFr = document.getElementById('langFr');
-
-            // Modal elements
-            const modalOverlay = document.getElementById('bookModal');
-            const modalClose = document.getElementById('modalClose');
-            const modalCover = document.getElementById('modalCover');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalAuthor = document.getElementById('modalAuthor');
-            const modalPrice = document.getElementById('modalPrice');
-            const modalAvailability = document.getElementById('modalAvailability');
-            const modalAddToCart = document.getElementById('modalAddToCart');
-            const modalAddToWishList = document.getElementById('modalAddToWishList');
-            const modalDescription = document.getElementById('modalDescription');
-            const modalAuthorBio = document.getElementById('modalAuthorBio');
-            const modalCategories = document.getElementById('modalCategories');
-            const modalIsbn = document.getElementById('modalIsbn');
-            const modalPublisher = document.getElementById('modalPublisher');
-            const modalPubDate = document.getElementById('modalPubDate');
-            const modalPages = document.getElementById('modalPages');
-            const modalLanguage = document.getElementById('modalLanguage');
-            const modalReviews = document.getElementById('modalReviews');
-            const tabs = document.querySelectorAll('.modal-tab');
-            const panes = document.querySelectorAll('.tab-pane');
-
-            // Tab switching
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const target = tab.dataset.tab;
-                    tabs.forEach(t => t.classList.remove('active'));
-                    panes.forEach(p => p.classList.remove('active'));
-                    tab.classList.add('active');
-                    document.getElementById(`tab-${target}`).classList.add('active');
-                });
-            });
-
-            // ---------- Helper: translate UI ----------
-            function translateUI(lang) {
-                document.querySelectorAll('[data-i18n]').forEach(el => {
-                    const key = el.getAttribute('data-i18n');
-                    if (langPack[lang] && langPack[lang][key] !== undefined) {
-                        el.innerHTML = langPack[lang][key];
-                    }
-                });
-                if (lang === 'en') {
-                    langEn.classList.add('active');
-                    langFr.classList.remove('active');
-                } else {
-                    langFr.classList.add('active');
-                    langEn.classList.remove('active');
-                }
-            }
-
-            // ---------- Render books (random 6–8 in public, all in admin) ----------
-            function renderBooks() {
-                let booksToShow;
-                if (adminMode) {
-                    booksToShow = books;
-                } else {
-                    const min = 6, max = 8;
-                    const total = books.length;
-                    let targetCount = total;
-                    if (total >= min) {
-                        targetCount = Math.floor(Math.random() * (max - min + 1)) + min;
-                        targetCount = Math.min(targetCount, total);
-                    }
-                    const shuffled = [...books].sort(() => Math.random() - 0.5);
-                    booksToShow = shuffled.slice(0, targetCount);
-                }
-
-                let html = '';
-                booksToShow.forEach((book) => {
-                    let coverStyle = book.cover 
-                        ? `background-image: url('${book.cover}'); background-size: cover; background-position: center;`
-                        : `background: #2d2d2d;`;
-                    const deleteBtn = adminMode ? `<button class="delete-book" data-id="${book.id}"><i class="fas fa-trash-alt"></i></button>` : '';
-                    html += `
-                        <div class="book-card" data-id="${book.id}">
-                            <div class="book-cover" style="${coverStyle} background-color: #2d2d2d;">
-                                ${book.title.length > 25 ? book.title.substr(0,22)+'…' : book.title}
-                            </div>
-                            <div class="book-meta">
-                                <div class="book-title">${book.title}</div>
-                                <div class="book-author">${book.author}</div>
-                                ${adminMode ? `<div class="admin-controls">${deleteBtn}</div>` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-                grid.innerHTML = html;
-
-                document.querySelectorAll('.book-card').forEach(card => {
-                    card.addEventListener('click', (e) => {
-                        if (e.target.closest('.admin-controls')) return;
-                        const bookId = card.dataset.id;
-                        const book = books.find(b => b.id === bookId);
-                        if (book) openModal(book);
-                    });
-                });
-
-                if (adminMode) {
-                    document.querySelectorAll('.delete-book').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const id = btn.dataset.id;
-                            books = books.filter(b => b.id !== id);
-                            renderBooks();
-                        });
-                    });
-                }
-            }
-
-            // ---------- Render news ----------
-            function renderNews() {
-                let html = '';
-                newsItems.forEach(item => {
-                    const imageHtml = item.image 
-                        ? `<div class="news-image" style="background-image: url('${item.image}');"></div>` 
-                        : `<div class="news-image" style="background-color: #ccc;"></div>`;
-                    const deleteBtn = adminMode ? `<button class="delete-news" data-id="${item.id}"><i class="fas fa-trash-alt"></i></button>` : '';
-                    html += `
-                        <div class="news-item" data-id="${item.id}">
-                            ${imageHtml}
-                            <div class="news-date">${item.date}</div>
-                            <div class="news-title">${item.title}</div>
-                            <div class="news-summary">${item.summary}</div>
-                            <div class="news-footer">${deleteBtn}</div>
-                        </div>
-                    `;
-                });
-                newsGrid.innerHTML = html;
-
-                if (adminMode) {
-                    document.querySelectorAll('.delete-news').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const id = btn.dataset.id;
-                            newsItems = newsItems.filter(n => n.id !== id);
-                            renderNews();
-                        });
-                    });
-                }
-            }
-
-            // ---------- Modal functions ----------
-            function openModal(book) {
-                modalCover.style.backgroundImage = `url('${book.cover}')`;
-                modalTitle.innerText = book.title;
-                modalAuthor.innerText = book.author;
-                modalPrice.innerText = `$${book.price}`;
-                // Use a fixed availability message as in the screenshot
-                modalAvailability.innerText = 'At Distributor - We Can Usually Get It in 3-8 Days! NON-RETURNABLE - Arrival Times Vary, Often 1-2 Weeks';
-                
-                // Description
-                modalDescription.innerText = book.description || langPack[currentLang].bookDescription;
-                
-                // Author bio
-                modalAuthorBio.innerText = book.authorBio || 'Information about the author is not available.';
-                
-                // Categories
-                if (book.categories && book.categories.length) {
-                    modalCategories.innerHTML = book.categories.map(cat => `<span class="category-tag">${cat}</span>`).join('');
-                } else {
-                    modalCategories.innerHTML = '<span class="category-tag">General</span>';
-                }
-                
-                // Product details
-                modalIsbn.innerText = book.isbn || '978-1-7381938-6-8';
-                modalPublisher.innerText = book.publisher || 'Acer Books';
-                modalPubDate.innerText = book.pubDate || 'March 17th, 2024';
-                modalPages.innerText = book.pages || '170';
-                modalLanguage.innerText = book.language || 'Chinese';
-                
-                // Reviews placeholder
-                modalReviews.innerText = 'No reviews yet.';
-                
-                // Reset to first tab
-                tabs.forEach(t => t.classList.remove('active'));
-                panes.forEach(p => p.classList.remove('active'));
-                tabs[0].classList.add('active');
-                panes[0].classList.add('active');
-                
-                modalAddToCart.dataset.bookId = book.id;
-                modalAddToWishList.dataset.bookId = book.id;
-                
-                modalOverlay.classList.add('active');
-            }
-
-            function closeModal() {
-                modalOverlay.classList.remove('active');
-            }
-
-            modalClose.addEventListener('click', closeModal);
-            modalOverlay.addEventListener('click', (e) => {
-                if (e.target === modalOverlay) closeModal();
-            });
-
-            modalAddToCart.addEventListener('click', () => {
-                alert('🛒 Added to cart (demo)');
-                closeModal();
-            });
-
-            modalAddToWishList.addEventListener('click', () => {
-                alert('❤️ Added to wish list (demo)');
-            });
-
-            // ---------- Admin toggle (password protected) ----------
-            adminSwitch.addEventListener('click', function() {
-                if (adminMode) {
-                    adminMode = false;
-                    adminSwitch.classList.remove('active');
-                    toolbox.classList.add('hidden');
-                    renderBooks();
-                    renderNews();
-                } else {
-                    const pwd = prompt("Enter admin password:");
-                    if (pwd === ADMIN_PASSWORD) {
-                        adminMode = true;
-                        adminSwitch.classList.add('active');
-                        toolbox.classList.remove('hidden');
-                        renderBooks();
-                        renderNews();
-                    } else {
-                        alert("Incorrect password.");
-                    }
-                }
-            });
-
-            // ---------- Add book ----------
-            coverUpload.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                fileNameSpan.textContent = file ? file.name : 'No file chosen';
-            });
-            addBtn.addEventListener('click', function() {
-                const title = newTitle.value.trim() || 'Untitled';
-                const author = newAuthor.value.trim() || 'Anonymous';
-                const price = parseFloat(newPrice.value) ? parseFloat(newPrice.value).toFixed(2) : '15.00';
-                const lang = newLang.value;
-                const file = coverUpload.files[0];
-
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        addBookToArray(title, author, price, lang, e.target.result);
-                        coverUpload.value = '';
-                        fileNameSpan.textContent = 'No file chosen';
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    addBookToArray(title, author, price, lang, null);
-                }
-            });
-
-            function addBookToArray(title, author, price, lang, coverDataUrl) {
-                const newId = 'b' + Date.now() + Math.random().toString(36).substring(2,6);
-                const newBook = {
-                    id: newId,
-                    title: title,
-                    author: author + (lang ? ' · ' + lang : ''),
-                    price: price,
-                    lang: lang,
-                    // Add default fields for new books
-                    isbn: '978-1-7381938-0-0',
-                    publisher: 'Acer Books',
-                    pubDate: '2025',
-                    pages: 200,
-                    language: lang,
-                    categories: ['General'],
-                    description: 'A new addition to the Acer Books catalogue.',
-                    authorBio: 'Author information coming soon.',
-                    format: 'Paperback'
-                };
-                if (coverDataUrl) newBook.cover = coverDataUrl;
-                books.push(newBook);
-                renderBooks();
-            }
-
-            // ---------- Add news ----------
-            newsImageUpload.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                newsFileNameSpan.textContent = file ? file.name : 'No file chosen';
-            });
-            addNewsBtn.addEventListener('click', function() {
-                const date = newsDate.value.trim() || 'No date';
-                const title = newsTitle.value.trim() || 'Untitled';
-                const summary = newsSummary.value.trim() || '';
-                const file = newsImageUpload.files[0];
-
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        addNewsToArray(date, title, summary, e.target.result);
-                        newsImageUpload.value = '';
-                        newsFileNameSpan.textContent = 'No file chosen';
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    addNewsToArray(date, title, summary, null);
-                }
-            });
-
-            function addNewsToArray(date, title, summary, imageDataUrl) {
-                const newId = 'n' + Date.now() + Math.random().toString(36).substring(2,6);
-                const newItem = { id: newId, date, title, summary };
-                if (imageDataUrl) newItem.image = imageDataUrl;
-                newsItems.push(newItem);
-                renderNews();
-            }
-
-            // ---------- Language switch ----------
-            function setLanguage(lang) {
-                currentLang = lang;
-                translateUI(lang);
-            }
-            langEn.addEventListener('click', (e) => { e.preventDefault(); setLanguage('en'); });
-            langFr.addEventListener('click', (e) => { e.preventDefault(); setLanguage('fr'); });
-
-            // ---------- Initial render ----------
-            renderBooks();
-            renderNews();
-            translateUI('en');
-            document.getElementById('cartIcon').addEventListener('click', () => alert('🛒 Proceed to checkout (demo)'));
-        })();
-    </script>
+    <!-- Scripts -->
+    <script src="i18n.js"></script>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
