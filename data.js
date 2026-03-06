@@ -18,6 +18,25 @@ const defaultBooks = [
     { id: 'b8', title: '枫吟唐韵 II', author: 'Ma Xinyun', price: '22.00', lang: 'zh', cover: 'zhijian/Image_20260305130755_46_399.png', isbn: '...', publisher: 'Acer Books', pubDate: '2025', pages: 220, language: 'Chinese', categories: ['General'], description: '...', authorBio: '...', format: 'Paperback' },
 ];
 
+const defaultReviews = [
+    {
+        id: 'r1',
+        bookId: 'b4', // "从北极到南极"
+        userId: 'u1',
+        username: 'Book Lover',
+        text: 'A stunning visual journey. The bilingual captions add depth.',
+        timestamp: '2025-02-10T14:30:00Z',
+        likes: [],
+        comments: []
+    },
+    // add more as needed
+];
+
+function loadReviews() {
+    const stored = localStorage.getItem(DATA_KEYS.REVIEWS);
+    return stored ? JSON.parse(stored) : defaultReviews;
+}
+
 const defaultNews = [
     {
         id: 'n1',

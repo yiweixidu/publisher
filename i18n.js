@@ -28,7 +28,18 @@ window.langPack = {
         addToCart: 'Add to cart',
         bookDescription: 'A masterful translation that bridges cultures. This edition presents the original text alongside the Chinese version, with insightful commentary.',
         login: 'Login',
-        loginBtn: 'Sign In'
+        loginBtn: 'Sign In',
+        noReviews: "No reviews yet. Be the first to review!",
+        writeReviewPlaceholder: "Write a review...",
+        submitReview: "Post review",
+        loginPrompt: "Login to comment",
+        tabDescription: "DESCRIPTION",
+        tabAuthor: "ABOUT THE AUTHOR",
+        tabDetails: "DETAILS",
+        tabReviews: "REVIEWS & MEDIA",
+        addToCart: "ADD TO CART",
+        addToWishList: "ADD TO WISH LIST",
+        availability: "At Distributor - We Can Usually Get It in 3-8 Days! NON-RETURNABLE - Arrival Times Vary, Often 1-2 Weeks"
     },
     fr: {
         navHome: 'ACCUEIL', navBooks: 'LIVRES', navAbout: 'À PROPOS', navNews: 'ACTUALITÉS',
@@ -58,6 +69,17 @@ window.langPack = {
         addToCart: 'Ajouter au panier',
         bookDescription: 'Une traduction magistrale qui fait le pont entre les cultures. Cette édition présente le texte original et la version chinoise, avec des commentaires éclairants.',
         login: 'Connexion',
-        loginBtn: 'Se connecter'
+        loginBtn: 'Se connecter',
+        noReviews: "Aucun avis pour le moment. Soyez le premier à commenter !",
+        writeReviewPlaceholder: "Écrire un commentaire...",
+        submitReview: "Publier",
+        loginPrompt: "Connectez-vous pour commenter",
+        tabDescription: "DESCRIPTION",
+        tabAuthor: "À PROPOS DE L'AUTEUR",
+        tabDetails: "DÉTAILS",
+        tabReviews: "CRITIQUES ET MÉDIAS",
+        addToCart: "AJOUTER AU PANIER",
+        addToWishList: "AJOUTER À LA LISTE DE SOUHAITS",
+        availability: "Chez le distributeur - généralement disponible sous 3 à 8 jours ! NON RETOURNABLE - Les délais d'arrivée varient, souvent 1 à 2 semaines"
     }
 };

@@ -11,6 +11,7 @@
     let currentLang = 'en';
     let adminMode = false;
     let currentUser = null;
+    let currentModalBook = null;
 
     // DOM elements
     const grid = document.getElementById('bookGrid');
@@ -141,17 +142,20 @@
         const bookReviews = reviews.filter(r => r.bookId === bookId);
         let html = '<div class="wechat-review-list">';
 
-        if (currentUser) {
-            html += `
-                <div class="review-form wechat-review-form">
-                    <textarea id="newReviewText" class="review-textarea" placeholder="写评论..."></textarea>
-                    <button id="submitReview" class="review-submit wechat-submit">发表评论</button>
-                </div>
-            `;
+        if (bookReviews.length === 0) {
+            html += `<p class="no-reviews">${langPack[currentLang].noReviews}</p>`;
         }
 
-        bookReviews.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(r => {
-            const date = new Date(r.timestamp).toLocaleDateString('zh-CN', { year:'numeric', month:'2-digit', day:'2-digit' });
+        bookReviews.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        bookReviews.forEach(r => {
+            if (!r.comments) r.comments = [];
+
+            const date = new Date(r.timestamp).toLocaleDateString(
+                currentLang === 'fr' ? 'fr-CA' : 'en-CA',
+                { year: 'numeric', month: '2-digit', day: '2-digit' }
+            );
+
             html += `
                 <div class="wechat-review-item" data-review-id="${r.id}">
                     <div class="wechat-review-header">
@@ -160,29 +164,51 @@
                     </div>
                     <div class="wechat-review-content">${r.text}</div>
                     <div class="wechat-review-footer">
-                        <button class="wechat-share-btn" data-review-id="${r.id}">分享到微信</button>
+                        <button class="wechat-share-btn" data-review-id="${r.id}">${langPack[currentLang].share || 'share to wechat'}</button>
                     </div>
                     <div class="wechat-comment-section" id="comments-${r.id}">
-                        ${r.comments.map(c => {
-                            const commentDate = new Date(c.timestamp).toLocaleDateString('zh-CN', { month:'2-digit', day:'2-digit' });
-                            return `
-                                <div class="wechat-comment-item">
-                                    <span class="wechat-comment-user">${c.username}</span>
-                                    <span class="wechat-comment-text">${c.text}</span>
-                                    <span class="wechat-comment-date">${commentDate}</span>
-                                </div>
-                            `;
-                        }).join('')}
-                        ${currentUser ? `
-                            <div class="wechat-comment-form">
-                                <input type="text" class="wechat-comment-input" placeholder="写下你的评论..." data-review-id="${r.id}">
-                                <button class="wechat-comment-submit" data-review-id="${r.id}">发送</button>
-                            </div>
-                        ` : ''}
+            `;
+
+            // Existing comments
+            r.comments.forEach(c => {
+                const commentDate = new Date(c.timestamp).toLocaleDateString(
+                    currentLang === 'fr' ? 'fr-CA' : 'en-CA',
+                    { month: '2-digit', day: '2-digit' }
+                );
+                html += `
+                    <div class="wechat-comment-item">
+                        <span class="wechat-comment-user">${c.username}</span>
+                        <span class="wechat-comment-text">${c.text}</span>
+                        <span class="wechat-comment-date">${commentDate}</span>
                     </div>
+                `;
+            });
+
+            // Comment form
+            if (currentUser) {
+                html += `
+                    <div class="wechat-comment-form">
+                        <input type="text" class="wechat-comment-input" placeholder="${langPack[currentLang].writeReviewPlaceholder}" data-review-id="${r.id}">
+                        <button class="wechat-comment-submit" data-review-id="${r.id}">${langPack[currentLang].submitReview}</button>
+                    </div>
+                `;
+            } else {
+                html += `<p class="login-prompt">${langPack[currentLang].loginPrompt}</p>`;
+            }
+
+            html += `</div></div>`;
+        });
+
+        // New review form (always shown if logged in)
+        if (currentUser) {
+            html += `
+                <div class="review-form wechat-review-form">
+                    <textarea id="newReviewText" class="review-textarea" placeholder="${langPack[currentLang].writeReviewPlaceholder}"></textarea>
+                    <button id="submitReview" class="review-submit wechat-submit">${langPack[currentLang].submitReview}</button>
                 </div>
             `;
-        });
+        }
+
         html += '</div>';
         modalReviews.innerHTML = html;
 
@@ -309,35 +335,80 @@
 
     // ---------- Open modal ----------
     function openModal(book) {
-        modalCover.style.backgroundImage = `url('${book.cover}')`;
-        modalTitle.innerText = book.title;
-        modalAuthor.innerText = book.author;
-        modalPrice.innerText = `$${book.price}`;
-        modalAvailability.innerText = 'At Distributor - We Can Usually Get It in 3-8 Days! NON-RETURNABLE - Arrival Times Vary, Often 1-2 Weeks';
-        modalDescription.innerText = book.description || langPack[currentLang].bookDescription;
+    currentModalBook = book;
+
+    modalCover.style.backgroundImage = `url('${book.cover}')`;
+    modalTitle.innerText = (currentLang === 'fr' && book.title_fr) ? book.title_fr : book.title;
+    modalAuthor.innerText = (currentLang === 'fr' && book.author_fr) ? book.author_fr : book.author;
+    modalPrice.innerText = `$${book.price}`;
+    modalAvailability.innerText = langPack[currentLang].availability;
+
+    // Language-independent details
+    modalIsbn.innerText = book.isbn || '978-1-7381938-6-8';
+    modalPublisher.innerText = book.publisher || 'Acer Books';
+    modalPubDate.innerText = book.pubDate || 'March 17th, 2024';
+    modalPages.innerText = book.pages || '170';
+
+    // Update language-dependent fields and tabs
+    updateModalLanguage();
+
+    renderReviews(book.id);
+
+    // Activate first tab
+    tabs.forEach(t => t.classList.remove('active'));
+    panes.forEach(p => p.classList.remove('active'));
+    tabs[0].classList.add('active');
+    panes[0].classList.add('active');
+
+    modalAddToCart.dataset.bookId = book.id;
+    modalAddToWishList.dataset.bookId = book.id;
+
+    modalOverlay.classList.add('active');
+    }
+
+    function updateModalLanguage() {
+    if (!currentModalBook) return;
+    const book = currentModalBook;
+
+    // Update title, author, price, availability, buttons
+    modalTitle.innerText = (currentLang === 'fr' && book.title_fr) ? book.title_fr : book.title;
+    modalAuthor.innerText = (currentLang === 'fr' && book.author_fr) ? book.author_fr : book.author;
+    modalPrice.innerText = `$${book.price}`;
+    modalAvailability.innerText = langPack[currentLang].availability;
+    modalAddToCart.innerHTML = `<i class="fas fa-shopping-cart"></i> ${langPack[currentLang].addToCart}`;
+    modalAddToWishList.innerHTML = `<i class="fas fa-heart"></i> ${langPack[currentLang].addToWishList}`;
+
+    // Description and author bio
+    if (currentLang === 'fr') {
+        modalDescription.innerText = book.description_fr || book.description || langPack.fr.bookDescription;
+        modalAuthorBio.innerText = book.authorBio_fr || book.authorBio || 'Information about the author is not available.';
+        if (book.categories_fr && book.categories_fr.length) {
+            modalCategories.innerHTML = book.categories_fr.map(cat => `<span class="category-tag">${cat}</span>`).join('');
+        } else if (book.categories && book.categories.length) {
+            modalCategories.innerHTML = book.categories.map(cat => `<span class="category-tag">${cat}</span>`).join('');
+        } else {
+            modalCategories.innerHTML = '<span class="category-tag">Général</span>';
+        }
+        modalLanguage.innerText = book.language_fr || book.language || 'Chinois';
+    } else {
+        modalDescription.innerText = book.description || langPack.en.bookDescription;
         modalAuthorBio.innerText = book.authorBio || 'Information about the author is not available.';
         if (book.categories && book.categories.length) {
             modalCategories.innerHTML = book.categories.map(cat => `<span class="category-tag">${cat}</span>`).join('');
         } else {
             modalCategories.innerHTML = '<span class="category-tag">General</span>';
         }
-        modalIsbn.innerText = book.isbn || '978-1-7381938-6-8';
-        modalPublisher.innerText = book.publisher || 'Acer Books';
-        modalPubDate.innerText = book.pubDate || 'March 17th, 2024';
-        modalPages.innerText = book.pages || '170';
         modalLanguage.innerText = book.language || 'Chinese';
+    }
 
-        renderReviews(book.id);
-
-        tabs.forEach(t => t.classList.remove('active'));
-        panes.forEach(p => p.classList.remove('active'));
-        tabs[0].classList.add('active');
-        panes[0].classList.add('active');
-
-        modalAddToCart.dataset.bookId = book.id;
-        modalAddToWishList.dataset.bookId = book.id;
-
-        modalOverlay.classList.add('active');
+    // Update tab labels
+    const tabElements = document.querySelectorAll('.modal-tab');
+        if (tabElements.length >= 4) {
+            tabElements[0].innerText = langPack[currentLang].tabDescription;
+            tabElements[1].innerText = langPack[currentLang].tabAuthor;
+            tabElements[2].innerText = langPack[currentLang].tabDetails;
+            tabElements[3].innerText = langPack[currentLang].tabReviews;
+        }
     }
 
     function closeModal() {
@@ -369,7 +440,7 @@
 
     // ---------- Render books (random 5-8) ----------
     function renderBooks() {
-    let booksToShow = books; // 管理员模式显示全部
+    let booksToShow = books;
 
     if (!adminMode) {
         const width = window.innerWidth;
@@ -400,18 +471,28 @@
 
         let html = '';
         booksToShow.forEach((book) => {
+            let displayTitle, displayAuthor;
+            if (currentLang === 'fr') {
+                displayTitle = book.title_fr || book.title;   // fallback to English
+                displayAuthor = book.author_fr || book.author;
+            } else {
+                displayTitle = book.title;
+                displayAuthor = book.author;
+            }
+
             let coverStyle = book.cover 
                 ? `background-image: url('${book.cover}'); background-size: cover; background-position: center;`
                 : `background: #2d2d2d;`;
             const deleteBtn = adminMode ? `<button class="delete-book" data-id="${book.id}"><i class="fas fa-trash-alt"></i></button>` : '';
+            
             html += `
                 <div class="book-card" data-id="${book.id}">
                     <div class="book-cover" style="${coverStyle} background-color: #2d2d2d;">
-                        ${book.title.length > 25 ? book.title.substr(0,22)+'…' : book.title}
+                        ${displayTitle.length > 25 ? displayTitle.substr(0,22)+'…' : displayTitle}
                     </div>
                     <div class="book-meta">
-                        <div class="book-title">${book.title}</div>
-                        <div class="book-author">${book.author}</div>
+                        <div class="book-title">${displayTitle}</div>
+                        <div class="book-author">${displayAuthor}</div>
                         ${adminMode ? `<div class="admin-controls">${deleteBtn}</div>` : ''}
                     </div>
                 </div>
@@ -597,6 +678,9 @@
         currentLang = lang;
         translateUI(lang);
         renderNews();
+        if (modalOverlay.classList.contains('active')) {
+            updateModalLanguage();
+        }
     }
     langEn.addEventListener('click', (e) => { e.preventDefault(); setLanguage('en'); });
     langFr.addEventListener('click', (e) => { e.preventDefault(); setLanguage('fr'); });
