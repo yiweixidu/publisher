@@ -2,7 +2,7 @@ name: Build and Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ master ]   # 如果你的默认分支是 master，则改为 master
+    branches: [ master ]
 
 jobs:
   build-and-deploy:
@@ -13,7 +13,6 @@ jobs:
 
       - name: Generate admins.js from secrets
         run: |
-          # 生成 admins.js 文件
           cat > admins.js << 'EOF'
           // This file is auto-generated during build – do not commit
           export const defaultAdmins = [
@@ -31,10 +30,10 @@ jobs:
           EOF
 
       - name: Deploy to GitHub Pages
-    uses: peaceiris/actions-gh-pages@v3
-    with:
-      github_token: ${{ secrets.GITHUB_TOKEN }}
-      publish_dir: .
-      user_name: 'github-actions[bot]'
-      user_email: 'github-actions[bot]@users.noreply.github.com'
-      force_orphan: true   # 强制创建全新的 gh-pages 分支，避免历史冲突
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          force_orphan: true
