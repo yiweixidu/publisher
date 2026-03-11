@@ -1,20 +1,37 @@
-name: Deploy Static HTML to GitHub Pages
+name: Build and Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main  # deploy when main is updated
+    branches: [ master ]   # 如果你的默认分支是 master，则改为 master
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Generate admins.js from secrets
+        run: |
+          # 生成 admins.js 文件
+          cat > admins.js << 'EOF'
+          // This file is auto-generated during build – do not commit
+          export const defaultAdmins = [
+            {
+              username: 'dev',
+              passwordHash: '${{ secrets.ADMIN_PASSWORD_HASH_DEV }}',
+              totpSecret: '${{ secrets.ADMIN_TOTP_SECRET_DEV }}'
+            },
+            {
+              username: 'owner',
+              passwordHash: '${{ secrets.ADMIN_PASSWORD_HASH_OWNER }}',
+              totpSecret: '${{ secrets.ADMIN_TOTP_SECRET_OWNER }}'
+            }
+          ];
+          EOF
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./        # your HTML location
+          publish_dir: .   # 将当前目录所有文件发布到 gh-pages 分支
