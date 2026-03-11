@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Redirecting...</title>
+  <script>
+    sessionStorage.redirect = location.pathname + location.search + location.hash;
+    location.replace('/publisher/');
+  </script>
+</head>
+<body>
+  <p>Redirecting to home...</p>
+</body>
+</html>

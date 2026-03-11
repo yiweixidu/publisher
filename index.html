@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acer Books · Montréal independent publisher</title>
+    <link rel="icon" type="image/png" href="/publisher/zhijian/Image_20260305124426_25_399.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/publisher/style.css">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div id="mainContent">
+            <!-- Navbar -->
+            <nav class="navbar">
+                <div class="logo">
+                    <a href="#"><img src="/publisher/zhijian/Image_20260305124426_25_399.png" alt="Acer Books"></a>
+                </div>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div class="nav-links" id="navLinks">
+                    <a href="#" id="navHome" data-i18n="navHome">HOME</a>
+                    <a href="#" id="navBooks" data-i18n="navBooks">BOOKS</a>
+                    <a href="#" id="navAbout" data-i18n="navAbout">ABOUT</a>
+                    <a href="#" id="navNews" data-i18n="navNews">NEWS</a>
+                    <div class="cart-icon" id="cartIcon">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span class="cart-badge">0</span>
+                    </div>
+                    <div id="userSection" class="user-info"></div>
+                    <div class="admin-toggle hidden" id="adminToggle">
+                        <span id="adminToggleText" style="font-size:0.8rem;">Admin</span>
+                        <span id="adminSwitch" class="switch" role="switch" tabindex="0"></span>
+                    </div>
+                    <div class="lang-switch">
+                            <a href="#" id="langEn" class="active">EN</a>
+                            <a href="#" id="langFr">FR</a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Hero -->
+            <div class="hero">
+                <div class="hero-image"></div>
+                <div class="hero-content">
+                    <h1>
+                        <span data-i18n="heroPart1">where poetry</span>
+                        <span class="accent-red" data-i18n="heroAccent">meets</span>
+                        <span data-i18n="heroPart2">the lens</span>
+                    </h1>
+                    <p data-i18n="heroDesc">Montreal-based independent publisher — red maple series, translation, and visual arts.</p>
+                    <button class="btn-red" data-i18n="heroBtn">discover our books <i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Featured books -->
+            <div class="section-heading">
+                <h2 data-i18n="sectionRecent">recent & recommended</h2>
+                <a href="#" class="view-link" id="booksViewAllLink" data-i18n="viewAll">view all <i class="fas fa-chevron-right"></i></a>
+            </div>
+            <div id="bookGrid" class="book-grid"></div>
+
+            <!-- About panel -->
+            <div class="about-panel">
+                <div class="about-text">
+                    <h3 data-i18n="aboutTitle">Acer Books · founded by Tao Zhijian, PhD</h3>
+                    <p data-i18n="aboutP1">Translator, scholar, and member of the Chinese Writers Association in Quebec. After publishing the acclaimed <em>The Waste Land / The Love Song</em> and <em>English Poems in Chinese Poetic Forms</em>, Tao launched Acer Books to bridge cultures through finely crafted editions. Every cover reflects an artist's eye — many photographs you see here are his own.</p>
+                    <p><i class="fas fa-map-pin accent-red"></i> <span data-i18n="aboutP2">Montreal · distributed worldwide including Harvard Book Store, Hatchards, and Amazon.</span></p>
+                    <button class="btn-outline-red" data-i18n="aboutBtn">contact us <i class="fas fa-user"></i></button>
+                </div>
+                <div class="about-photo"></div>
+            </div>
+
+            <!-- News grid -->
+            <div class="section-heading">
+                <h2 data-i18n="sectionNews">news & events</h2>
+                <a href="#" class="view-link" id="newsMoreLink" data-i18n="moreNews">more</a>
+            </div>
+            <div id="newsGrid" class="news-grid"></div>
+
+            <!-- Footer -->
+            <footer>
+                <div data-i18n="footerAddr">© 2025 Acer Books — 5470 rue Saint-Laurent, Montreal</div>
+                <div class="footer-links">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" data-i18n="footerNews">newsletter</a>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <div id="booksPage" style="display: none;">
+        <div class="container">
+            <div class="page-header">
+                <h2 data-i18n="allBooks">All Books</h2>
+                <button class="btn-outline-red" id="backToHomeFromBooks" data-i18n="backToHome"><i class="fas fa-arrow-left"></i> Back to Home</button>
+            </div>
+            <div id="booksGrid" class="book-grid"></div>
+        </div>
+    </div>
+
+    <div id="bookDetailPage" style="display: none;">
+        <div class="detail-container">
+            <button class="detail-back-btn" id="backToBooks"><i class="fas fa-arrow-left"></i> Back to All Books</button>
+            <div class="detail-content">
+                <div class="detail-left">
+                    <div id="detailCover" class="detail-cover"></div>
+                </div>
+                <div class="detail-right">
+                    <h1 id="detailTitle" class="detail-title"></h1>
+                    <h2 id="detailAuthor" class="detail-author"></h2>
+                    <div id="detailPrice" class="detail-price"></div>
+                    <div id="detailAvailability" class="detail-availability"></div>
+                    <div class="detail-actions">
+                        <button class="btn-primary" id="detailAddToCart"><i class="fas fa-shopping-cart"></i> ADD TO CART</button>
+                        <button class="btn-secondary" id="detailAddToWishList"><i class="fas fa-heart"></i> ADD TO WISH LIST</button>
+                    </div>
+                    <div class="detail-tabs">
+                        <div class="detail-tab active" data-tab="description">DESCRIPTION</div>
+                        <div class="detail-tab" data-tab="author">ABOUT THE AUTHOR</div>
+                        <div class="detail-tab" data-tab="details">DETAILS</div>
+                        <div class="detail-tab" data-tab="reviews">REVIEWS & MEDIA</div>
+                    </div>
+                    <div class="detail-tab-content">
+                        <div class="tab-pane active" id="detail-tab-description"><div id="detailDescription"></div></div>
+                        <div class="tab-pane" id="detail-tab-author"><div id="detailAuthorBio"></div></div>
+                        <div class="tab-pane" id="detail-tab-details">
+                            <div class="categories-section"><h4>Categories</h4><div class="category-list" id="detailCategories"></div></div>
+                            <div class="product-details"><h4>Product Details</h4>
+                                <div class="detail-row"><span class="detail-label">ISBN:</span><span class="detail-value" id="detailIsbn"></span></div>
+                                <div class="detail-row"><span class="detail-label">Publisher:</span><span class="detail-value" id="detailPublisher"></span></div>
+                                <div class="detail-row"><span class="detail-label">Publication Date:</span><span class="detail-value" id="detailPubDate"></span></div>
+                                <div class="detail-row"><span class="detail-label">Pages:</span><span class="detail-value" id="detailPages"></span></div>
+                                <div class="detail-row"><span class="detail-label">Language:</span><span class="detail-value" id="detailLanguage"></span></div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="detail-tab-reviews"><div id="detailReviews"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Book Detail Modal -->
+    <div id="bookModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" id="modalClose"><i class="fas fa-times"></i></span>
+            <div class="modal-left">
+                <div id="modalCover" class="modal-cover"></div>
+            </div>
+            <div class="modal-right">
+                <div class="modal-title" id="modalTitle"></div>
+                <div class="modal-author" id="modalAuthor"></div>
+                <div class="modal-price" id="modalPrice"></div>
+                <div class="modal-availability" id="modalAvailability">At Distributor - We Can Usually Get It in 3-8 Days! NON-RETURNABLE - Arrival Times Vary, Often 1-2 Weeks</div>
+                <div class="modal-actions">
+                    <button class="btn-primary" id="modalAddToCart"><i class="fas fa-shopping-cart"></i> ADD TO CART</button>
+                    <button class="btn-secondary" id="modalAddToWishList"><i class="fas fa-heart"></i> ADD TO WISH LIST</button>
+                </div>
+                <div class="modal-tabs">
+                    <div class="modal-tab active" data-tab="description">DESCRIPTION</div>
+                    <div class="modal-tab" data-tab="author">ABOUT THE AUTHOR</div>
+                    <div class="modal-tab" data-tab="details">DETAILS</div>
+                    <div class="modal-tab" data-tab="reviews">REVIEWS & MEDIA</div>
+                </div>
+                <div class="modal-tab-content">
+                    <div class="tab-pane active" id="tab-description"><div id="modalDescription" class="modal-description"></div></div>
+                    <div class="tab-pane" id="tab-author"><div id="modalAuthorBio" class="author-bio"></div></div>
+                    <div class="tab-pane" id="tab-details">
+                        <div class="categories-section">
+                            <h4>Categories</h4>
+                            <div class="category-list" id="modalCategories"></div>
+                        </div>
+                        <div class="product-details">
+                            <h4>Product Details</h4>
+                            <div class="detail-row"><span class="detail-label">ISBN:</span><span class="detail-value" id="modalIsbn"></span></div>
+                            <div class="detail-row"><span class="detail-label">Publisher:</span><span class="detail-value" id="modalPublisher">Acer Books</span></div>
+                            <div class="detail-row"><span class="detail-label">Publication Date:</span><span class="detail-value" id="modalPubDate"></span></div>
+                            <div class="detail-row"><span class="detail-label">Pages:</span><span class="detail-value" id="modalPages"></span></div>
+                            <div class="detail-row"><span class="detail-label">Language:</span><span class="detail-value" id="modalLanguage"></span></div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="tab-reviews"><div id="modalReviews" class="reviews-placeholder">No reviews yet.</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-modal">
+            <span class="login-close" id="loginClose"><i class="fas fa-times"></i></span>
+            <h2 class="login-title" data-i18n="login">Login</h2>
+            <input type="text" id="loginUsername" class="login-input" placeholder="Username" value="user">
+            <input type="password" id="loginPassword" class="login-input" placeholder="Password" value="pass">
+            <button id="loginBtn" class="login-btn" data-i18n="loginBtn">Sign In</button>
+            <div id="loginError" class="login-error"></div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginOverlay" class="login-overlay">
+        <div class="login-modal">
+            <span class="login-close" id="adminLoginClose"><i class="fas fa-times"></i></span>
+            <h2 class="login-title">Admin Login</h2>
+            <input type="password" id="adminPassword" class="login-input" placeholder="Password">
+            <input type="text" id="adminTOTP" class="login-input" placeholder="2FA Code">
+            <button id="adminLoginBtn" class="login-btn">Login</button>
+            <div id="adminLoginError" class="login-error"></div>
+        </div>
+    </div>
+
+    <!-- Shopping Cart Modal -->
+    <div id="cartModal" class="modal-overlay">
+        <div class="modal-content cart-modal-content">
+            <span class="modal-close" id="cartModalClose"><i class="fas fa-times"></i></span>
+            <h2 class="cart-title" data-i18n="cartTitle">Your Shopping Cart</h2>
+            <div id="cartItemsContainer" class="cart-items-container">
+                <!-- Cart items will be rendered here dynamically -->
+            </div>
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span data-i18n="subtotal">Subtotal</span>
+                    <span id="cartSubtotal">$0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span data-i18n="shipping">Shipping</span>
+                    <span id="cartShipping">$5.00</span>
+                </div>
+                <div class="summary-row">
+                    <span data-i18n="tax">Tax (10%)</span>
+                    <span id="cartTax">$0.00</span>
+                </div>
+                <div class="summary-row total-row">
+                    <span data-i18n="total">Total</span>
+                    <span id="cartTotal">$0.00</span>
+                </div>
+            </div>
+            <div class="cart-actions">
+                <button id="checkoutBtn" class="btn-primary"><i class="fas fa-lock"></i> <span data-i18n="proceedToCheckout">Proceed to Checkout</span></button>
+                <button id="continueShoppingBtn" class="btn-outline-red"><span data-i18n="continueShopping">Continue Shopping</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal-overlay">
+        <div class="modal-content checkout-modal-content">
+            <span class="modal-close" id="checkoutModalClose"><i class="fas fa-times"></i></span>
+            <h2 class="checkout-title" data-i18n="checkoutTitle">Checkout</h2>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="cardName" data-i18n="nameOnCard">Name on Card</label>
+                    <input type="text" id="cardName" class="checkout-input" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="cardNumber" data-i18n="cardNumber">Card Number</label>
+                    <input type="text" id="cardNumber" class="checkout-input" placeholder="1234 5678 9012 3456" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="expiry" data-i18n="expiry">Expiry (MM/YY)</label>
+                        <input type="text" id="expiry" class="checkout-input" placeholder="MM/YY" required>
+                    </div>
+                    <div class="form-group half">
+                        <label for="cvv" data-i18n="cvv">CVV</label>
+                        <input type="text" id="cvv" class="checkout-input" placeholder="123" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" id="payNowBtn"><span data-i18n="payNow">Pay Now</span></button>
+            </form>
+            <div id="paymentError" class="payment-error"></div>
+        </div>
+    </div>
+
+    <!-- Order Confirmation Modal -->
+    <div id="confirmationModal" class="modal-overlay">
+        <div class="modal-content confirmation-modal-content">
+            <span class="modal-close" id="confirmationModalClose"><i class="fas fa-times"></i></span>
+            <h2 class="confirmation-title" data-i18n="thankYou">Thank You for Your Order!</h2>
+            <div id="orderSummary" class="order-summary">
+                <!-- Order summary will be displayed here -->
+            </div>
+            <button id="printReceiptBtn" class="btn-outline-red"><span data-i18n="printReceipt">Print Receipt</span></button>
+            <button id="continueShoppingConfirmBtn" class="btn-primary"><span data-i18n="continueShopping">Continue Shopping</span></button>
+        </div>
+    </div>
+
+    <!-- News List Page -->
+    <div id="newsListPage" style="display: none;">
+        <div class="container">
+            <div class="page-header">
+                <h2 data-i18n="newsAndEvents">News & Events</h2>
+                <button class="btn-outline-red" id="backToHomeFromNews" data-i18n="backToHome"><i class="fas fa-arrow-left"></i> Back to Home</button>
+            </div>
+            <div id="allNewsGrid" class="news-grid"></div>
+        </div>
+    </div>
+
+    <!-- News Detail Page -->
+    <div id="newsDetailPage" style="display: none;">
+        <div class="detail-container">
+            <button class="detail-back-btn" id="backToNewsList" data-i18n="backToNews"><i class="fas fa-arrow-left"></i> Back to News</button>
+            <div class="news-detail-content">
+                <h1 id="newsDetailTitle" class="news-detail-title"></h1>
+                <div id="newsDetailDate" class="news-detail-date"></div>
+                <div id="newsDetailImage" class="news-detail-image"></div>
+                <div id="newsDetailSummary" class="news-detail-summary"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Books Manager Page -->
+    <div id="adminBooksPage" style="display: none;">
+    <div class="container">
+        <div class="page-header">
+        <h2 data-i18n="manageBooksTitle">Full Book Catalog Manager</h2>
+        <button class="btn-outline-red" id="backToHomeFromAdmin" data-i18n="backToHome">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </button>
+        </div>
+
+        <!-- Search & Sort Controls -->
+        <div class="admin-controls">
+        <input type="text" id="searchBooks" placeholder="Search by title or author..." data-i18n="searchPlaceholder">
+        <select id="sortBooks">
+            <option value="title" data-i18n="sortTitle">Sort by Title</option>
+            <option value="author" data-i18n="sortAuthor">Sort by Author</option>
+            <option value="price" data-i18n="sortPrice">Sort by Price</option>
+            <option value="pubDate" data-i18n="sortPubDate">Sort by Publication Date</option>
+        </select>
+        <button id="addNewBookBtn" class="btn-primary"><i class="fas fa-plus"></i> <span data-i18n="addNewBook">Add New Book</span></button>
+        </div>
+
+        <!-- Books List -->
+        <div id="adminBooksList" class="admin-books-list"></div>
+    </div>
+    </div>
+
+    <!-- Book Form Modal (Add/Edit) -->
+    <div id="bookFormModal" class="modal-overlay">
+        <div class="modal-content form-modal-content">
+            <span class="modal-close" id="bookFormModalClose"><i class="fas fa-times"></i></span>
+            <h2 id="formModalTitle" data-i18n="addNewBook">Add New Book</h2>
+            <form id="bookForm">
+            <!-- Hidden field for book id (empty for new) -->
+            <input type="hidden" id="bookId" value="">
+            <!-- Row 1: Title & Author -->
+            <div class="form-row">
+                <input type="text" id="formTitle" placeholder="Title *" required data-i18n-placeholder="titlePlaceholder">
+                <input type="text" id="formAuthor" placeholder="Author *" required data-i18n-placeholder="authorPlaceholder">
+            </div>
+            <!-- Row 2：Categories, ISBN -->
+            <div class="form-row">
+                <input type="text" id="formCategories" placeholder="Categories (comma separated)" data-i18n-placeholder="categoriesPlaceholder">
+                <input type="text" id="formIsbn" placeholder="ISBN" data-i18n-placeholder="isbnPlaceholder">
+            </div>
+            <!-- Row 3：Publisher, Publication Date -->
+            <div class="form-row">
+                <input type="text" id="formPublisher" placeholder="Publisher" data-i18n-placeholder="publisherPlaceholder">
+                <input type="text" id="formPubDate" placeholder="Publication Date (e.g. 2024-03-17)" data-i18n-placeholder="pubDatePlaceholder">
+            </div>
+            <!-- Row 4：Pages, Language -->
+            <div class="form-row">
+                <input type="number" id="formPages" placeholder="Pages" min="1" data-i18n-placeholder="pagesPlaceholder">
+                <input type="text" id="formLanguage" placeholder="Language" data-i18n-placeholder="languagePlaceholder">
+            </div>
+            <!-- Row 5：Price, StockStatus -->
+            <div class="form-row">
+                <input type="number" step="0.01" id="formPrice" placeholder="Price *" required data-i18n-placeholder="pricePlaceholder">
+                <select id="formStockStatus">
+                    <option value="In Stock" data-i18n="inStock">In Stock</option>
+                    <option value="Out of Stock" data-i18n="outOfStock">Out of Stock</option>
+                    <option value="Pre-order" data-i18n="preOrder">Pre-order</option>
+                </select>
+            </div>
+
+            <!-- Rich text editors (description & author bio) -->
+            <div class="form-group">
+                <label data-i18n="description">Description</label>
+                <div id="descriptionEditor" style="height: 200px;"></div>
+                <textarea id="formDescription" style="display:none;"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label data-i18n="authorBio">Author Bio</label>
+                <div id="bioEditor" style="height: 200px;"></div>
+                <textarea id="formAuthorBio" style="display:none;"></textarea>
+            </div>
+
+            <!-- Cover image upload -->
+            <div class="form-group">
+                <label data-i18n="coverImage">Cover Image</label>
+                <input type="file" id="formCover" accept="image/*">
+                <div id="coverPreview" class="image-preview"></div>
+            </div>
+
+            <!-- Interior previews (multiple images) -->
+            <div class="form-group">
+                <label data-i18n="interiorPreviews">Interior Previews</label>
+                <input type="file" id="formInterior" accept="image/*" multiple>
+                <div id="interiorPreviewsContainer" class="image-preview-grid"></div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary" id="saveBookBtn"><span data-i18n="saveBook">Save Book</span></button>
+                <button type="button" class="btn-outline-red" id="cancelFormBtn"><span data-i18n="cancel">Cancel</span></button>
+            </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin News Manager Page -->
+    <div id="adminNewsPage" style="display: none;">
+        <div class="container">
+            <div class="page-header">
+                <h2 data-i18n="manageNewsTitle">Manage News & Events</h2>
+                <button class="btn-outline-red" id="backToHomeFromAdminNews" data-i18n="backToHome">
+                    <i class="fas fa-arrow-left"></i> Back to Home
+                </button>
+            </div>
+            <div class="admin-controls">
+                <button id="addNewsAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> <span data-i18n="addNewsBtn">Add News</span></button>
+            </div>
+            <div id="adminNewsList" class="admin-news-list"></div>
+        </div>
+    </div>
+
+    <!-- News Form Modal -->
+    <div id="newsFormModal" class="modal-overlay">
+        <div class="modal-content form-modal-content">
+            <span class="modal-close" id="newsFormModalClose"><i class="fas fa-times"></i></span>
+            <h2 id="newsFormModalTitle" data-i18n="addNewsBtn">Add News</h2>
+            <form id="newsForm">
+                <input type="hidden" id="newsId" value="">
+                <div class="form-row">
+                    <input type="text" id="newsDateInput" placeholder="Date (e.g. June 15, 2024)" required>
+                </div>
+                <div class="form-row">
+                    <input type="text" id="newsTitleEnInput" placeholder="Title (English)" required>
+                    <input type="text" id="newsTitleFrInput" placeholder="Title (French)" required>
+                </div>
+                <div class="form-row">
+                    <textarea id="newsSummaryEnInput" placeholder="Summary (English)" rows="3" required></textarea>
+                    <textarea id="newsSummaryFrInput" placeholder="Summary (French)" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="chooseNewsImage">News Image</label>
+                    <input type="file" id="newsImageInput" accept="image/*">
+                    <div id="newsImagePreview" class="image-preview"></div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary"><span data-i18n="save">Save</span></button>
+                    <button type="button" class="btn-outline-red" id="cancelNewsFormBtn"><span data-i18n="cancel">Cancel</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div id="contactModal" class="modal-overlay">
+        <div class="modal-content contact-modal-content">
+            <span class="modal-close" id="contactModalClose"><i class="fas fa-times"></i></span>
+            <h3 class="contact-title" data-i18n="contactTitle">Contact Us</h3>
+            <form id="contactForm">
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="contactFirstName" data-i18n="contactFirstName">First Name *</label>
+                        <input type="text" id="contactFirstName" class="contact-input" required
+                            pattern="[A-Za-zÀ-ÖØ-öø-ÿ\s\-']+"
+                            title="Please enter a valid first name (letters only)">
+                    </div>
+                    <div class="form-group half">
+                        <label for="contactLastName" data-i18n="contactLastName">Last Name *</label>
+                        <input type="text" id="contactLastName" class="contact-input" required
+                            pattern="[A-Za-zÀ-ÖØ-öø-ÿ\s\-']+"
+                            title="Please enter a valid last name (letters only)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="contactEmail" data-i18n="contactEmail">Email *</label>
+                    <input type="email" id="contactEmail" class="contact-input" required
+                       pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                       title="Please enter a valid email address (e.g. name@domain.com)">
+                </div>
+                <div class="form-group">
+                    <label for="contactMessage" data-i18n="contactMessage">Message *</label>
+                    <textarea id="contactMessage" class="contact-textarea" rows="10" required></textarea>
+                    <p class="required-note" data-i18n="requiredNote"></p>
+                </div>
+                <button type="submit" class="btn-primary" id="sendContactBtn"><span data-i18n="send">Send</span></button>
+            </form>
+            <div id="contactError" class="contact-error"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/otpauth@9.1.2/dist/otpauth.umd.min.js"></script>
+    <script type="module" src="/publisher/main.js"></script>
+</body>
+</html>
