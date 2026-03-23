@@ -2,7 +2,7 @@
 export const langPack = {
     en: {
         navHome: 'HOME', navBooks: 'BOOKS', navAbout: 'ABOUT', navNews: 'NEWS',
-        heroPart1: 'where poetry', heroAccent: 'meets', heroPart2: 'the lens',
+        heroPart1: 'Where poetry', heroAccent: 'meets', heroPart2: 'the lens',
         heroDesc: 'Montreal-based independent publisher — Acer Series, translation, and visual arts.',
         heroBtn: 'discover our books  ',
         sectionRecent: 'recent & recommended',
@@ -119,11 +119,20 @@ export const langPack = {
         thankYou: 'Thank You for Your Order!',
         printReceipt: 'Print Receipt',
         manageNewsTitle: 'Manage News & Events',
-        authorInfoNotAvailable: 'Information about the author is not available.'
+        authorInfoNotAvailable: 'Information about the author is not available.',
+        signup: 'Sign Up',
+        signupBtn: 'Sign Up',
+        noAccount: 'Don\'t have an account? Sign up',
+        alreadyHaveAccount: 'Already have an account? Log in',
+        usernameExists: 'Username already exists',
+        passwordMismatch: 'Passwords do not match',
+        passwordTooShort: 'Password must be at least 6 characters',
+        signupSuccess: 'Registration successful! You can now log in.',
     },
+
     fr: {
         navHome: 'ACCUEIL', navBooks: 'LIVRES', navAbout: 'À PROPOS', navNews: 'ACTUALITÉS',
-        heroPart1: 'où la poésie', heroAccent: 'rencontre', heroPart2: "l'objectif",
+        heroPart1: 'Où la poésie', heroAccent: 'rencontre', heroPart2: "l'objectif",
         heroDesc: 'Maison d’édition indépendante montréalaise — série Acer, traduction et arts visuels.',
         heroBtn: 'découvrir nos livres  ',
         sectionRecent: 'récents & recommandés',
@@ -244,7 +253,15 @@ export const langPack = {
         contactMessage: 'Message *',
         requiredNote: '* Champs obligatoires',
         send: 'Envoyer',
-        authorInfoNotAvailable: 'Informations sur l\'auteur non disponibles.'
+        authorInfoNotAvailable: 'Informations sur l\'auteur non disponibles.',
+        signup: "S'inscrire",
+        signupBtn: "S'inscrire",
+        noAccount: "Vous n'avez pas de compte ? Inscrivez-vous",
+        alreadyHaveAccount: "Vous avez déjà un compte ? Connectez-vous",
+        usernameExists: "Ce nom d'utilisateur existe déjà",
+        passwordMismatch: "Les mots de passe ne correspondent pas",
+        passwordTooShort: "Le mot de passe doit contenir au moins 6 caractères",
+        signupSuccess: "Inscription réussie ! Vous pouvez maintenant vous connecter."
     }
 };
 

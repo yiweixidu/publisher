@@ -49,7 +49,7 @@
                 <div class="hero-image"></div>
                 <div class="hero-content">
                     <h1>
-                        <span data-i18n="heroPart1">where poetry</span>
+                        <span data-i18n="heroPart1">Where poetry</span>
                         <span class="accent-red" data-i18n="heroAccent">meets</span>
                         <span data-i18n="heroPart2">the lens</span>
                     </h1>
@@ -197,10 +197,30 @@
         <div class="login-modal">
             <span class="login-close" id="loginClose"><i class="fas fa-times"></i></span>
             <h2 class="login-title" data-i18n="login">Login</h2>
-            <input type="text" id="loginUsername" class="login-input" placeholder="Username" value="user">
-            <input type="password" id="loginPassword" class="login-input" placeholder="Password" value="pass">
+            <input type="text" id="loginUsername" class="login-input" placeholder="Username">
+            <input type="password" id="loginPassword" class="login-input" placeholder="Password">
             <button id="loginBtn" class="login-btn" data-i18n="loginBtn">Sign In</button>
+            <a href="#" id="goToSignupLink" data-i18n="noAccount">Don't have an account? Sign up</a>
             <div id="loginError" class="login-error"></div>
+            <p style="text-align:center; margin-top:1rem;">
+        </p>
+        </div>
+    </div>
+
+    <!-- Sign Up Modal -->
+    <div id="signupOverlay" class="login-overlay">
+        <div class="login-modal">
+            <span class="login-close" id="signupClose"><i class="fas fa-times"></i></span>
+            <h2 class="login-title" data-i18n="signup">Sign Up</h2>
+            <input type="text" id="signupUsername" class="login-input" placeholder="Username *" required>
+            <input type="text" id="signupDisplayName" class="login-input" placeholder="Display Name (optional)">
+            <input type="password" id="signupPassword" class="login-input" placeholder="Password *" required>
+            <input type="password" id="signupConfirmPassword" class="login-input" placeholder="Confirm Password *" required>
+            <button id="signupBtn" class="login-btn" data-i18n="signupBtn">Sign Up</button>
+            <div id="signupError" class="login-error"></div>
+            <p style="text-align:center; margin-top:1rem;">
+                <a href="#" id="goToLoginLink" data-i18n="alreadyHaveAccount">Already have an account? Log in</a>
+            </p>
         </div>
     </div>
 

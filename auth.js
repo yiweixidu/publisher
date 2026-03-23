@@ -3,7 +3,47 @@ import { DataService, saveUsers, users } from './data.js';
 import { langPack } from './i18n.js';
 import { SESSION_DURATION, ADMIN_INACTIVITY_TIMEOUT } from './constants.js';
 import { currentLang } from './i18n.js'; 
-import { navigateTo } from './routing.js'; // 新增导入
+import { navigateTo } from './routing.js';
+
+const USER_STORAGE_KEY = 'acerCurrentUser';
+
+// store user in localStorage
+function saveUserToStorage(user) {
+    if (user) {
+        // only store necessary info to identify user, not password or sensitive data
+        const userToStore = {
+            id: user.id,
+            username: user.username,
+            displayName: user.displayName
+        };
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userToStore));
+    } else {
+        localStorage.removeItem(USER_STORAGE_KEY);
+    }
+}
+
+// restore user login state from localStorage
+function loadUserFromStorage() {
+    const stored = localStorage.getItem(USER_STORAGE_KEY);
+    if (stored) {
+        try {
+            const userData = JSON.parse(stored);
+            // need to verify if this user still exists in our users list (in case of deletion)
+            // if you just want to keep the user logged in, you can use the stored user info,
+            // but features like reviews may require the full currentUser object
+            // here we simply look up the full user from the users array by id
+            const fullUser = users.find(u => u.id === userData.id);
+            if (fullUser) {
+                currentUser = fullUser;
+            } else {
+                // user no longer exists, clear storage
+                localStorage.removeItem(USER_STORAGE_KEY);
+            }
+        } catch (e) {
+            localStorage.removeItem(USER_STORAGE_KEY);
+        }
+    }
+}
 
 // State variables
 export let adminMode = false;
@@ -120,6 +160,11 @@ export function initAdminSession() {
     }, 300000);
 }
 
+export function initUserSession() {
+    loadUserFromStorage();
+    updateUserUI();
+}
+
 export function ensureAdminSession() {
     if (!adminSession) return false;
     if (adminSession.expiry < Date.now()) {
@@ -154,22 +199,25 @@ export function bindInactivityEvents() {
     });
 }
 
-// ---------- Regular User Login ----------
+// ---------- Regular User Authentication ----------
 export function login(username, password) {
     const user = users.find(u => u.username === username && u.password === password);
     if (user) {
         currentUser = user;
+        saveUserToStorage(user);
         loginOverlay?.classList.remove('active');
         updateUserUI();
-        // Refresh reviews if modal or detail page open (handled by event)
         window.dispatchEvent(new CustomEvent('userLogin'));
+        return true;
     } else {
         if (loginError) loginError.textContent = 'Invalid username or password';
+        return false;
     }
 }
 
 export function logout() {
     currentUser = null;
+    saveUserToStorage(null);
     updateUserUI();
     window.dispatchEvent(new CustomEvent('userLogout'));
 }
@@ -187,6 +235,58 @@ export function updateUserUI() {
             loginOverlay?.classList.add('active');
         });
     }
+}
+
+/**
+ * Register a new user account
+ * @param {string} username - Desired username
+ * @param {string} displayName - Display name (optional)
+ * @param {string} password - Password
+ * @param {string} confirmPassword - Password confirmation
+ * @returns {boolean} - True if registration successful
+ */
+export function signup(username, displayName, password, confirmPassword) {
+    // Clear previous error
+    const errorEl = document.getElementById('signupError');
+    if (errorEl) errorEl.textContent = '';
+
+    // Validation
+    if (!username || !password || !confirmPassword) {
+        if (errorEl) errorEl.textContent = langPack[currentLang].bothFieldsRequired || 'All fields are required.';
+        return false;
+    }
+    if (password.length < 6) {
+        if (errorEl) errorEl.textContent = langPack[currentLang].passwordTooShort || 'Password must be at least 6 characters.';
+        return false;
+    }
+    if (password !== confirmPassword) {
+        if (errorEl) errorEl.textContent = langPack[currentLang].passwordMismatch || 'Passwords do not match.';
+        return false;
+    }
+
+    // Check if username already exists
+    const existing = users.find(u => u.username === username);
+    if (existing) {
+        if (errorEl) errorEl.textContent = langPack[currentLang].usernameExists || 'Username already exists.';
+        return false;
+    }
+
+    // Create new user
+    const newUser = {
+        id: 'u' + Date.now() + Math.random().toString(36).substr(2, 6),
+        username: username,
+        password: password,  // In production, this should be hashed
+        displayName: displayName || username
+    };
+
+    const newUsers = [...users, newUser];
+    saveUsers(newUsers);
+
+    // Optional: auto-login after registration (uncomment if desired)
+    // login(username, password);
+
+    alert(langPack[currentLang].signupSuccess || 'Registration successful!');
+    return true;
 }
 
 // ---------- Admin Nav Link ----------
@@ -224,12 +324,12 @@ export function updateAdminNavLink() {
         container.appendChild(booksLink);
         container.appendChild(newsLink);
 
-        // 将容器插入到购物车图标之后
+        // Insert the container after the cart icon
         const cartIcon = document.querySelector('.cart-icon');
         if (cartIcon && cartIcon.parentNode === nav) {
             nav.insertBefore(container, cartIcon.nextSibling);
         } else {
-            nav.appendChild(container); // 后备方案
+            nav.appendChild(container); // fallback
         }
     }
 }

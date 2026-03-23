@@ -9,7 +9,8 @@ import { langPack, currentLang } from './i18n.js';
 import { 
     adminMode, currentUser, adminLogin, adminLogout, initAdminSession, ensureAdminSession,
     login, logout, updateUserUI, bindInactivityEvents, openAdminLoginModal, closeAdminLoginModal,
-    updateAdminNavLink
+    updateAdminNavLink, signup,
+    initUserSession
 } from './auth.js';
 import { cart, loadCart, saveCart, addToCart, renderCartModal } from './cart.js';
 import { 
@@ -62,6 +63,11 @@ const modalClose = document.getElementById('modalClose');
 const modalAddToCart = document.getElementById('modalAddToCart');
 const modalAddToWishList = document.getElementById('modalAddToWishList');
 const modalOverlay = document.getElementById('bookModal');
+const signupOverlay = document.getElementById('signupOverlay');
+const signupClose = document.getElementById('signupClose');
+const signupBtn = document.getElementById('signupBtn');
+const goToSignupLink = document.getElementById('goToSignupLink');
+const goToLoginLink = document.getElementById('goToLoginLink');
 
 // ---------- Helper: Admin Toggle Visibility ----------
 function updateAdminToggleVisibility() {
@@ -118,6 +124,53 @@ loginOverlay?.addEventListener('click', (e) => {
     }
 });
 
+// Open signup modal (switch from login)
+goToSignupLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    loginOverlay?.classList.remove('active');
+    signupOverlay?.classList.add('active');
+});
+
+// back to login link in signup modal
+goToLoginLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    signupOverlay?.classList.remove('active');
+    loginOverlay?.classList.add('active');
+});
+
+// Close signup modal
+signupClose?.addEventListener('click', () => {
+    signupOverlay?.classList.remove('active');
+    document.getElementById('signupError').textContent = '';
+});
+signupOverlay?.addEventListener('click', (e) => {
+    if (e.target === signupOverlay) {
+        signupOverlay.classList.remove('active');
+        document.getElementById('signupError').textContent = '';
+    }
+});
+
+// Handle signup form submission
+signupBtn?.addEventListener('click', () => {
+    const username = document.getElementById('signupUsername').value.trim();
+    const displayName = document.getElementById('signupDisplayName').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const confirm = document.getElementById('signupConfirmPassword').value;
+
+    const success = signup(username, displayName, password, confirm);
+    if (success) {
+        // After successful signup, switch to login modal
+        signupOverlay.classList.remove('active');
+        loginOverlay.classList.add('active');
+        // Clear signup form
+        document.getElementById('signupUsername').value = '';
+        document.getElementById('signupDisplayName').value = '';
+        document.getElementById('signupPassword').value = '';
+        document.getElementById('signupConfirmPassword').value = '';
+        document.getElementById('signupError').textContent = '';
+    }
+});
+
 // Language switch
 langEn?.addEventListener('click', (e) => { e.preventDefault(); setLanguage('en'); });
 langFr?.addEventListener('click', (e) => { e.preventDefault(); setLanguage('fr'); });
@@ -141,6 +194,10 @@ continueShoppingBtn?.addEventListener('click', () => cartModal?.classList.remove
 checkoutBtn?.addEventListener('click', () => {
     if (cart.length === 0) {
         alert(langPack[currentLang].emptyCart);
+        return;
+    }
+    if (!currentUser) {
+        loginOverlay?.classList.add('active');
         return;
     }
     cartModal?.classList.remove('active');
@@ -465,8 +522,6 @@ window.addEventListener('hashReview', (e) => {
 // Listen for route changes
 window.addEventListener('routeChanged', updateAdminToggleVisibility);
 
-// 移除旧的 adminNavBooks/adminNavNews 事件监听，因为现在通过路由导航
-
 window.addEventListener('popstate', handleRoute);
 
 // ---------- Initialization ----------
@@ -474,9 +529,9 @@ loadCart();
 initAdminSession();
 initQuillEditors();
 bindInactivityEvents();
+initUserSession();
 translateUI(currentLang);
 checkHashForReview();
-// We need to call handleRoute after everything is set
 handleRoute();
 updateAdminToggleVisibility(); // initial call
 
