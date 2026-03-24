@@ -1,5 +1,6 @@
 // data.js
 import { supabase } from '/publisher/supabaseClient.js';
+import { currentAccessToken } from './auth.js';
 
 // Exported arrays (initially empty, filled by load functions)
 export let books = [];
@@ -18,32 +19,18 @@ export async function loadBooks() {
 
 export async function saveBooks(newBooks) {
     console.log('saveBooks called with', newBooks.length, 'books');
-    
-    console.log('supabase.auth:', supabase.auth);
-    console.log('Calling supabase.auth.getSession()...');
-    
-    let sessionResult;
-    try {
-        sessionResult = await supabase.auth.getSession();
-    } catch (err) {
-        console.error('getSession threw error:', err);
-        throw err;
+
+    if (!currentAccessToken) {
+        console.error('No access token available. Please log in.');
+        throw new Error('Not authenticated. Please log in.');
     }
-    
-    console.log('getSession result:', sessionResult);
-    const session = sessionResult.data?.session;
-    if (!session) {
-        console.error('No session after getSession');
-        throw new Error('Not authenticated');
-    }
-    const accessToken = session.access_token;
-    console.log('Access token obtained, length:', accessToken.length);
-    
+    console.log('Using stored token, length:', currentAccessToken.length);
+
     const cleanedBooks = newBooks.map(book => {
         const { created_at, ...clean } = book;
         return clean;
     });
-    
+
     const SUPABASE_URL = 'https://asjiiftlxyihlayydfju.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_W9OZS-Qu8r_N6PQ7dpZ-wA_1FDD8XO6';
     const response = await fetch(`${SUPABASE_URL}/rest/v1/books`, {
@@ -51,17 +38,17 @@ export async function saveBooks(newBooks) {
         headers: {
             'Content-Type': 'application/json',
             'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${accessToken}`,
+            'Authorization': `Bearer ${currentAccessToken}`,
             'Prefer': 'resolution=merge-duplicates'
         },
         body: JSON.stringify(cleanedBooks)
     });
-    
+
     if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Supabase error ${response.status}: ${errorText}`);
     }
-    
+
     console.log('Save successful');
     books = newBooks;
 }

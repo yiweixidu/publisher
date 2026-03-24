@@ -278,19 +278,10 @@ async function saveBookFromForm() {
     try {
         let updatedBooks;
         if (bookData.id) {
-            const index = books.findIndex(b => b.id === bookData.id);
-            if (index !== -1) {
-                updatedBooks = [...books];
-                updatedBooks[index] = { ...books[index], ...bookData };
-            } else {
-                updatedBooks = books.map(b => b.id === bookData.id ? { ...b, ...bookData } : b);
-                if (!updatedBooks.find(b => b.id === bookData.id)) {
-                    updatedBooks = [...books, bookData];
-                }
-            }
+            updatedBooks = [bookData];
         } else {
             bookData.id = 'b' + Date.now() + Math.random().toString(36).substr(2, 6);
-            updatedBooks = [...books, bookData];
+            updatedBooks = [bookData];
         }
 
         console.log('Saving book:', bookData);

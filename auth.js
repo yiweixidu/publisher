@@ -10,6 +10,8 @@ export let currentUser = null;
 export let adminMode = false;
 let authListener = null;
 
+export let currentAccessToken = null;
+
 // DOM elements
 const adminSwitch = document.getElementById('adminSwitch');
 const loginOverlay = document.getElementById('loginOverlay');
@@ -62,6 +64,7 @@ export async function login(email, password) {
         return false;
     }
     currentUser = data.user;
+    currentAccessToken = data.session.access_token;
     const role = await getUserRole(currentUser.id);
     adminMode = (role === 'admin');
     updateAdminSwitch();
@@ -75,6 +78,7 @@ export async function logout() {
     const { error } = await supabase.auth.signOut();
     if (error) console.error(error);
     currentUser = null;
+    currentAccessToken = null;
     adminMode = false;
     updateAdminSwitch();
     updateUserUI();
@@ -97,12 +101,14 @@ export async function initAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
         currentUser = session.user;
+        currentAccessToken = session.access_token;
         const role = await getUserRole(currentUser.id);
         adminMode = (role === 'admin');
         updateAdminSwitch();
         updateUserUI();
     } else {
         currentUser = null;
+        currentAccessToken = null;
         adminMode = false;
         updateUserUI();
     }
@@ -112,6 +118,7 @@ export async function initAuth() {
     authListener = supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN') {
             currentUser = session.user;
+            currentAccessToken = session.access_token;
             const role = await getUserRole(currentUser.id);
             adminMode = (role === 'admin');
             updateAdminSwitch();
@@ -119,6 +126,7 @@ export async function initAuth() {
             window.dispatchEvent(new CustomEvent('userLogin'));
         } else if (event === 'SIGNED_OUT') {
             currentUser = null;
+            currentAccessToken = null;
             adminMode = false;
             updateAdminSwitch();
             updateUserUI();
