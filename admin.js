@@ -1,12 +1,13 @@
 // admin.js
-import { books, newsItems, saveBooks, saveNews } from './data.js';
+import { books, newsItems, saveBooks, saveNews, loadBooks, loadNews } from './data.js';
 import { langPack } from './i18n.js';
-import { adminMode, ensureAdminSession} from './auth.js'; 
+import { adminMode } from './auth.js';
 import { currentLang } from './i18n.js';
 import { renderBooks, renderAllBooks, renderNews, renderAllNews } from './ui.js';
 import { navigateTo } from './routing.js';
+import { supabase } from '/publisher/supabaseClient.js';
 
-// DOM elements
+// DOM elements (same as before)
 const adminBooksPage = document.getElementById('adminBooksPage');
 const adminBooksList = document.getElementById('adminBooksList');
 const searchInput = document.getElementById('searchBooks');
@@ -39,12 +40,24 @@ const newsTitleEn = document.getElementById('newsTitleEn');
 const newsTitleFr = document.getElementById('newsTitleFr');
 const newsSummaryEn = document.getElementById('newsSummaryEn');
 const newsSummaryFr = document.getElementById('newsSummaryFr');
+
 // Quill editors
 let descriptionQuill, bioQuill;
 
 // State
 let adminSearchTerm = '';
 let adminSortBy = 'title';
+
+// Helper: upload file to Supabase Storage and return public URL
+async function uploadFile(file, bucket, pathPrefix) {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${fileExt}`;
+    const filePath = `${pathPrefix}/${fileName}`;
+    const { error } = await supabase.storage.from(bucket).upload(filePath, file);
+    if (error) throw error;
+    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    return publicUrl;
+}
 
 // ---------- Admin Books Page ----------
 export function showAdminBooksPage() {
@@ -64,7 +77,10 @@ export function hideAdminBooksPage() {
     document.getElementById('mainContent').style.display = 'block';
 }
 
-export function renderAdminBookList() {
+export async function renderAdminBookList() {
+    // Ensure we have latest books
+    await loadBooks();
+
     let filtered = books.filter(book =>
         book.title.toLowerCase().includes(adminSearchTerm) ||
         (book.author && book.author.toLowerCase().includes(adminSearchTerm))
@@ -87,7 +103,7 @@ export function renderAdminBookList() {
             <div>${title}</div>
             <div>${author}</div>
             <div>$${book.price}</div>
-            <div>${book.stockStatus || 'In Stock'}</div>
+            <div>${book.stock_status || 'In Stock'}</div>
             <div class="actions">
                 <button class="edit-book" data-id="${book.id}" data-i18n="editBook">Edit</button>
                 <button class="duplicate-book" data-id="${book.id}" data-i18n="duplicate">Duplicate</button>
@@ -97,11 +113,10 @@ export function renderAdminBookList() {
         `;
     }).join('');
     adminBooksList.innerHTML = html;
-    // translateUI will be called by main after render
 
     // Attach event listeners
     document.querySelectorAll('.edit-book').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const id = btn.dataset.id;
             const book = books.find(b => b.id === id);
@@ -120,21 +135,19 @@ export function renderAdminBookList() {
         });
     });
     document.querySelectorAll('.delete-book').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             if (!confirm(langPack[currentLang].deleteConfirm || 'Are you sure?')) return;
             const id = btn.dataset.id;
             const newBooks = books.filter(b => b.id !== id);
-            saveBooks(newBooks);
-            renderAdminBookList();
-            // Also refresh other views if visible
+            await saveBooks(newBooks);
+            await renderAdminBookList();
             if (document.getElementById('mainContent').style.display === 'block') renderBooks();
             if (document.getElementById('booksPage').style.display === 'block') renderAllBooks();
         });
     });
 }
 
-// Search and sort listeners (to be attached in main)
 export function setAdminSearchTerm(term) {
     adminSearchTerm = term.toLowerCase();
     renderAdminBookList();
@@ -147,7 +160,6 @@ export function setAdminSortBy(sortBy) {
 
 // ---------- Book Form Modal ----------
 export function openBookFormModal(book = null) {
-    // Clear previous form and previews
     bookForm.reset();
     coverPreview.style.backgroundImage = '';
     interiorPreviewsContainer.innerHTML = '';
@@ -159,19 +171,19 @@ export function openBookFormModal(book = null) {
         formCategories.value = book.categories ? book.categories.join(', ') : '';
         formIsbn.value = book.isbn || '';
         formPublisher.value = book.publisher || '';
-        formPubDate.value = book.pubDate || '';
-        formPages.value = book.pages || '';  
+        formPubDate.value = book.pub_date || '';
+        formPages.value = book.pages || '';
         formLanguage.value = book.language || '';
         formPrice.value = book.price || '';
-        formStockStatus.value = book.stockStatus || 'In Stock';
+        formStockStatus.value = book.stock_status || 'In Stock';
         if (descriptionQuill) descriptionQuill.root.innerHTML = book.description || '';
-        if (bioQuill) bioQuill.root.innerHTML = book.authorBio || '';
+        if (bioQuill) bioQuill.root.innerHTML = book.author_bio || '';
         if (book.cover) {
             coverPreview.style.backgroundImage = `url('${book.cover}')`;
             coverPreview.style.height = '150px';
         }
-        if (book.interiorPreviews && Array.isArray(book.interiorPreviews)) {
-            book.interiorPreviews.forEach(url => {
+        if (book.interior_previews && Array.isArray(book.interior_previews)) {
+            book.interior_previews.forEach(url => {
                 const thumb = document.createElement('div');
                 thumb.className = 'thumb';
                 thumb.style.backgroundImage = `url('${url}')`;
@@ -207,27 +219,38 @@ export function initQuillEditors() {
 }
 
 async function saveBookFromForm() {
+    console.log('saveBookFromForm called');
     const bookData = {
         id: bookIdField.value || undefined,
         title: formTitle.value.trim(),
+        title_fr: formTitle.value.trim() || null,
         author: formAuthor.value.trim(),
+        author_fr: formAuthor.value.trim() || null,
         categories: formCategories.value.split(',').map(s => s.trim()).filter(s => s),
         isbn: formIsbn.value.trim(),
         publisher: formPublisher.value.trim(),
-        pubDate: formPubDate.value.trim(),
-        pages: parseInt(formPages.value) || undefined,
-        language: formLanguage.value.trim(), 
+        pub_date: formPubDate.value.trim(),
+        pages: parseInt(formPages.value) || null,
+        language: formLanguage.value.trim(),
         price: parseFloat(formPrice.value).toFixed(2),
-        stockStatus: formStockStatus.value,
+        stock_status: formStockStatus.value,
         description: document.getElementById('formDescription').value,
-        authorBio: document.getElementById('formAuthorBio').value,
+        description_fr: document.getElementById('formDescription').value || null,
+        author_bio: document.getElementById('formAuthorBio').value,
+        author_bio_fr: document.getElementById('formAuthorBio').value || null,
         cover: '',
-        interiorPreviews: []
+        interior_previews: []
     };
 
     if (formCover.files.length > 0) {
         const file = formCover.files[0];
-        bookData.cover = await readFileAsDataURL(file);
+        try {
+            bookData.cover = await uploadFile(file, 'book-covers', 'covers');
+        } catch (err) {
+            console.error('Cover upload failed', err);
+            alert('封面上传失败，请重试');
+            return;
+        }
     } else {
         const existing = books.find(b => b.id === bookData.id);
         if (existing && existing.cover) bookData.cover = existing.cover;
@@ -235,29 +258,54 @@ async function saveBookFromForm() {
 
     if (formInterior.files.length > 0) {
         const files = Array.from(formInterior.files);
-        const promises = files.map(file => readFileAsDataURL(file));
-        bookData.interiorPreviews = await Promise.all(promises);
+        const urls = [];
+        for (const file of files) {
+            try {
+                const url = await uploadFile(file, 'book-covers', 'interior');
+                urls.push(url);
+            } catch (err) {
+                console.error('Interior upload failed', err);
+                alert('内页图片上传失败，请重试');
+                return;
+            }
+        }
+        bookData.interior_previews = urls;
     } else {
         const existing = books.find(b => b.id === bookData.id);
-        if (existing && existing.interiorPreviews) bookData.interiorPreviews = existing.interiorPreviews;
+        if (existing && existing.interior_previews) bookData.interior_previews = existing.interior_previews;
     }
 
-    if (bookData.id) {
-        const index = books.findIndex(b => b.id === bookData.id);
-        if (index !== -1) {
-            const newBooks = [...books];
-            newBooks[index] = { ...books[index], ...bookData };
-            saveBooks(newBooks);
+    try {
+        let updatedBooks;
+        if (bookData.id) {
+            const index = books.findIndex(b => b.id === bookData.id);
+            if (index !== -1) {
+                updatedBooks = [...books];
+                updatedBooks[index] = { ...books[index], ...bookData };
+            } else {
+                updatedBooks = books.map(b => b.id === bookData.id ? { ...b, ...bookData } : b);
+                if (!updatedBooks.find(b => b.id === bookData.id)) {
+                    updatedBooks = [...books, bookData];
+                }
+            }
+        } else {
+            bookData.id = 'b' + Date.now() + Math.random().toString(36).substr(2, 6);
+            updatedBooks = [...books, bookData];
         }
-    } else {
-        bookData.id = 'b' + Date.now() + Math.random().toString(36).substr(2,6);
-        saveBooks([...books, bookData]);
-    }
 
-    bookFormModal.classList.remove('active');
-    renderAdminBookList();
-    if (document.getElementById('mainContent').style.display === 'block') renderBooks();
-    if (document.getElementById('booksPage').style.display === 'block') renderAllBooks();
+        console.log('Saving book:', bookData);
+        await saveBooks(updatedBooks);
+        console.log('Book saved');
+
+        bookFormModal.classList.remove('active');
+        await renderAdminBookList();
+        if (document.getElementById('mainContent').style.display === 'block') renderBooks();
+        if (document.getElementById('booksPage').style.display === 'block') renderAllBooks();
+        alert('书籍保存成功！');
+    } catch (err) {
+        console.error('Error saving book:', err);
+        alert('保存失败，请检查控制台错误：' + (err.message || err));
+    }
 }
 
 function readFileAsDataURL(file) {
@@ -276,8 +324,7 @@ export function attachNewsEvents() {
         if (newsFileNameSpan) newsFileNameSpan.textContent = file ? file.name : 'No file chosen';
     });
 
-    addNewsBtn?.addEventListener('click', function() {
-        if (!ensureAdminSession()) return;
+    addNewsBtn?.addEventListener('click', async function() {
         const displayDate = newsDate?.value.trim() || 'No date';
         const titleEn = newsTitleEn?.value.trim() || 'Untitled';
         const titleFr = newsTitleFr?.value.trim() || titleEn;
@@ -295,37 +342,35 @@ export function attachNewsEvents() {
             if (newsFileNameSpan) newsFileNameSpan.textContent = 'No file chosen';
         };
 
+        let imageUrl = null;
         if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                addNewsToArray(displayDate, { en: titleEn, fr: titleFr }, { en: summaryEn, fr: summaryFr }, e.target.result);
-                clearInputs();
-            };
-            reader.readAsDataURL(file);
-        } else {
-            addNewsToArray(displayDate, { en: titleEn, fr: titleFr }, { en: summaryEn, fr: summaryFr }, null);
-            clearInputs();
+            try {
+                imageUrl = await uploadFile(file, 'news-images', 'news');
+            } catch (err) {
+                console.error('News image upload failed', err);
+            }
         }
-    });
-}
 
-function addNewsToArray(displayDate, title, summary, imageDataUrl) {
-    const newId = 'n' + Date.now() + Math.random().toString(36).substring(2,6);
-    const newItem = {
-        id: newId,
-        displayDate: displayDate,
-        timestamp: Date.now(),
-        title: { en: title.en, fr: title.fr },
-        summary: { en: summary.en, fr: summary.fr }
-    };
-    if (imageDataUrl) newItem.image = imageDataUrl;
-    saveNews([...newsItems, newItem]);
-    // renderNews and renderAllNews will be called by main via events
+        const newId = 'n' + Date.now() + Math.random().toString(36).substring(2,6);
+        const newItem = {
+            id: newId,
+            display_date: displayDate,
+            timestamp: Date.now(),
+            title: { en: titleEn, fr: titleFr },
+            summary: { en: summaryEn, fr: summaryFr },
+            image: imageUrl
+        };
+        const updatedNews = [...newsItems, newItem];
+        await saveNews(updatedNews);
+        clearInputs();
+        // refresh views
+        if (document.getElementById('mainContent').style.display === 'block') renderNews();
+        if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
+    });
 }
 
 // ---------- Admin News Management ----------
 export function showAdminNewsPage() {
-    // Hide all other pages
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('booksPage').style.display = 'none';
     document.getElementById('bookDetailPage').style.display = 'none';
@@ -340,11 +385,12 @@ export function hideAdminNewsPage() {
     document.getElementById('adminNewsPage').style.display = 'none';
 }
 
-export function renderAdminNewsList() {
+export async function renderAdminNewsList() {
+    await loadNews();
     const sorted = [...newsItems].sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
     let html = sorted.map(item => `
         <div class="admin-news-row" data-id="${item.id}">
-            <div>${item.displayDate || ''}</div>
+            <div>${item.display_date || ''}</div>
             <div>${item.title?.en || ''} / ${item.title?.fr || ''}</div>
             <div>${(item.summary?.en || '').substring(0,50)}${(item.summary?.en || '').length > 50 ? '…' : ''}</div>
             <div class="actions">
@@ -355,7 +401,6 @@ export function renderAdminNewsList() {
     `).join('');
     document.getElementById('adminNewsList').innerHTML = html;
 
-    // Attach events
     document.querySelectorAll('.edit-news').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = btn.dataset.id;
@@ -364,25 +409,19 @@ export function renderAdminNewsList() {
         });
     });
     document.querySelectorAll('.delete-news').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             if (!confirm(langPack[currentLang].deleteConfirm || 'Are you sure?')) return;
             const id = btn.dataset.id;
             const newNews = newsItems.filter(n => n.id !== id);
-            saveNews(newNews);
-            renderAdminNewsList();
-            // Refresh public views if they are visible
-            if (document.getElementById('mainContent').style.display === 'block') {
-                renderNews();
-            }
-            if (document.getElementById('newsListPage').style.display === 'block') {
-                renderAllNews();
-            }
+            await saveNews(newNews);
+            await renderAdminNewsList();
+            if (document.getElementById('mainContent').style.display === 'block') renderNews();
+            if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
         });
     });
 }
 
 export function openNewsFormModal(item = null) {
-    // Reset form
     document.getElementById('newsForm').reset();
     const preview = document.getElementById('newsImagePreview');
     preview.style.backgroundImage = '';
@@ -390,7 +429,7 @@ export function openNewsFormModal(item = null) {
 
     if (item) {
         document.getElementById('newsId').value = item.id;
-        document.getElementById('newsDateInput').value = item.displayDate || '';
+        document.getElementById('newsDateInput').value = item.display_date || '';
         document.getElementById('newsTitleEnInput').value = item.title?.en || '';
         document.getElementById('newsTitleFrInput').value = item.title?.fr || '';
         document.getElementById('newsSummaryEnInput').value = item.summary?.en || '';
@@ -407,7 +446,6 @@ export function openNewsFormModal(item = null) {
     document.getElementById('newsFormModal').classList.add('active');
 }
 
-// Save news from form
 async function saveNewsFromForm() {
     const id = document.getElementById('newsId').value;
     const displayDate = document.getElementById('newsDateInput').value.trim();
@@ -422,50 +460,43 @@ async function saveNewsFromForm() {
         return;
     }
 
-    let imageDataUrl = null;
+    let imageUrl = null;
     if (imageFile) {
-        imageDataUrl = await readFileAsDataURL(imageFile);
+        try {
+            imageUrl = await uploadFile(imageFile, 'news-images', 'news');
+        } catch (err) {
+            console.error('Image upload failed', err);
+        }
     } else {
-        // Keep existing image if editing and no new file chosen
         if (id) {
             const existing = newsItems.find(n => n.id === id);
-            if (existing && existing.image) imageDataUrl = existing.image;
+            if (existing && existing.image) imageUrl = existing.image;
         }
     }
 
     const newsItem = {
         id: id || 'n' + Date.now() + Math.random().toString(36).substr(2,6),
-        displayDate: displayDate,
+        display_date: displayDate,
         timestamp: Date.now(),
         title: { en: titleEn, fr: titleFr },
         summary: { en: summaryEn, fr: summaryFr },
-        image: imageDataUrl
+        image: imageUrl
     };
 
     let updatedNews;
     if (id) {
-        // Edit existing
         updatedNews = newsItems.map(item => item.id === id ? newsItem : item);
     } else {
-        // Add new
         updatedNews = [...newsItems, newsItem];
     }
-    saveNews(updatedNews);
+    await saveNews(updatedNews);
 
-    // Close modal
     document.getElementById('newsFormModal').classList.remove('active');
-
-    // Re-render admin list and public views if visible
-    renderAdminNewsList();
-    if (document.getElementById('mainContent').style.display === 'block') {
-        renderNews();
-    }
-    if (document.getElementById('newsListPage').style.display === 'block') {
-        renderAllNews();
-    }
+    await renderAdminNewsList();
+    if (document.getElementById('mainContent').style.display === 'block') renderNews();
+    if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
 }
 
-// Attach event listeners for news admin
 export function attachAdminNewsEvents() {
     document.getElementById('addNewsAdminBtn')?.addEventListener('click', () => openNewsFormModal());
 
@@ -487,7 +518,6 @@ export function attachAdminNewsEvents() {
         navigateTo('/');
     });
 
-    // Preview image on file selection
     document.getElementById('newsImageInput')?.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {

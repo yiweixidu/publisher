@@ -4,12 +4,12 @@ import { books } from './data.js';
 import { renderBooks, renderAllBooks, renderBookDetail, renderNews, renderAllNews, renderNewsDetail, resetMetaTags, updateMetaTags } from './ui.js';
 import { showAdminBooksPage, showAdminNewsPage } from './admin.js';
 import { BASE_PATH } from './constants.js';
-import { adminMode } from './auth.js';  // new import
+import { adminMode } from './auth.js';
 
 export function navigateTo(path) {
     const base = BASE_PATH.replace(/\/+$/, '');
     const cleanPath = path.replace(/^\/+/, '');
-    const fullPath = cleanPath ? `${base}/${cleanPath}` : base + '/'; 
+    const fullPath = cleanPath ? `${base}/${cleanPath}` : base + '/';
     const currentFullPath = window.location.pathname;
     if (currentFullPath === fullPath) {
         handleRoute();
@@ -19,11 +19,11 @@ export function navigateTo(path) {
     handleRoute();
 }
 
-export function handleRoute() {
+export async function handleRoute() {   // <-- make async
     let path = window.location.pathname.replace(/\/+/g, '/');
     const basePattern = new RegExp('^' + BASE_PATH.replace(/\/+$/, '') + '/?');
     path = path.replace(basePattern, '') || '/';
-    
+
     const mainContent = document.getElementById('mainContent');
     const booksPage = document.getElementById('booksPage');
     const detailPage = document.getElementById('bookDetailPage');
@@ -43,12 +43,11 @@ export function handleRoute() {
 
     if (path === '/' || path === '') {
         mainContent.style.display = 'block';
-        renderBooks();
-        renderNews();
+        await Promise.all([renderBooks(), renderNews()]); // <-- await both
         resetMetaTags();
     } else if (path === 'books') {
         booksPage.style.display = 'block';
-        renderAllBooks();
+        await renderAllBooks();
         document.title = 'All Books | Acer Books';
     } else if (path.startsWith('book/')) {
         const bookId = path.split('book/')[1];
@@ -63,7 +62,7 @@ export function handleRoute() {
     } else if (path === 'news') {
         if (newsListPage) {
             newsListPage.style.display = 'block';
-            renderAllNews();
+            await renderAllNews();
             document.title = 'News & Events | Acer Books';
         } else {
             navigateTo('/');
@@ -79,10 +78,8 @@ export function handleRoute() {
             navigateTo('/news');
         }
     } else if (path === 'admin') {
-        // Show homepage but allow the admin toggle to appear
         mainContent.style.display = 'block';
-        renderBooks();
-        renderNews();
+        await Promise.all([renderBooks(), renderNews()]);
         resetMetaTags();
     } else if (path === 'admin/books') {
         if (!adminMode) {
@@ -102,6 +99,5 @@ export function handleRoute() {
         navigateTo('/');
     }
 
-    // Dispatch event so main.js can update toggle visibility
     window.dispatchEvent(new CustomEvent('routeChanged'));
 }

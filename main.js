@@ -7,10 +7,8 @@ import {
 } from './ui.js';
 import { langPack, currentLang } from './i18n.js';
 import { 
-    adminMode, currentUser, adminLogin, adminLogout, initAdminSession, ensureAdminSession,
-    login, logout, updateUserUI, bindInactivityEvents, openAdminLoginModal, closeAdminLoginModal,
-    updateAdminNavLink, signup,
-    initUserSession
+    adminMode, currentUser, logout, updateUserUI, bindInactivityEvents, openAdminLoginModal,
+    updateAdminNavLink, login, signup, initAuth
 } from './auth.js';
 import { cart, loadCart, saveCart, addToCart, renderCartModal } from './cart.js';
 import { 
@@ -19,8 +17,9 @@ import {
 } from './admin.js';
 import { renderReviews, renderDetailReviews, checkHashForReview } from './review.js';
 import { navigateTo, handleRoute } from './routing.js';
+import { loadBooks, loadNews, loadReviews } from './data.js';
 
-// DOM elements for event listeners
+// DOM elements (same as original, but we'll keep the selectors)
 const adminSwitch = document.getElementById('adminSwitch');
 const langEn = document.getElementById('langEn');
 const langFr = document.getElementById('langFr');
@@ -69,7 +68,7 @@ const signupBtn = document.getElementById('signupBtn');
 const goToSignupLink = document.getElementById('goToSignupLink');
 const goToLoginLink = document.getElementById('goToLoginLink');
 
-// ---------- Helper: Admin Toggle Visibility ----------
+// Helper: Admin Toggle Visibility
 function updateAdminToggleVisibility() {
     const adminToggle = document.getElementById('adminToggle');
     if (!adminToggle) return;
@@ -85,38 +84,37 @@ function updateAdminToggleVisibility() {
 
 // ---------- Event Listeners ----------
 
-// Admin toggle
+// Admin toggle: now simply shows login modal if not admin, else logs out
 adminSwitch?.addEventListener('click', () => {
     if (adminMode) {
-        adminLogout();
+        logout();
     } else {
-        openAdminLoginModal();
+        openAdminLoginModal(); // this now opens the regular login modal
     }
 });
 
-// Admin login modal
-adminLoginBtn?.addEventListener('click', async () => {
-    const pwd = document.getElementById('adminPassword').value.trim();
-    const code = document.getElementById('adminTOTP').value.trim();
-    if (!pwd || !code) {
-        document.getElementById('adminLoginError').textContent = 'Both fields are required';
-        return;
+// Admin login modal is no longer separate – we reuse the regular login modal
+// So we just open the regular login modal when admin toggle is clicked while not logged in.
+// The adminLoginBtn and adminLoginOverlay can be removed or repurposed; we'll keep them but disable.
+adminLoginBtn?.addEventListener('click', () => { /* no-op */ });
+adminLoginClose?.addEventListener('click', () => { /* no-op */ });
+adminLoginOverlay?.addEventListener('click', () => { /* no-op */ });
+
+// Regular login – updated to use email instead of username
+loginBtn?.addEventListener('click', async () => {
+    const email = document.getElementById('loginUsername')?.value; // field reused for email
+    const password = document.getElementById('loginPassword')?.value;
+    const success = await login(email, password);
+    if (!success) {
+        // error already displayed in loginError
     }
-    await adminLogin(pwd, code);
-});
-adminLoginClose?.addEventListener('click', closeAdminLoginModal);
-adminLoginOverlay?.addEventListener('click', (e) => {
-    if (e.target === adminLoginOverlay) closeAdminLoginModal();
 });
 
-// Regular login
-loginBtn?.addEventListener('click', () => {
-    login(document.getElementById('loginUsername')?.value, document.getElementById('loginPassword')?.value);
-});
 loginClose?.addEventListener('click', () => {
     loginOverlay?.classList.remove('active');
     document.getElementById('loginError').textContent = '';
 });
+
 loginOverlay?.addEventListener('click', (e) => {
     if (e.target === loginOverlay) {
         loginOverlay.classList.remove('active');
@@ -124,25 +122,24 @@ loginOverlay?.addEventListener('click', (e) => {
     }
 });
 
-// Open signup modal (switch from login)
+// Signup
 goToSignupLink?.addEventListener('click', (e) => {
     e.preventDefault();
     loginOverlay?.classList.remove('active');
     signupOverlay?.classList.add('active');
 });
 
-// back to login link in signup modal
 goToLoginLink?.addEventListener('click', (e) => {
     e.preventDefault();
     signupOverlay?.classList.remove('active');
     loginOverlay?.classList.add('active');
 });
 
-// Close signup modal
 signupClose?.addEventListener('click', () => {
     signupOverlay?.classList.remove('active');
     document.getElementById('signupError').textContent = '';
 });
+
 signupOverlay?.addEventListener('click', (e) => {
     if (e.target === signupOverlay) {
         signupOverlay.classList.remove('active');
@@ -150,24 +147,37 @@ signupOverlay?.addEventListener('click', (e) => {
     }
 });
 
-// Handle signup form submission
-signupBtn?.addEventListener('click', () => {
-    const username = document.getElementById('signupUsername').value.trim();
+signupBtn?.addEventListener('click', async () => {
+    const email = document.getElementById('signupUsername').value.trim(); // email
     const displayName = document.getElementById('signupDisplayName').value.trim();
     const password = document.getElementById('signupPassword').value;
     const confirm = document.getElementById('signupConfirmPassword').value;
 
-    const success = signup(username, displayName, password, confirm);
-    if (success) {
-        // After successful signup, switch to login modal
+    if (!email || !password || !confirm) {
+        document.getElementById('signupError').textContent = langPack[currentLang].bothFieldsRequired;
+        return;
+    }
+    if (password.length < 6) {
+        document.getElementById('signupError').textContent = langPack[currentLang].passwordTooShort;
+        return;
+    }
+    if (password !== confirm) {
+        document.getElementById('signupError').textContent = langPack[currentLang].passwordMismatch;
+        return;
+    }
+
+    try {
+        await signup(email, password, displayName);
+        alert(langPack[currentLang].signupSuccess);
         signupOverlay.classList.remove('active');
         loginOverlay.classList.add('active');
-        // Clear signup form
         document.getElementById('signupUsername').value = '';
         document.getElementById('signupDisplayName').value = '';
         document.getElementById('signupPassword').value = '';
         document.getElementById('signupConfirmPassword').value = '';
         document.getElementById('signupError').textContent = '';
+    } catch (err) {
+        document.getElementById('signupError').textContent = err.message;
     }
 });
 
@@ -214,7 +224,7 @@ checkoutModal?.addEventListener('click', (e) => {
     }
 });
 
-// Payment form
+// Payment form (unchanged)
 if (paymentForm) {
     paymentForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -339,10 +349,8 @@ modalAddToWishList?.addEventListener('click', () => {
     alert(langPack[currentLang].addedToWishList);
 });
 
-// In initialization, after other admin events:
 attachAdminNewsEvents();
 
-// Add back button handler for admin news page
 document.getElementById('backToHomeFromAdminNews')?.addEventListener('click', () => {
     hideAdminNewsPage();
     navigateTo('/');
@@ -353,7 +361,6 @@ const contactModalClose = document.getElementById('contactModalClose');
 const contactForm = document.getElementById('contactForm');
 const contactError = document.getElementById('contactError');
 
-// Open contact modal when about button is clicked
 document.querySelector('.about-text .btn-outline-red').addEventListener('click', (e) => {
     e.preventDefault();
     contactModal.classList.add('active');
@@ -436,10 +443,10 @@ window.addEventListener('resize', () => {
 
 // Custom events for auth state changes
 window.addEventListener('adminLogin', () => {
-    // Re-render current page based on visibility
+    // adminLogin is now triggered when user logs in with role admin
     const mainContent = document.getElementById('mainContent');
     const booksPage = document.getElementById('booksPage');
-    const detailPage = document.getElementById('bookDetailPage');
+    const detailPage = document.getElementById('bookDetailPage'); // <-- added
     const newsListPage = document.getElementById('newsListPage');
     const newsDetailPage = document.getElementById('newsDetailPage');
     const adminBooksPage = document.getElementById('adminBooksPage');
@@ -458,13 +465,13 @@ window.addEventListener('adminLogin', () => {
     } else if (adminBooksPage.style.display === 'block') {
         renderAdminBookList();
     }
-    updateAdminToggleVisibility(); // added
+    updateAdminToggleVisibility();
 });
 
 window.addEventListener('adminLogout', () => {
     const mainContent = document.getElementById('mainContent');
     const booksPage = document.getElementById('booksPage');
-    const detailPage = document.getElementById('bookDetailPage');
+    const detailPage = document.getElementById('bookDetailPage'); // <-- added
     const newsListPage = document.getElementById('newsListPage');
     const newsDetailPage = document.getElementById('newsDetailPage');
     const adminBooksPage = document.getElementById('adminBooksPage');
@@ -486,26 +493,31 @@ window.addEventListener('adminLogout', () => {
         renderBooks();
         renderNews();
     }
-    updateAdminToggleVisibility(); // added
+    updateAdminToggleVisibility();
 });
 
 window.addEventListener('userLogin', () => {
-    // Refresh reviews if modal or detail open
     if (modalOverlay?.classList.contains('active') && currentModalBook) {
         renderReviews(currentModalBook.id, currentLang, currentUser);
     }
+    const detailPage = document.getElementById('bookDetailPage'); // <-- added
     if (detailPage && detailPage.style.display === 'block' && currentModalBook) {
         renderDetailReviews(currentModalBook.id, currentLang, currentUser);
     }
+    updateAdminNavLink(); // in case role changed
+    updateAdminToggleVisibility();
 });
 
 window.addEventListener('userLogout', () => {
     if (modalOverlay?.classList.contains('active') && currentModalBook) {
         renderReviews(currentModalBook.id, currentLang, currentUser);
     }
+    const detailPage = document.getElementById('bookDetailPage'); // <-- added
     if (detailPage && detailPage.style.display === 'block' && currentModalBook) {
         renderDetailReviews(currentModalBook.id, currentLang, currentUser);
     }
+    updateAdminNavLink();
+    updateAdminToggleVisibility();
 });
 
 window.addEventListener('hashReview', (e) => {
@@ -519,29 +531,30 @@ window.addEventListener('hashReview', (e) => {
     }, 100);
 });
 
-// Listen for route changes
 window.addEventListener('routeChanged', updateAdminToggleVisibility);
 
 window.addEventListener('popstate', handleRoute);
 
 // ---------- Initialization ----------
-loadCart();
-initAdminSession();
-initQuillEditors();
-bindInactivityEvents();
-initUserSession();
-translateUI(currentLang);
-checkHashForReview();
-handleRoute();
-updateAdminToggleVisibility(); // initial call
+async function init() {
+    loadCart();
+    await initAuth(); // sets up user session and auth listener
+    await Promise.all([loadBooks(), loadNews(), loadReviews()]);
+    initQuillEditors();
+    bindInactivityEvents();
+    translateUI(currentLang);
+    checkHashForReview();
+    handleRoute();
+    updateAdminToggleVisibility();
 
-// Handle redirect from 404.html
-(function() {
+    // Handle redirect from 404.html
     const redirect = sessionStorage.redirect;
     if (redirect) {
         sessionStorage.removeItem('redirect');
         history.replaceState(null, '', redirect);
         handleRoute();
-        updateAdminToggleVisibility(); // after redirect
+        updateAdminToggleVisibility();
     }
-})();
+}
+
+init();

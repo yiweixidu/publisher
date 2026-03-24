@@ -1,11 +1,10 @@
 // review.js
-import { reviews, saveReviews, books } from './data.js';
+import { reviews, saveReviews, loadReviews } from './data.js';
 import { langPack } from './i18n.js';
+import { supabase } from '/publisher/supabaseClient.js';
 
-// DOM elements (for modal reviews)
 const modalReviews = document.getElementById('modalReviews');
 
-// 通用 fallback 分享函数
 function fallbackCopy(review, shareUrl) {
     const message = `【Review】${review.username} reviewed this book:\n“${review.text}”\nView full review: ${shareUrl}`;
     navigator.clipboard.writeText(message).then(() => {
@@ -15,11 +14,9 @@ function fallbackCopy(review, shareUrl) {
     });
 }
 
-// 通用评论/分享事件绑定
 function attachEventsToContainer(container, bookId, currentLang, currentUser) {
     if (!container) return;
 
-    // Share button handler
     container.querySelectorAll('.wechat-share-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -36,18 +33,15 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
                     title: shareTitle,
                     text: shareText,
                     url: shareUrl,
-                }).catch(() => {
-                    fallbackCopy(review, shareUrl);
-                });
+                }).catch(() => fallbackCopy(review, shareUrl));
             } else {
                 fallbackCopy(review, shareUrl);
             }
         });
     });
 
-    // Comment submission handler
     container.querySelectorAll('.wechat-comment-submit').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             if (!currentUser) return;
             const reviewId = btn.dataset.reviewId;
@@ -57,13 +51,12 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
             const review = reviews.find(r => r.id === reviewId);
             if (review) {
                 review.comments.push({
-                    userId: currentUser.id,
-                    username: currentUser.displayName || currentUser.username,
+                    user_id: currentUser.id,
+                    username: currentUser.email.split('@')[0], // fallback
                     text: text,
                     timestamp: new Date().toISOString()
                 });
-                saveReviews(reviews);
-                // Re-render the appropriate view
+                await saveReviews(reviews);
                 if (container === modalReviews) {
                     renderReviews(bookId, currentLang, currentUser);
                 } else {
@@ -73,25 +66,24 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
         });
     });
 
-    // New review submission handler
     const submitReview = container.querySelector('.review-submit');
     if (submitReview && currentUser) {
-        submitReview.addEventListener('click', () => {
+        submitReview.addEventListener('click', async () => {
             const textarea = container.querySelector('.review-textarea');
             const text = textarea?.value.trim();
             if (!text) return;
             const newReview = {
                 id: 'rev_' + Date.now() + Math.random().toString(36).substr(2,6),
-                bookId: bookId,
-                userId: currentUser.id,
-                username: currentUser.displayName || currentUser.username,
+                book_id: bookId,
+                user_id: currentUser.id,
+                username: currentUser.email.split('@')[0], // fallback
                 text: text,
                 timestamp: new Date().toISOString(),
                 likes: [],
                 comments: []
             };
-            reviews.push(newReview);
-            saveReviews(reviews);
+            const updatedReviews = [...reviews, newReview];
+            await saveReviews(updatedReviews);
             if (container === modalReviews) {
                 renderReviews(bookId, currentLang, currentUser);
             } else {
@@ -101,7 +93,6 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
     }
 }
 
-// 生成评论列表 HTML（公用）
 function generateReviewsHTML(bookReviews, currentLang, currentUser) {
     let html = '<div class="wechat-review-list">';
 
@@ -173,30 +164,36 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
     return html;
 }
 
-export function renderReviews(bookId, currentLang, currentUser) {
+export async function renderReviews(bookId, currentLang, currentUser) {
+    await loadReviews(); // ensure latest
     if (!modalReviews) return;
-    const bookReviews = reviews.filter(r => r.bookId === bookId);
+    const bookReviews = reviews.filter(r => r.book_id === bookId);
     modalReviews.innerHTML = generateReviewsHTML(bookReviews, currentLang, currentUser);
     attachEventsToContainer(modalReviews, bookId, currentLang, currentUser);
 }
 
-export function renderDetailReviews(bookId, currentLang, currentUser) {
+export async function renderDetailReviews(bookId, currentLang, currentUser) {
+    await loadReviews();
     const detailReviews = document.getElementById('detailReviews');
     if (!detailReviews) return;
-    const bookReviews = reviews.filter(r => r.bookId === bookId);
+    const bookReviews = reviews.filter(r => r.book_id === bookId);
     detailReviews.innerHTML = generateReviewsHTML(bookReviews, currentLang, currentUser);
     attachEventsToContainer(detailReviews, bookId, currentLang, currentUser);
 }
 
 export function checkHashForReview() {
+    // hash handling remains the same; relies on reviews array
     if (window.location.hash.startsWith('#review-')) {
         const reviewId = window.location.hash.substring(8);
         const review = reviews.find(r => r.id === reviewId);
         if (review) {
-            const book = books.find(b => b.id === review.bookId);
-            if (book) {
-                window.dispatchEvent(new CustomEvent('hashReview', { detail: { book, reviewId } }));
-            }
+            // need books array – it's imported from data.js, but we must ensure it's loaded
+            import('./data.js').then(({ books }) => {
+                const book = books.find(b => b.id === review.book_id);
+                if (book) {
+                    window.dispatchEvent(new CustomEvent('hashReview', { detail: { book, reviewId } }));
+                }
+            });
         }
     }
 }
