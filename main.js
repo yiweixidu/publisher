@@ -8,7 +8,7 @@ import {
 import { langPack, currentLang } from './i18n.js';
 import { 
     adminMode, currentUser, logout, updateUserUI, bindInactivityEvents, openAdminLoginModal,
-    updateAdminNavLink, login, signup, initAuth
+    updateAdminNavLink, login, signup, initAuth, isAdminUser
 } from './auth.js';
 import { cart, loadCart, saveCart, addToCart, renderCartModal } from './cart.js';
 import { 
@@ -72,13 +72,17 @@ const goToLoginLink = document.getElementById('goToLoginLink');
 function updateAdminToggleVisibility() {
     const adminToggle = document.getElementById('adminToggle');
     if (!adminToggle) return;
-    let path = window.location.pathname.replace(/\/+/g, '/');
-    const basePattern = new RegExp('^' + BASE_PATH.replace(/\/+$/, '') + '/?');
-    const relativePath = path.replace(basePattern, '') || '/';
-    if (adminMode || relativePath === 'admin') {
+    if (isAdminUser) {
         adminToggle.classList.remove('hidden');
     } else {
-        adminToggle.classList.add('hidden');
+        let path = window.location.pathname.replace(/\/+/g, '/');
+        const basePattern = new RegExp('^' + BASE_PATH.replace(/\/+$/, '') + '/?');
+        const relativePath = path.replace(basePattern, '') || '/';
+        if (adminMode || relativePath === 'admin') {
+            adminToggle.classList.remove('hidden');
+        } else {
+            adminToggle.classList.add('hidden');
+        }
     }
 }
 
@@ -86,11 +90,7 @@ function updateAdminToggleVisibility() {
 
 // Admin toggle: now simply shows login modal if not admin, else logs out
 adminSwitch?.addEventListener('click', () => {
-    if (adminMode) {
-        logout();
-    } else {
-        openAdminLoginModal(); // this now opens the regular login modal
-    }
+    import('./auth.js').then(({ toggleAdminMode }) => toggleAdminMode());
 });
 
 // Admin login modal is no longer separate – we reuse the regular login modal
@@ -466,6 +466,14 @@ window.addEventListener('adminLogin', () => {
         renderAdminBookList();
     }
     updateAdminToggleVisibility();
+});
+
+const adminToggleText = document.getElementById('adminToggleText');
+adminToggleText?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (currentUser) {
+        logout();
+    }
 });
 
 window.addEventListener('adminLogout', () => {

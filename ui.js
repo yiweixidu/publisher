@@ -163,7 +163,7 @@ export async function renderBooks() {
             booksToShow = shuffled.slice(0, count);
         }
         let html = '';
-        booksToShow.forEach(book => { html += generateBookCardHTML(book, adminMode, currentLang); });
+        booksToShow.forEach(book => { html += generateBookCardHTML(book, false, currentLang); });
         if (grid) grid.innerHTML = html;
         document.querySelectorAll('.book-card').forEach(card => {
             card.addEventListener('click', (e) => {
@@ -173,7 +173,7 @@ export async function renderBooks() {
                 if (book) openModal(book);
             });
         });
-        attachBookDeleteEvents(grid, renderBooks);
+        // attachBookDeleteEvents(grid, renderBooks);
     } catch (err) {
         console.error('Error rendering books:', err);
         if (grid) grid.innerHTML = '<p>Error loading books. Please refresh or try again later.</p>';
@@ -184,7 +184,7 @@ export async function renderAllBooks() {
     try {
         if (books.length === 0) await loadBooks();
         let html = '';
-        books.forEach(book => { html += generateBookCardHTML(book, adminMode, currentLang); });
+        books.forEach(book => { html += generateBookCardHTML(book,false, currentLang); });
         if (booksGridAll) booksGridAll.innerHTML = html;
         document.querySelectorAll('#booksGrid .book-card').forEach(card => {
             card.addEventListener('click', (e) => {
@@ -193,7 +193,7 @@ export async function renderAllBooks() {
                 navigateTo(`/book/${bookId}`);
             });
         });
-        attachBookDeleteEvents(booksGridAll, renderAllBooks);
+        //attachBookDeleteEvents(booksGridAll, renderAllBooks);
     } catch (err) {
         console.error('Error rendering all books:', err);
         if (booksGridAll) booksGridAll.innerHTML = '<p>Error loading books.</p>';
@@ -238,10 +238,18 @@ export async function renderNews() {
             await loadNews();
             console.log(`Loaded ${newsItems.length} news items.`);
         }
-        const sorted = [...newsItems].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        let filtered = newsItems;
+        if (!adminMode) {
+            filtered = newsItems.filter(item => item.status === 'published');
+        }
+        const sorted = [...filtered].sort((a, b) => {
+            const dateA = a.event_date ? new Date(a.event_date) : 0;
+            const dateB = b.event_date ? new Date(b.event_date) : 0;
+            return dateB - dateA;
+        });
         const latest = sorted.slice(0, 3);
         let html = '';
-        latest.forEach(item => { html += generateNewsItemHTML(item, adminMode, currentLang); });
+        latest.forEach(item => { html += generateNewsItemHTML(item, false, currentLang); });
         if (newsGrid) newsGrid.innerHTML = html;
         document.querySelectorAll('#newsGrid .news-item').forEach(card => {
             card.addEventListener('click', (e) => {
@@ -250,7 +258,6 @@ export async function renderNews() {
                 navigateTo(`/news/${id}`);
             });
         });
-        attachNewsDeleteEvents(newsGrid, renderNews);
     } catch (err) {
         console.error('Error rendering news:', err);
         if (newsGrid) newsGrid.innerHTML = '<p>Error loading news.</p>';
@@ -260,9 +267,17 @@ export async function renderNews() {
 export async function renderAllNews() {
     try {
         if (newsItems.length === 0) await loadNews();
-        const sorted = [...newsItems].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        let filtered = newsItems;
+        if (!adminMode) {
+            filtered = newsItems.filter(item => item.status === 'published');
+        }
+        const sorted = [...filtered].sort((a, b) => {
+            const dateA = a.event_date ? new Date(a.event_date) : 0;
+            const dateB = b.event_date ? new Date(b.event_date) : 0;
+            return dateB - dateA;
+        });
         let html = '';
-        sorted.forEach(item => { html += generateNewsItemHTML(item, adminMode, currentLang); });
+        sorted.forEach(item => { html += generateNewsItemHTML(item, false, currentLang); });
         if (allNewsGrid) allNewsGrid.innerHTML = html;
         document.querySelectorAll('#allNewsGrid .news-item').forEach(card => {
             card.addEventListener('click', () => {
@@ -270,7 +285,6 @@ export async function renderAllNews() {
                 navigateTo(`/news/${id}`);
             });
         });
-        attachNewsDeleteEvents(allNewsGrid, renderAllNews);
     } catch (err) {
         console.error('Error rendering all news:', err);
         if (allNewsGrid) allNewsGrid.innerHTML = '<p>Error loading news.</p>';
@@ -281,6 +295,8 @@ export function renderNewsDetail(item) {
     currentNewsItem = item;
     const title = (item.title && typeof item.title === 'object') ? (item.title[currentLang] || item.title.en || '') : item.title || '';
     const summary = (item.summary && typeof item.summary === 'object') ? (item.summary[currentLang] || item.summary.en || '') : item.summary || '';
+    const content = currentLang === 'fr' ? (item.content_fr || '') : (item.content_en || '');
+
     if (newsDetailTitle) newsDetailTitle.innerText = title;
     if (newsDetailDate) newsDetailDate.innerText = item.display_date || '';
     if (newsDetailImage) {
@@ -293,6 +309,10 @@ export function renderNewsDetail(item) {
         }
     }
     if (newsDetailSummary) newsDetailSummary.innerText = summary;
+    const contentContainer = document.getElementById('newsDetailContent');
+    if (contentContainer) {
+        contentContainer.innerHTML = content;
+    }
 }
 
 export function renderBookDetail(book) {

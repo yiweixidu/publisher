@@ -7,6 +7,7 @@ import { getUserRole } from './data.js';
 
 // State variables
 export let currentUser = null;
+export let isAdminUser = false;
 export let adminMode = false;
 let authListener = null;
 
@@ -32,7 +33,7 @@ function updateAdminSwitch() {
 // Helper: update UI based on user login state
 export async function updateUserUI() {
     if (currentUser) {
-        if (adminMode) {
+        if (isAdminUser) {
             userSection.innerHTML = '';
             return;
         }
@@ -66,7 +67,8 @@ export async function login(email, password) {
     currentUser = data.user;
     currentAccessToken = data.session.access_token;
     const role = await getUserRole(currentUser.id);
-    adminMode = (role === 'admin');
+    isAdminUser = (role === 'admin');
+    adminMode = isAdminUser; // 管理员登录后直接开启 admin 模式
     updateAdminSwitch();
     updateUserUI();
     loginOverlay?.classList.remove('active');
@@ -80,6 +82,7 @@ export async function logout() {
     currentUser = null;
     currentAccessToken = null;
     adminMode = false;
+    isAdminUser = false;
     updateAdminSwitch();
     updateUserUI();
     window.dispatchEvent(new CustomEvent('userLogout'));
@@ -103,13 +106,15 @@ export async function initAuth() {
         currentUser = session.user;
         currentAccessToken = session.access_token;
         const role = await getUserRole(currentUser.id);
-        adminMode = (role === 'admin');
+        isAdminUser = (role === 'admin');
+        adminMode = false; // 刷新后始终关闭 admin 模式
         updateAdminSwitch();
         updateUserUI();
     } else {
         currentUser = null;
         currentAccessToken = null;
         adminMode = false;
+        isAdminUser = false;
         updateUserUI();
     }
 
@@ -120,7 +125,8 @@ export async function initAuth() {
             currentUser = session.user;
             currentAccessToken = session.access_token;
             const role = await getUserRole(currentUser.id);
-            adminMode = (role === 'admin');
+            isAdminUser = (role === 'admin');
+            // 注意：不修改 adminMode，保留当前值（由 login 或刷新后的 false 决定）
             updateAdminSwitch();
             updateUserUI();
             window.dispatchEvent(new CustomEvent('userLogin'));
@@ -128,6 +134,7 @@ export async function initAuth() {
             currentUser = null;
             currentAccessToken = null;
             adminMode = false;
+            isAdminUser = false;
             updateAdminSwitch();
             updateUserUI();
             window.dispatchEvent(new CustomEvent('userLogout'));
@@ -186,6 +193,18 @@ export function openAdminLoginModal() {
 
 export function closeAdminLoginModal() {
     loginOverlay?.classList.remove('active');
+}
+
+export function toggleAdminMode() {
+    if (adminMode) {
+        logout(); // 关闭 admin 模式：登出用户
+    } else {
+        // 开启 admin 模式：先确保登出（如果已登录），再弹出登录框
+        if (currentUser) {
+            logout();
+        }
+        openAdminLoginModal();
+    }
 }
 
 // ---------- Inactivity timer (optional) – keep as is ----------

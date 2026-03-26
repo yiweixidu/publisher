@@ -128,6 +128,10 @@ export const langPack = {
         passwordMismatch: 'Passwords do not match',
         passwordTooShort: 'Password must be at least 6 characters',
         signupSuccess: 'Registration successful! You can now log in.',
+        statusPublished: 'Published',
+        statusDraft: 'Draft',
+        publish: 'Publish',
+        unpublish: 'Unpublish',
     },
 
     fr: {
@@ -261,7 +265,11 @@ export const langPack = {
         usernameExists: "Ce nom d'utilisateur existe déjà",
         passwordMismatch: "Les mots de passe ne correspondent pas",
         passwordTooShort: "Le mot de passe doit contenir au moins 6 caractères",
-        signupSuccess: "Inscription réussie ! Vous pouvez maintenant vous connecter."
+        signupSuccess: "Inscription réussie ! Vous pouvez maintenant vous connecter.",
+        statusPublished: "Publié",
+        statusDraft: "Brouillon",
+        publish: "Publier",
+        unpublish: "Dépublier",
     }
 };
 

@@ -27,8 +27,8 @@ export async function saveBooks(newBooks) {
     console.log('Using stored token, length:', currentAccessToken.length);
 
     const cleanedBooks = newBooks.map(book => {
-        const { created_at, ...clean } = book;
-        return clean;
+        const { created_at, interior_previews, description_fr, author_bio_fr, ...clean } = book;
+        return clean; 
     });
 
     const SUPABASE_URL = 'https://asjiiftlxyihlayydfju.supabase.co';
@@ -50,7 +50,13 @@ export async function saveBooks(newBooks) {
     }
 
     console.log('Save successful');
-    books = newBooks;
+    await loadBooks();
+}
+
+export async function deleteBook(bookId) {
+    const { error } = await supabase.from('books').delete().eq('id', bookId);
+    if (error) throw error;
+    books = books.filter(b => b.id !== bookId);
 }
 
 // ---------- News ----------
@@ -64,9 +70,45 @@ export async function loadNews() {
 }
 
 export async function saveNews(newNews) {
-    const { error } = await supabase.from('news').upsert(newNews, { onConflict: 'id' });
+    console.log('saveNews called with', newNews.length, 'news items');
+    console.log('currentAccessToken:', currentAccessToken ? 'exists' : 'null');
+
+    if (!currentAccessToken) {
+        console.error('No access token available. Please log in.');
+        throw new Error('Not authenticated. Please log in.');
+    }
+
+    const cleanedNews = newNews.map(item => {
+        const { created_at, ...clean } = item;
+        return clean;
+    });
+
+    const SUPABASE_URL = 'https://asjiiftlxyihlayydfju.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_W9OZS-Qu8r_N6PQ7dpZ-wA_1FDD8XO6';
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/news`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${currentAccessToken}`,
+            'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(cleanedNews)
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Supabase error ${response.status}: ${errorText}`);
+    }
+
+    console.log('Save news successful');
+    await loadNews();
+}
+
+export async function deleteNews(newsId) {
+    const { error } = await supabase.from('news').delete().eq('id', newsId);
     if (error) throw error;
-    newsItems = newNews;
+    newsItems = newsItems.filter(n => n.id !== newsId);
 }
 
 // ---------- Reviews ----------

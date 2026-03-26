@@ -1,11 +1,12 @@
 // admin.js
-import { books, newsItems, saveBooks, saveNews, loadBooks, loadNews } from './data.js';
+import { books, newsItems, saveBooks, deleteBook, saveNews, deleteNews, loadBooks, loadNews } from './data.js';
 import { langPack } from './i18n.js';
-import { adminMode } from './auth.js';
+import { adminMode, currentAccessToken } from './auth.js';
 import { currentLang } from './i18n.js';
 import { renderBooks, renderAllBooks, renderNews, renderAllNews } from './ui.js';
 import { navigateTo } from './routing.js';
 import { supabase } from '/publisher/supabaseClient.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './constants.js';
 
 // DOM elements (same as before)
 const adminBooksPage = document.getElementById('adminBooksPage');
@@ -41,8 +42,10 @@ const newsTitleFr = document.getElementById('newsTitleFr');
 const newsSummaryEn = document.getElementById('newsSummaryEn');
 const newsSummaryFr = document.getElementById('newsSummaryFr');
 
-// Quill editors
+// Quill editors for books
 let descriptionQuill, bioQuill;
+// Quill editors for news content
+let newsContentEditorEn, newsContentEditorFr;
 
 // State
 let adminSearchTerm = '';
@@ -50,12 +53,34 @@ let adminSortBy = 'title';
 
 // Helper: upload file to Supabase Storage and return public URL
 async function uploadFile(file, bucket, pathPrefix) {
+    console.log(`uploadFile: bucket=${bucket}, pathPrefix=${pathPrefix}, file=${file.name}, size=${file.size}`);
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${fileExt}`;
     const filePath = `${pathPrefix}/${fileName}`;
-    const { error } = await supabase.storage.from(bucket).upload(filePath, file);
-    if (error) throw error;
-    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    
+    if (!currentAccessToken) {
+        throw new Error('Not authenticated');
+    }
+    console.log('Token obtained from auth.js, length:', currentAccessToken.length);
+    
+    const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${filePath}`;
+    console.log('Uploading to URL:', url);
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${currentAccessToken}`,
+            'Content-Type': file.type
+        },
+        body: file
+    });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
+    }
+    
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filePath}`;
+    console.log('Upload success, publicUrl:', publicUrl);
     return publicUrl;
 }
 
@@ -78,7 +103,6 @@ export function hideAdminBooksPage() {
 }
 
 export async function renderAdminBookList() {
-    // Ensure we have latest books
     await loadBooks();
 
     let filtered = books.filter(book =>
@@ -107,14 +131,13 @@ export async function renderAdminBookList() {
             <div class="actions">
                 <button class="edit-book" data-id="${book.id}" data-i18n="editBook">Edit</button>
                 <button class="duplicate-book" data-id="${book.id}" data-i18n="duplicate">Duplicate</button>
-                <button class="delete-book" data-id="${book.id}" data-i18n="delete">Delete</button>
+                <button class="delete-book" data-id="${book.id}" data-i18n="title="Delete"><i class="fas fa-trash-alt"></i></button>
             </div>
         </div>
         `;
     }).join('');
     adminBooksList.innerHTML = html;
 
-    // Attach event listeners
     document.querySelectorAll('.edit-book').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
@@ -139,11 +162,16 @@ export async function renderAdminBookList() {
             e.stopPropagation();
             if (!confirm(langPack[currentLang].deleteConfirm || 'Are you sure?')) return;
             const id = btn.dataset.id;
-            const newBooks = books.filter(b => b.id !== id);
-            await saveBooks(newBooks);
-            await renderAdminBookList();
-            if (document.getElementById('mainContent').style.display === 'block') renderBooks();
-            if (document.getElementById('booksPage').style.display === 'block') renderAllBooks();
+            try {
+                await deleteBook(id);
+                await renderAdminBookList();
+                if (document.getElementById('mainContent').style.display === 'block') renderBooks();
+                if (document.getElementById('booksPage').style.display === 'block') renderAllBooks();
+                alert('删除成功');
+            } catch (err) {
+                console.error('Delete error:', err);
+                alert('删除失败：' + err.message);
+            }
         });
     });
 }
@@ -316,6 +344,7 @@ export function attachNewsEvents() {
     });
 
     addNewsBtn?.addEventListener('click', async function() {
+        console.log('addNewsBtn clicked');
         const displayDate = newsDate?.value.trim() || 'No date';
         const titleEn = newsTitleEn?.value.trim() || 'Untitled';
         const titleFr = newsTitleFr?.value.trim() || titleEn;
@@ -349,7 +378,8 @@ export function attachNewsEvents() {
             timestamp: Date.now(),
             title: { en: titleEn, fr: titleFr },
             summary: { en: summaryEn, fr: summaryFr },
-            image: imageUrl
+            image: imageUrl,
+            status: 'draft'          // default status
         };
         const updatedNews = [...newsItems, newItem];
         await saveNews(updatedNews);
@@ -378,19 +408,45 @@ export function hideAdminNewsPage() {
 
 export async function renderAdminNewsList() {
     await loadNews();
-    const sorted = [...newsItems].sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+    const sorted = [...newsItems].sort((a, b) => {
+        const dateA = a.event_date ? new Date(a.event_date) : 0;
+        const dateB = b.event_date ? new Date(b.event_date) : 0;
+        return dateB - dateA;
+    });
     let html = sorted.map(item => `
         <div class="admin-news-row" data-id="${item.id}">
             <div>${item.display_date || ''}</div>
             <div>${item.title?.en || ''} / ${item.title?.fr || ''}</div>
             <div>${(item.summary?.en || '').substring(0,50)}${(item.summary?.en || '').length > 50 ? '…' : ''}</div>
+            <div class="status-badge ${item.status === 'published' ? 'published' : 'draft'}">${item.status}</div>
             <div class="actions">
+                <button class="toggle-status" data-id="${item.id}" data-status="${item.status}">
+                    ${item.status === 'published' ? 'Unpublish' : 'Publish'}
+                </button>
                 <button class="edit-news" data-id="${item.id}"><i class="fas fa-edit"></i> <span data-i18n="editNews">Edit News</span></button>
-                <button class="delete-news" data-id="${item.id}"><i class="fas fa-trash-alt"></i> <span data-i18n="delete">Delete</span></button>
+                <button class="delete-news" data-id="${item.id}"title="Delete"><i class="fas fa-trash-alt"></i></button>
             </div>
         </div>
     `).join('');
     document.getElementById('adminNewsList').innerHTML = html;
+
+    // Toggle status
+    document.querySelectorAll('.toggle-status').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = btn.dataset.id;
+            const currentStatus = btn.dataset.status;
+            const newStatus = currentStatus === 'published' ? 'draft' : 'published';
+            const item = newsItems.find(n => n.id === id);
+            if (item) {
+                item.status = newStatus;
+                await saveNews(newsItems);
+                await renderAdminNewsList();
+                // refresh frontend
+                if (document.getElementById('mainContent').style.display === 'block') renderNews();
+                if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
+            }
+        });
+    });
 
     document.querySelectorAll('.edit-news').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -403,76 +459,154 @@ export async function renderAdminNewsList() {
         btn.addEventListener('click', async () => {
             if (!confirm(langPack[currentLang].deleteConfirm || 'Are you sure?')) return;
             const id = btn.dataset.id;
-            const newNews = newsItems.filter(n => n.id !== id);
-            await saveNews(newNews);
-            await renderAdminNewsList();
-            if (document.getElementById('mainContent').style.display === 'block') renderNews();
-            if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
+            try {
+                await deleteNews(id);
+                await renderAdminNewsList();
+                if (document.getElementById('mainContent').style.display === 'block') renderNews();
+                if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
+                alert('删除成功');
+            } catch (err) {
+                console.error('Delete error:', err);
+                alert('删除失败：' + err.message);
+            }
         });
     });
 }
 
 export function openNewsFormModal(item = null) {
-    document.getElementById('newsForm').reset();
+    const newsForm = document.getElementById('newsForm');
     const preview = document.getElementById('newsImagePreview');
+    const newsId = document.getElementById('newsId');
+    const newsDateInput = document.getElementById('newsDateInput');
+    const newsTitleEnInput = document.getElementById('newsTitleEnInput');
+    const newsTitleFrInput = document.getElementById('newsTitleFrInput');
+    const newsSummaryEnInput = document.getElementById('newsSummaryEnInput');
+    const newsSummaryFrInput = document.getElementById('newsSummaryFrInput');
+    const newsStatus = document.getElementById('newsStatus');
+    const modalTitle = document.getElementById('newsFormModalTitle');
+    const modal = document.getElementById('newsFormModal');
+
+    if (!newsForm || !preview || !newsId || !newsDateInput || !newsTitleEnInput || !newsTitleFrInput ||
+        !newsSummaryEnInput || !newsSummaryFrInput || !newsStatus || !modalTitle || !modal) {
+        console.error('One or more news form elements not found in DOM');
+        return;
+    }
+
+    newsForm.reset();
     preview.style.backgroundImage = '';
     preview.style.height = '0';
 
+    if (!newsContentEditorEn && document.getElementById('newsContentEditorEn')) {
+        newsContentEditorEn = new Quill('#newsContentEditorEn', {
+            theme: 'snow',
+            modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
+        });
+        newsContentEditorFr = new Quill('#newsContentEditorFr', {
+            theme: 'snow',
+            modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
+        });
+    }
+
     if (item) {
-        document.getElementById('newsId').value = item.id;
-        document.getElementById('newsDateInput').value = item.display_date || '';
-        document.getElementById('newsTitleEnInput').value = item.title?.en || '';
-        document.getElementById('newsTitleFrInput').value = item.title?.fr || '';
-        document.getElementById('newsSummaryEnInput').value = item.summary?.en || '';
-        document.getElementById('newsSummaryFrInput').value = item.summary?.fr || '';
+        newsId.value = item.id || '';
+        newsDateInput.value = item.display_date || '';
+        newsTitleEnInput.value = item.title?.en || '';
+        newsTitleFrInput.value = item.title?.fr || '';
+        newsSummaryEnInput.value = item.summary?.en || '';
+        newsSummaryFrInput.value = item.summary?.fr || '';
+        newsStatus.value = item.status || 'draft';
+
+        if (item.content_en && newsContentEditorEn) newsContentEditorEn.root.innerHTML = item.content_en;
+        if (item.content_fr && newsContentEditorFr) newsContentEditorFr.root.innerHTML = item.content_fr;
+
         if (item.image) {
             preview.style.backgroundImage = `url('${item.image}')`;
             preview.style.height = '150px';
         }
-        document.getElementById('newsFormModalTitle').innerText = langPack[currentLang].editNews || 'Edit News';
+        modalTitle.innerText = langPack[currentLang].editNews || 'Edit News';
     } else {
-        document.getElementById('newsId').value = '';
-        document.getElementById('newsFormModalTitle').innerText = langPack[currentLang].addNewsBtn || 'Add News';
+        if (newsContentEditorEn) newsContentEditorEn.root.innerHTML = '';
+        if (newsContentEditorFr) newsContentEditorFr.root.innerHTML = '';
+        newsStatus.value = 'draft';
+        modalTitle.innerText = langPack[currentLang].addNewsBtn || 'Add News';
     }
-    document.getElementById('newsFormModal').classList.add('active');
+
+    modal.classList.add('active');
+}
+
+function parseDisplayDateToEventDate(dateStr) {
+    let date = new Date(dateStr);
+    if (!isNaN(date)) {
+        return date.toISOString().slice(0, 10);
+    }
+    return '';
 }
 
 async function saveNewsFromForm() {
+    console.log('saveNewsFromForm called');
     const id = document.getElementById('newsId').value;
     const displayDate = document.getElementById('newsDateInput').value.trim();
     const titleEn = document.getElementById('newsTitleEnInput').value.trim();
     const titleFr = document.getElementById('newsTitleFrInput').value.trim();
     const summaryEn = document.getElementById('newsSummaryEnInput').value.trim();
     const summaryFr = document.getElementById('newsSummaryFrInput').value.trim();
+    const status = document.getElementById('newsStatus').value;
+    const contentEn = newsContentEditorEn?.root.innerHTML || '';
+    const contentFr = newsContentEditorFr?.root.innerHTML || '';
     const imageFile = document.getElementById('newsImageInput').files[0];
 
+    console.log('Form values:', { displayDate, titleEn, titleFr, summaryEn, summaryFr, status, hasImage: !!imageFile });
+
     if (!displayDate || !titleEn || !titleFr || !summaryEn || !summaryFr) {
+        console.log('Validation failed: missing fields');
         alert('Please fill all fields.');
         return;
     }
+    console.log('Validation passed');
 
     let imageUrl = null;
     if (imageFile) {
+        console.log('Uploading image...');
         try {
             imageUrl = await uploadFile(imageFile, 'news-images', 'news');
+            console.log('Image uploaded, URL:', imageUrl);
         } catch (err) {
             console.error('Image upload failed', err);
+            alert('图片上传失败：' + err.message);
+            return;
         }
+    } else if (id) {
+        const existing = newsItems.find(n => n.id === id);
+        if (existing && existing.image) imageUrl = existing.image;
+        console.log('Using existing image:', imageUrl);
+    }
+
+    const eventDate = parseDisplayDateToEventDate(displayDate);
+    console.log('Parsed event_date:', eventDate);
+
+    let timestamp;
+    if (id) {
+        const existing = newsItems.find(n => n.id === id);
+        timestamp = existing ? existing.timestamp : Date.now();
+        console.log('Editing, keeping timestamp:', timestamp);
     } else {
-        if (id) {
-            const existing = newsItems.find(n => n.id === id);
-            if (existing && existing.image) imageUrl = existing.image;
-        }
+        timestamp = Date.now();
+        console.log('New item, timestamp:', timestamp);
     }
 
     const newsItem = {
-        id: id || 'n' + Date.now() + Math.random().toString(36).substr(2,6),
+        id: id || 'n' + Date.now() + Math.random().toString(36).substr(2, 6),
         display_date: displayDate,
-        timestamp: Date.now(),
+        timestamp: timestamp,
+        event_date: eventDate,
         title: { en: titleEn, fr: titleFr },
         summary: { en: summaryEn, fr: summaryFr },
-        image: imageUrl
+        content_en: contentEn,
+        content_fr: contentFr, 
+        image: imageUrl,
+        status: status
     };
+    console.log('Constructed newsItem:', newsItem);
 
     let updatedNews;
     if (id) {
@@ -480,18 +614,31 @@ async function saveNewsFromForm() {
     } else {
         updatedNews = [...newsItems, newsItem];
     }
-    await saveNews(updatedNews);
+    console.log('About to call saveNews with', updatedNews.length, 'items');
 
-    document.getElementById('newsFormModal').classList.remove('active');
-    await renderAdminNewsList();
-    if (document.getElementById('mainContent').style.display === 'block') renderNews();
-    if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
+    try {
+        await saveNews(updatedNews);
+        console.log('saveNews completed successfully');
+        document.getElementById('newsFormModal').classList.remove('active');
+        await renderAdminNewsList();
+        if (document.getElementById('mainContent').style.display === 'block') renderNews();
+        if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
+        alert('新闻保存成功！');
+    } catch (err) {
+        console.error('Error saving news:', err);
+        alert('保存失败：' + err.message);
+    }
 }
 
 export function attachAdminNewsEvents() {
-    document.getElementById('addNewsAdminBtn')?.addEventListener('click', () => openNewsFormModal());
+    console.log('attachAdminNewsEvents called');
+    document.getElementById('addNewsAdminBtn')?.addEventListener('click', () => {
+        console.log('addNewsAdminBtn clicked');
+        openNewsFormModal();
+    });
 
     document.getElementById('newsForm')?.addEventListener('submit', (e) => {
+        console.log('newsForm submit event triggered');
         e.preventDefault();
         saveNewsFromForm();
     });

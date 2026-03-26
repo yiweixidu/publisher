@@ -332,6 +332,7 @@
                 <div id="newsDetailDate" class="news-detail-date"></div>
                 <div id="newsDetailImage" class="news-detail-image"></div>
                 <div id="newsDetailSummary" class="news-detail-summary"></div>
+                <div id="newsDetailContent" class="news-detail-content"></div>
             </div>
         </div>
     </div>
@@ -469,6 +470,22 @@
                 <div class="form-row">
                     <textarea id="newsSummaryEnInput" placeholder="Summary (English)" rows="3" required></textarea>
                     <textarea id="newsSummaryFrInput" placeholder="Summary (French)" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Content (English) *</label>
+                    <div id="newsContentEditorEn" style="height: 250px;"></div>
+                    <textarea id="newsContentEn" style="display:none;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Contenu (Français) *</label>
+                    <div id="newsContentEditorFr" style="height: 250px;"></div>
+                    <textarea id="newsContentFr" style="display:none;"></textarea>
+                </div>
+                <div class="form-row">
+                    <select id="newsStatus" required>
+                        <option value="published" data-i18n="statusPublished">Published</option>
+                        <option value="draft" data-i18n="statusDraft">Draft</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label data-i18n="chooseNewsImage">News Image</label>
