@@ -81,6 +81,7 @@ function handleLanguageChange(event) {
     const lang = event.detail;
     translateUI(lang);
     renderNews();
+    renderBooks();
     if (modalOverlay?.classList.contains('active')) updateModalLanguage();
     if (cartModal?.classList.contains('active')) renderCartModal();
     if (newsListPage && newsListPage.style.display === 'block') renderAllNews();
