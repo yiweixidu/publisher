@@ -1,7 +1,7 @@
 // review.js
 import { reviews, saveReviews, loadReviews } from './data.js';
 import { langPack } from './i18n.js';
-import { supabase } from '/publisher/supabaseClient.js';
+import { supabase } from './supabaseClient.js';
 
 const modalReviews = document.getElementById('modalReviews');
 

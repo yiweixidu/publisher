@@ -2,7 +2,7 @@
 import { langPack } from './i18n.js';
 import { currentLang } from './i18n.js';
 import { navigateTo } from './routing.js';
-import { supabase } from '/publisher/supabaseClient.js';
+import { supabase } from './supabaseClient.js';
 import { getUserRole } from './data.js';
 
 // State variables

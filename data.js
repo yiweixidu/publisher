@@ -1,5 +1,5 @@
 // data.js
-import { supabase } from '/publisher/supabaseClient.js';
+import { supabase } from './supabaseClient.js';
 import { currentAccessToken } from './auth.js';
 
 // Exported arrays (initially empty, filled by load functions)
