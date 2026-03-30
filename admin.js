@@ -5,7 +5,7 @@ import { adminMode, currentAccessToken } from './auth.js';
 import { currentLang } from './i18n.js';
 import { renderBooks, renderAllBooks, renderNews, renderAllNews } from './ui.js';
 import { navigateTo } from './routing.js';
-import { supabase } from '/publisher/supabaseClient.js';
+import { supabase } from './supabaseClient.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './constants.js';
 
 // DOM elements (same as before)
