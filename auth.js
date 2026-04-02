@@ -43,9 +43,12 @@ export async function updateUserUI() {
             .select('display_name')
             .eq('id', currentUser.id)
             .single();
-        const displayName = profile?.display_name || currentUser.email;
+        const displayName = profile?.display_name || currentUser.email.split('@')[0];
+        const initial = displayName.charAt(0).toUpperCase();
         userSection.innerHTML = `
-            <span class="user-name user-name--link" id="userNameBtn" title="My Account">${displayName}</span>
+            <button class="user-avatar-btn" id="userNameBtn" title="${displayName} — My Account">
+                <span class="user-avatar-circle">${initial}</span>
+            </button>
             <button class="logout-btn" id="logoutBtn">Logout</button>
         `;
         document.getElementById('logoutBtn')?.addEventListener('click', logout);
@@ -92,13 +95,16 @@ export async function logout() {
 }
 
 export async function signup(email, password, displayName) {
+    const siteUrl = window.location.origin + '/';
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { display_name: displayName, role: 'user' } }
+        options: {
+            emailRedirectTo: siteUrl,
+            data: { display_name: displayName, role: 'user' }
+        }
     });
     if (error) throw error;
-    // Profile will be created automatically by the database trigger
     return true;
 }
 

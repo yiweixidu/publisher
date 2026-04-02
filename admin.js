@@ -430,16 +430,18 @@ export async function renderAdminNewsList() {
     });
     let html = sorted.map(item => `
         <div class="admin-news-row" data-id="${item.id}">
-            <div>${item.display_date || ''}</div>
-            <div>${item.title?.en || ''} / ${item.title?.fr || ''}</div>
-            <div>${(item.summary?.en || '').substring(0,50)}${(item.summary?.en || '').length > 50 ? '…' : ''}</div>
-            <div class="status-badge ${item.status === 'published' ? 'published' : 'draft'}">${item.status}</div>
-            <div class="actions">
-                <button class="toggle-status" data-id="${item.id}" data-status="${item.status}">
-                    ${item.status === 'published' ? 'Unpublish' : 'Publish'}
-                </button>
-                <button class="edit-news" data-id="${item.id}"><i class="fas fa-edit"></i> <span data-i18n="editNews">Edit News</span></button>
-                <button class="delete-news" data-id="${item.id}"title="Delete"><i class="fas fa-trash-alt"></i></button>
+            <div class="anr-date">${item.display_date || ''}</div>
+            <div class="anr-title">${item.title?.en || ''} / ${item.title?.fr || ''}</div>
+            <div class="anr-summary">${(item.summary?.en || '').substring(0,50)}${(item.summary?.en || '').length > 50 ? '…' : ''}</div>
+            <div class="anr-right">
+                <span class="status-badge ${item.status === 'published' ? 'published' : 'draft'}">${item.status}</span>
+                <div class="anr-actions">
+                    <button class="toggle-status anr-btn" data-id="${item.id}" data-status="${item.status}">
+                        ${item.status === 'published' ? 'Unpublish' : 'Publish'}
+                    </button>
+                    <button class="edit-news anr-btn" data-id="${item.id}"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="delete-news anr-btn anr-btn--danger" data-id="${item.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                </div>
             </div>
         </div>
     `).join('');

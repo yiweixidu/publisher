@@ -757,87 +757,202 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .footer-lang.active { color: #c00; font-weight: 600; }
 .footer-lang:hover  { color: #333; }
 .footer-lang-sep    { color: #ccc; font-size: 0.72rem; }
-/* ═══════════════════════════════════════════════════════════════════════════
-   Account Dashboard Modal
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-.account-modal-content {
-    width: min(660px, 96vw);
-    max-height: 92vh;
-    overflow-y: auto;
-    padding: 0;
-    border-radius: 18px;
-    display: flex;
-    flex-direction: column;
+/* ═══════════════════════════════════════════════════════════════════
+   Password field wrapper & toggle
+   ═══════════════════════════════════════════════════════════════════ */
+.pw-field-wrap {
+    position: relative;
+    width: 100%;
 }
-
-/* ── Header ── */
-.acc-header {
-    background: linear-gradient(135deg, #1a1a1a 55%, #3a0000 100%);
-    color: #fff;
-    padding: 1.8rem 2rem;
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-    border-radius: 18px 18px 0 0;
-    flex-shrink: 0;
+.pw-field-wrap .login-input {
+    width: 100%;
+    padding-right: 2.8rem;
+    box-sizing: border-box;
 }
-.acc-avatar {
-    width: 54px; height: 54px;
+.pw-toggle {
+    position: absolute;
+    right: 0.8rem; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    cursor: pointer; color: #aaa;
+    font-size: 0.95rem; line-height: 1;
+    padding: 0.2rem;
+    transition: color 0.15s;
+}
+.pw-toggle:hover { color: #b00; }
+.forgot-pw-link {
+    display: block; text-align: right;
+    font-size: 0.78rem; color: #b00;
+    text-decoration: none;
+    margin: 0.1rem 0 0.9rem;
+}
+.forgot-pw-link:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Navbar: avatar circle (replaces username text)
+   ═══════════════════════════════════════════════════════════════════ */
+.user-avatar-btn {
+    background: none; border: none;
+    padding: 0; cursor: pointer;
+    display: inline-flex; align-items: center;
+}
+.user-avatar-circle {
+    width: 34px; height: 34px;
     border-radius: 50%;
     background: #b00;
+    color: #fff;
+    font-size: 0.85rem; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    letter-spacing: 0;
+    transition: opacity 0.15s, transform 0.15s;
+}
+.user-avatar-btn:hover .user-avatar-circle {
+    opacity: 0.85; transform: scale(1.06);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Add News button — right-aligned + same hover as Add New Book
+   ═══════════════════════════════════════════════════════════════════ */
+.page-header-actions {
+    display: flex; align-items: center; gap: 0.75rem;
+}
+#addNewsAdminBtn {
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+#addNewsAdminBtn:hover {
+    background-color: #cc0000;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(180,0,0,0.25);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Admin News Row — actions inline on same line
+   ═══════════════════════════════════════════════════════════════════ */
+.admin-news-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #eaeaea;
+}
+.admin-news-row:last-child { border-bottom: none; }
+.anr-date    { font-size: 0.8rem; color: #888; }
+.anr-title   { font-size: 0.88rem; font-weight: 600; }
+.anr-summary { font-size: 0.82rem; color: #999; }
+.anr-right   { display: flex; align-items: center; gap: 0.6rem; justify-content: flex-end; }
+.anr-actions { display: flex; align-items: center; gap: 0.35rem; }
+.anr-btn {
+    background: none; border: 1px solid #ddd;
+    border-radius: 6px; cursor: pointer;
+    font-size: 0.78rem; padding: 0.28rem 0.65rem;
+    color: #555; transition: all 0.15s;
+    white-space: nowrap;
+}
+.anr-btn:hover { border-color: #b00; color: #b00; background: #fff5f5; }
+.anr-btn--danger:hover { border-color: #b00; color: #b00; background: #fff0f0; }
+.status-badge {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 0.18rem 0.55rem;
+    border-radius: 20px; white-space: nowrap;
+}
+.status-badge.published { background: #d4edda; color: #155724; }
+.status-badge.draft     { background: #fff3cd; color: #856404; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Account Dashboard Modal — sidebar + body layout
+   ═══════════════════════════════════════════════════════════════════ */
+.account-modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    width: min(780px, 96vw);
+    max-height: 90vh;
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+}
+.acc-modal-close {
+    position: absolute; top: 1rem; right: 1rem;
+    background: rgba(255,255,255,0.15); border: none;
+    color: #fff; width: 30px; height: 30px;
+    border-radius: 50%; cursor: pointer; z-index: 10;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem; font-weight: 700; color: #fff;
+    font-size: 0.9rem; transition: background 0.15s;
+}
+.acc-modal-close:hover { background: rgba(255,255,255,0.3); }
+
+/* Sidebar */
+.acc-sidebar {
+    width: 210px;
     flex-shrink: 0;
+    background: linear-gradient(160deg, #1a0000 0%, #4a0000 60%, #6b0000 100%);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+.acc-header {
+    padding: 2.2rem 1.4rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.acc-avatar {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: #b00;
+    border: 3px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: 700; color: #fff;
+    margin-bottom: 0.75rem;
     letter-spacing: 0;
 }
-.acc-header-info { flex: 1; min-width: 0; }
-.acc-header-name  { font-size: 1.05rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.acc-header-email { font-size: 0.78rem; opacity: 0.6; margin-top: 0.2rem; }
-
-/* ── Tab nav ── */
+.acc-header-name {
+    color: #fff; font-size: 0.95rem; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;
+}
+.acc-header-email {
+    color: rgba(255,255,255,0.5); font-size: 0.72rem; margin-top: 0.25rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;
+}
 .acc-nav {
-    display: flex;
-    border-bottom: 1px solid #eaeaea;
-    padding: 0 1.5rem;
-    overflow-x: auto;
-    flex-shrink: 0;
+    display: flex; flex-direction: column;
+    padding: 1rem 0; flex: 1;
 }
 .acc-tab {
     background: none; border: none;
-    border-bottom: 2.5px solid transparent;
-    padding: 0.85rem 1rem;
-    font-size: 0.75rem; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    cursor: pointer; color: #aaa; white-space: nowrap;
-    transition: color 0.15s, border-color 0.15s;
-    display: flex; align-items: center; gap: 0.4rem;
+    padding: 0.8rem 1.4rem;
+    font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    cursor: pointer; color: rgba(255,255,255,0.5);
+    text-align: left; display: flex; align-items: center; gap: 0.6rem;
+    transition: color 0.15s, background 0.15s;
+    border-left: 3px solid transparent;
 }
-.acc-tab:hover { color: #333; }
-.acc-tab.active { color: #b00; border-bottom-color: #b00; }
+.acc-tab:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.05); }
+.acc-tab.active { color: #fff; background: rgba(255,255,255,0.1); border-left-color: #ff4444; }
 
-/* ── Body / panes ── */
-.acc-body { padding: 1.8rem 2rem; flex: 1; overflow-y: auto; }
+/* Body */
+.acc-body {
+    flex: 1; overflow-y: auto;
+    padding: 2rem 1.8rem;
+    min-width: 0;
+}
 .acc-pane { display: none; }
 .acc-pane.active { display: block; }
 
-.acc-empty {
-    color: #aaa; font-size: 0.88rem;
-    text-align: center; padding: 2.5rem 1rem; line-height: 1.6;
-}
-.acc-loading { color: #bbb; text-align: center; padding: 2rem 0; }
-
-/* ── Section headings inside panes ── */
 .acc-section-title {
-    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.14em;
-    text-transform: uppercase; color: #bbb;
-    margin: 1.6rem 0 1rem;
-    padding-top: 1.6rem;
+    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase; color: #ccc;
+    margin: 1.8rem 0 1rem;
+    padding-top: 1.8rem;
     border-top: 1px solid #f0f0f0;
 }
 .acc-section-title:first-child { border-top: none; margin-top: 0; padding-top: 0; }
 
-/* ── Form elements ── */
 .acc-form-group { margin-bottom: 1rem; }
 .acc-form-group label {
     display: block; font-size: 0.75rem; font-weight: 600;
@@ -847,37 +962,23 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     width: 100%; padding: 0.62rem 0.9rem;
     border: 1.5px solid #e0e0e0; border-radius: 8px;
     font-size: 0.88rem; font-family: inherit;
-    transition: border-color 0.15s; box-sizing: border-box;
-    background: #fff;
+    transition: border-color 0.15s; box-sizing: border-box; background: #fff;
 }
 .acc-input:focus { outline: none; border-color: #b00; }
 .acc-input[readonly] { background: #f7f7f7; color: #aaa; cursor: not-allowed; }
-
-.acc-action-btn { width: auto !important; padding: 0.6rem 1.4rem !important; }
-
-.acc-msg {
-    font-size: 0.84rem; margin-top: 0.7rem; min-height: 1.2em;
-    transition: color 0.2s;
-}
+.acc-action-btn { padding: 0.6rem 1.4rem !important; }
+.acc-msg { font-size: 0.84rem; margin-top: 0.7rem; min-height: 1.2em; }
 .acc-msg.success { color: #2d862d; }
 .acc-msg.error   { color: #b00; }
+.acc-empty { color: #aaa; font-size: 0.88rem; text-align: center; padding: 2.5rem 1rem; line-height: 1.6; }
+.acc-loading { color: #bbb; text-align: center; padding: 2rem 0; }
 
-/* ── Orders ── */
-.order-card {
-    border: 1.5px solid #ebebeb; border-radius: 10px;
-    padding: 0.95rem 1.15rem; margin-bottom: 0.75rem;
-    transition: border-color 0.15s;
-}
-.order-card:hover { border-color: #d0d0d0; }
-.order-card-top {
-    display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.35rem; flex-wrap: wrap;
-}
-.order-date   { font-size: 0.8rem; color: #aaa; }
-.order-total  { font-weight: 700; font-size: 0.95rem; margin-left: auto; }
-.order-badge  {
-    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.07em;
-    text-transform: uppercase; padding: 0.15rem 0.55rem; border-radius: 20px;
-}
+/* Orders */
+.order-card { border: 1.5px solid #ebebeb; border-radius: 10px; padding: 0.95rem 1.15rem; margin-bottom: 0.75rem; }
+.order-card-top { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.35rem; flex-wrap: wrap; }
+.order-date  { font-size: 0.8rem; color: #aaa; }
+.order-total { font-weight: 700; font-size: 0.95rem; margin-left: auto; }
+.order-badge { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; padding: 0.15rem 0.55rem; border-radius: 20px; }
 .order-badge--pending   { background: #fff3cd; color: #856404; }
 .order-badge--shipped   { background: #d1ecf1; color: #0c5460; }
 .order-badge--delivered { background: #d4edda; color: #155724; }
@@ -885,87 +986,44 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .order-card-items { font-size: 0.82rem; color: #666; }
 .order-card-ship  { font-size: 0.77rem; color: #bbb; margin-top: 0.3rem; }
 
-/* ── Wishlist ── */
-.wishlist-item {
-    display: flex; align-items: center; gap: 1rem;
-    padding: 0.8rem 0; border-bottom: 1px solid #f3f3f3;
-}
+/* Wishlist */
+.wishlist-item { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid #f3f3f3; }
 .wishlist-item:last-child { border-bottom: none; }
-.wishlist-cover {
-    width: 46px; height: 64px; border-radius: 5px;
-    background: #eee; flex-shrink: 0;
-}
+.wishlist-cover { width: 46px; height: 64px; border-radius: 5px; background: #eee; flex-shrink: 0; }
 .wishlist-info  { flex: 1; min-width: 0; }
-.wishlist-title { font-weight: 600; font-size: 0.86rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wishlist-title { font-weight: 600; font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wishlist-author{ font-size: 0.78rem; color: #888; margin-top: 0.15rem; }
 .wishlist-price { font-size: 0.88rem; font-weight: 700; color: #b00; margin-top: 0.25rem; }
 
-/* ── Addresses ── */
-.address-card {
-    display: flex; align-items: flex-start; gap: 0.8rem;
-    border: 1.5px solid #ebebeb; border-radius: 10px;
-    padding: 0.95rem 1.15rem; margin-bottom: 0.75rem;
-}
+/* Addresses */
+.address-card { display: flex; align-items: flex-start; gap: 0.8rem; border: 1.5px solid #ebebeb; border-radius: 10px; padding: 0.95rem 1.15rem; margin-bottom: 0.75rem; }
 .address-card-body { flex: 1; font-size: 0.85rem; line-height: 1.65; color: #444; }
-
-/* ── Icon buttons ── */
-.btn-icon {
-    background: none; border: none; cursor: pointer;
-    color: #ccc; padding: 0.3rem 0.4rem; border-radius: 6px;
-    transition: color 0.15s, background 0.15s; font-size: 0.88rem;
-    flex-shrink: 0;
-}
-.btn-icon:hover { color: #b00; background: #fff0f0; }
-
-/* ── Add address form ── */
-.add-address-form {
-    display: none; background: #f9f9f9; border-radius: 10px;
-    padding: 1.2rem 1.4rem; margin-top: 0.5rem;
-    border: 1.5px solid #eaeaea;
-}
+.add-address-form { display: none; background: #f9f9f9; border-radius: 10px; padding: 1.2rem 1.4rem; margin-top: 0.5rem; border: 1.5px solid #eaeaea; }
 .add-address-form.visible { display: block; }
 .add-address-row { display: flex; gap: 0.8rem; }
 .add-address-row .acc-form-group { flex: 1; }
 .acc-form-actions { display: flex; gap: 0.8rem; margin-top: 0.5rem; }
 
-/* ── Wishlist heart state ── */
+/* Icon buttons */
+.btn-icon { background: none; border: none; cursor: pointer; color: #ccc; padding: 0.3rem 0.4rem; border-radius: 6px; transition: color 0.15s, background 0.15s; font-size: 0.88rem; flex-shrink: 0; }
+.btn-icon:hover { color: #b00; background: #fff0f0; }
 .wishlisted i { color: #b00 !important; }
 
-/* ── Clickable username in navbar ── */
-.user-name--link {
-    cursor: pointer;
-    border-bottom: 1px dashed currentColor;
-    transition: opacity 0.15s;
-}
-.user-name--link:hover { opacity: 0.7; }
-
-/* ── Forgot password link ── */
-.forgot-pw-link {
-    display: block; text-align: right;
-    font-size: 0.78rem; color: #b00;
-    text-decoration: none; margin: -0.2rem 0 0.9rem;
-}
-.forgot-pw-link:hover { text-decoration: underline; }
-
-/* ── Password reset modal ── */
-.reset-pw-desc {
-    color: #777; font-size: 0.86rem; line-height: 1.55;
-    margin-bottom: 1.2rem; text-align: center;
-}
-
-/* ── Save address checkbox in checkout ── */
-.save-address-label {
-    display: flex; align-items: center; gap: 0.5rem;
-    font-size: 0.82rem; color: #666; margin: 0.8rem 0 0.4rem;
-    cursor: pointer;
-}
+/* Save address checkbox */
+.save-address-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: #666; margin: 0.8rem 0 0.4rem; cursor: pointer; }
 .save-address-label input[type="checkbox"] { accent-color: #b00; }
 
-/* ── Responsive ── */
+/* Responsive */
 @media (max-width: 600px) {
-    .acc-header { padding: 1.4rem; gap: 0.9rem; }
-    .acc-body   { padding: 1.2rem; }
+    .account-modal-content { flex-direction: column; max-height: 95vh; }
+    .acc-sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; }
+    .acc-header { flex-direction: row; text-align: left; padding: 1rem 1.2rem; border-bottom: none; border-right: none; gap: 0.8rem; }
+    .acc-avatar { width: 44px; height: 44px; font-size: 1.1rem; margin-bottom: 0; flex-shrink: 0; }
+    .acc-nav { flex-direction: row; padding: 0 0.5rem 0.5rem; overflow-x: auto; }
+    .acc-tab { padding: 0.55rem 0.8rem; font-size: 0.68rem; border-left: none; border-bottom: 2px solid transparent; }
+    .acc-tab.active { border-left-color: transparent; border-bottom-color: #ff4444; }
+    .acc-body { padding: 1.2rem; }
     .add-address-row { flex-direction: column; gap: 0; }
-    .acc-nav { padding: 0 0.5rem; }
-    .acc-tab { padding: 0.75rem 0.7rem; font-size: 0.68rem; }
+    .admin-news-row { grid-template-columns: 1fr; gap: 0.4rem; }
+    .anr-right { justify-content: flex-start; }
 }
