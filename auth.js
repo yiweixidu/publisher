@@ -45,10 +45,13 @@ export async function updateUserUI() {
             .single();
         const displayName = profile?.display_name || currentUser.email;
         userSection.innerHTML = `
-            <span class="user-name">${displayName}</span>
+            <span class="user-name user-name--link" id="userNameBtn" title="My Account">${displayName}</span>
             <button class="logout-btn" id="logoutBtn">Logout</button>
         `;
         document.getElementById('logoutBtn')?.addEventListener('click', logout);
+        document.getElementById('userNameBtn')?.addEventListener('click', () => {
+            window.dispatchEvent(new CustomEvent('openAccountDashboard'));
+        });
     } else {
         userSection.innerHTML = `<button class="btn-outline-red" id="showLoginBtn">Login</button>`;
         document.getElementById('showLoginBtn')?.addEventListener('click', () => {
@@ -99,6 +102,13 @@ export async function signup(email, password, displayName) {
     return true;
 }
 
+
+export async function resetPassword(email) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/'
+    });
+    if (error) throw error;
+}
 // Initialize session from Supabase
 export async function initAuth() {
     const { data: { session } } = await supabase.auth.getSession();
