@@ -19,6 +19,15 @@ import {
 import { renderReviews, renderDetailReviews, checkHashForReview } from './review.js';
 import { navigateTo, handleRoute } from './routing.js';
 import { loadBooks, loadNews, loadReviews } from './data.js';
+import {
+    openAccountDashboard, closeAccountDashboard, switchAccTab,
+    toggleWishlist, isInWishlist, updateWishlistButtons,
+    updateDisplayName, updateUserPassword,
+    addSavedAddress, getSavedAddresses,
+    renderWishlistTab
+} from './account.js';
+import { resetPassword } from './auth.js';
+
 
 // DOM elements (same as original, but we'll keep the selectors)
 const adminSwitch = document.getElementById('adminSwitch');
@@ -404,6 +413,10 @@ document.getElementById('coPlaceOrder')?.addEventListener('click', async () => {
                 <p><strong>${langPack[currentLang].total}:</strong> $${total.toFixed(2)}</p>
                 <p><strong>${isFr?'Livraison à':'Shipping to'}:</strong> ${coShipData.firstName} ${coShipData.lastName}, ${coShipData.city}</p>`;
         }
+        // Save shipping address if checkbox was ticked
+        if (document.getElementById('saveAddressCheck')?.checked) {
+            addSavedAddress(coShipData);
+        }
         cart.length = 0; saveCart();
         closeCheckout();
         confirmationModal?.classList.add('active');
@@ -453,59 +466,6 @@ printReceiptBtn?.addEventListener('click', () => {
     printWindow.document.close();
 });
 
-// ── Navbar section-scroll ─────────────────────────────────────────────────
-// Each nav link scrolls to its homepage section.
-// If we're not on the homepage, navigate there first then scroll.
-
-function isOnHomepage() {
-    const mainContent = document.getElementById('mainContent');
-    return mainContent && mainContent.style.display !== 'none';
-}
-
-function scrollToSection(sectionId) {
-    const el = sectionId ? document.getElementById(sectionId) : null;
-    if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-}
-
-function navToSection(sectionId) {
-    if (isOnHomepage()) {
-        scrollToSection(sectionId);
-    } else {
-        // Navigate home, then scroll after the route renders
-        navigateTo('/');
-        // routeChanged fires after handleRoute(); give the DOM a tick to paint
-        const onRouteChanged = () => {
-            window.removeEventListener('routeChanged', onRouteChanged);
-            setTimeout(() => scrollToSection(sectionId), 80);
-        };
-        window.addEventListener('routeChanged', onRouteChanged);
-    }
-}
-
-document.getElementById('navHome')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    navToSection(null); // scroll to very top
-});
-
-document.getElementById('navBooks')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    navToSection('sectionBooks');
-});
-
-document.getElementById('navAbout')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    navToSection('sectionAbout');
-});
-
-document.getElementById('navNews')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    navToSection('sectionNews');
-});
-
 // Navigation links
 booksViewAllLink?.addEventListener('click', (e) => { e.preventDefault(); resetBooksPageState(); navigateTo('/books'); });
 newsMoreLink?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('/news'); });
@@ -542,7 +502,16 @@ modalAddToCart?.addEventListener('click', () => {
     }
 });
 modalAddToWishList?.addEventListener('click', () => {
-    alert(langPack[currentLang].addedToWishList);
+    if (!currentUser) { loginOverlay?.classList.add('active'); return; }
+    if (currentModalBook) {
+        const added = toggleWishlist(currentModalBook);
+        modalAddToWishList.innerHTML = added
+            ? '<i class="fas fa-heart"></i> ADDED TO WISHLIST'
+            : '<i class="fas fa-heart"></i> ADD TO WISH LIST';
+        setTimeout(() => {
+            modalAddToWishList.innerHTML = '<i class="fas fa-heart"></i> ADD TO WISH LIST';
+        }, 1500);
+    }
 });
 
 attachAdminNewsEvents();
@@ -610,6 +579,146 @@ contactForm.addEventListener('submit', (e) => {
     window.location.href = mailtoLink;
     contactModal.classList.remove('active');
 });
+
+// ── Account Dashboard ──────────────────────────────────────────────────────
+window.addEventListener('openAccountDashboard', () => openAccountDashboard());
+
+document.getElementById('accountModalClose')?.addEventListener('click', closeAccountDashboard);
+document.getElementById('accountModal')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('accountModal')) closeAccountDashboard();
+});
+
+document.querySelectorAll('.acc-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchAccTab(tab.dataset.tab));
+});
+
+// Profile — save display name
+document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
+    const msgEl = document.getElementById('profileMsg');
+    const name  = document.getElementById('profileDisplayName')?.value.trim();
+    if (!name) { _accMsg(msgEl, 'Please enter a display name.', 'error'); return; }
+    try {
+        await updateDisplayName(name);
+        // Refresh the username shown in navbar
+        const btn = document.getElementById('userNameBtn');
+        if (btn) btn.textContent = name;
+        document.getElementById('accHeaderName').textContent = name;
+        document.getElementById('accAvatarInitial').textContent = name.charAt(0).toUpperCase();
+        _accMsg(msgEl, 'Name updated successfully!', 'success');
+    } catch (err) {
+        _accMsg(msgEl, err.message, 'error');
+    }
+});
+
+// Profile — change password
+document.getElementById('changePasswordBtn')?.addEventListener('click', async () => {
+    const msgEl = document.getElementById('profileMsg');
+    const pw1 = document.getElementById('profileNewPw')?.value;
+    const pw2 = document.getElementById('profileConfirmPw')?.value;
+    if (!pw1 || pw1.length < 6) { _accMsg(msgEl, 'Password must be at least 6 characters.', 'error'); return; }
+    if (pw1 !== pw2)             { _accMsg(msgEl, 'Passwords do not match.', 'error'); return; }
+    try {
+        await updateUserPassword(pw1);
+        document.getElementById('profileNewPw').value    = '';
+        document.getElementById('profileConfirmPw').value = '';
+        _accMsg(msgEl, 'Password changed successfully!', 'success');
+    } catch (err) {
+        _accMsg(msgEl, err.message, 'error');
+    }
+});
+
+// Addresses — toggle add form
+document.getElementById('addAddressBtn')?.addEventListener('click', () => {
+    document.getElementById('addAddressForm')?.classList.toggle('visible');
+});
+document.getElementById('cancelAddressBtn')?.addEventListener('click', () => {
+    document.getElementById('addAddressForm')?.classList.remove('visible');
+});
+document.getElementById('saveAddressBtn')?.addEventListener('click', () => {
+    const g = id => document.getElementById(id)?.value.trim();
+    const addr = {
+        firstName: g('addrFirstName'), lastName:  g('addrLastName'),
+        address:   g('addrStreet'),    city:       g('addrCity'),
+        province:  g('addrProvince'),  postal:     g('addrPostal'),
+        country:   g('addrCountry') || 'CA'
+    };
+    const msgEl = document.getElementById('addAddressMsg');
+    if (!addr.firstName || !addr.address || !addr.city || !addr.postal) {
+        _accMsg(msgEl, 'Please fill in all required fields.', 'error');
+        return;
+    }
+    addSavedAddress(addr);
+    document.getElementById('addAddressForm')?.classList.remove('visible');
+    ['addrFirstName','addrLastName','addrStreet','addrCity','addrProvince','addrPostal']
+        .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    switchAccTab('addresses');
+    _accMsg(document.getElementById('addAddressMsg'), '', '');
+});
+
+// ── Password Reset ───────────────────────────────────────────────────────────
+document.getElementById('forgotPasswordLink')?.addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('loginOverlay')?.classList.remove('active');
+    document.getElementById('resetPasswordOverlay')?.classList.add('active');
+    document.getElementById('resetMsg').textContent = '';
+});
+document.getElementById('resetPasswordClose')?.addEventListener('click', () => {
+    document.getElementById('resetPasswordOverlay')?.classList.remove('active');
+});
+document.getElementById('resetPasswordOverlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('resetPasswordOverlay'))
+        document.getElementById('resetPasswordOverlay').classList.remove('active');
+});
+document.getElementById('backToLoginFromReset')?.addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('resetPasswordOverlay')?.classList.remove('active');
+    document.getElementById('loginOverlay')?.classList.add('active');
+});
+document.getElementById('sendResetBtn')?.addEventListener('click', async () => {
+    const msgEl = document.getElementById('resetMsg');
+    const email = document.getElementById('resetEmail')?.value.trim();
+    if (!email) { _accMsg(msgEl, 'Please enter your email address.', 'error'); return; }
+    try {
+        await resetPassword(email);
+        _accMsg(msgEl, 'Reset link sent! Check your inbox.', 'success');
+    } catch (err) {
+        _accMsg(msgEl, err.message, 'error');
+    }
+});
+
+// ── Wishlist buttons (event delegation on body) ──────────────────────────────
+document.body.addEventListener('click', e => {
+    const btn = e.target.closest('[data-wishlist-bookid]');
+    if (!btn) return;
+    e.stopPropagation();
+    if (!currentUser) {
+        document.getElementById('loginOverlay')?.classList.add('active');
+        return;
+    }
+    const bookId = btn.dataset.wishlistBookid;
+    // Fetch book from loaded books array
+    import('./data.js').then(({ books }) => {
+        const book = books.find(b => b.id === bookId);
+        if (!book) return;
+        const added = toggleWishlist(book);
+        const msg   = added ? 'Added to wishlist!' : 'Removed from wishlist.';
+        // Brief inline feedback
+        const original = btn.innerHTML;
+        btn.innerHTML = `<i class="fas fa-check"></i>`;
+        setTimeout(() => { btn.innerHTML = original; updateWishlistButtons(); }, 900);
+    });
+});
+
+// ── Save address at checkout ─────────────────────────────────────────────────
+// Hooked into the existing coPlaceOrder success path via a flag read in the handler below.
+// (The checkbox id="saveAddressCheck" lives in checkout step 1.)
+
+// ── Helper ───────────────────────────────────────────────────────────────────
+function _accMsg(el, text, type) {
+    if (!el) return;
+    el.textContent  = text;
+    el.className    = 'acc-msg' + (type ? ' ' + type : '');
+}
 
 // Hamburger menu
 if (hamburger && navLinks) {
