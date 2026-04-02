@@ -4,7 +4,7 @@ import { books, newsItems, loadBooks, loadNews, saveBooks, saveNews } from './da
 import { langPack, currentLang, setLanguage as i18nSetLanguage } from './i18n.js';
 import { addToCart } from './cart.js';
 import { renderReviews, renderDetailReviews } from './review.js';
-import { navigateTo } from './routing.js';
+import { navigateTo, toSlug } from './routing.js';
 import { renderCartModal } from './cart.js';
 
 // DOM elements
@@ -42,6 +42,14 @@ const booksPage = document.getElementById('booksPage');
 
 export let currentModalBook = null;
 export let currentNewsItem = null;
+export let currentModalFormat = 'paperback'; // tracks selected format in modal/detail
+
+// Fix relative cover paths (DB stores e.g. "zhijian/image.jpg" → "/zhijian/image.jpg")
+function normalizeCover(cover) {
+    if (!cover) return '';
+    if (cover.startsWith('http') || cover.startsWith('/') || cover.startsWith('data:')) return cover;
+    return '/' + cover;
+}
 
 // ---------- Translation ----------
 export function translateUI(lang) {
@@ -119,8 +127,22 @@ function generateBookCardHTML(book, adminMode, currentLang) {
         displayTitle = book.title;
         displayAuthor = book.author;
     }
-    let coverStyle = book.cover ? `background-image: url('${book.cover}'); background-size: cover; background-position: center;` : `background: #2d2d2d;`;
+    const cover = normalizeCover(book.cover);
+    let coverStyle = cover
+        ? `background-image: url('${cover}'); background-size: cover; background-position: center;`
+        : `background: #2d2d2d;`;
     const deleteBtn = adminMode ? `<button class="delete-book" data-id="${book.id}"><i class="fas fa-trash-alt"></i></button>` : '';
+    const pbPrice = parseFloat(book.price || 0);
+    const hcPrice = book.price_hardcover ? parseFloat(book.price_hardcover) : null;
+    const priceRow = `
+        <div class="book-price-row">
+            <span class="book-price" id="card-price-${book.id}">$${pbPrice.toFixed(2)}</span>
+            ${hcPrice ? `<div class="fmt-toggle" data-book-id="${book.id}" data-pb="${pbPrice}" data-hc="${hcPrice}">
+                <span class="fmt-btn active" data-fmt="paperback">PB</span>
+                <span class="fmt-sep">|</span>
+                <span class="fmt-btn" data-fmt="hardcover">HC</span>
+            </div>` : ''}
+        </div>`;
     return `
         <div class="book-card" data-id="${book.id}">
             <div class="book-cover" style="${coverStyle} background-color: #2d2d2d;">
@@ -129,10 +151,29 @@ function generateBookCardHTML(book, adminMode, currentLang) {
             <div class="book-meta">
                 <div class="book-title">${displayTitle}</div>
                 <div class="book-author">${displayAuthor}</div>
+                ${priceRow}
                 ${adminMode ? `<div class="admin-controls">${deleteBtn}</div>` : ''}
             </div>
         </div>
     `;
+}
+
+function attachFormatToggleEvents(container) {
+    container.querySelectorAll('.fmt-toggle').forEach(toggle => {
+        toggle.querySelectorAll('.fmt-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const bookId  = toggle.dataset.bookId;
+                const fmt     = btn.dataset.fmt;
+                const pb      = parseFloat(toggle.dataset.pb);
+                const hc      = parseFloat(toggle.dataset.hc);
+                const priceEl = document.getElementById(`card-price-${bookId}`);
+                toggle.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                if (priceEl) priceEl.textContent = `$${(fmt === 'hardcover' ? hc : pb).toFixed(2)}`;
+            });
+        });
+    });
 }
 
 function attachBookDeleteEvents(container, renderCallback) {
@@ -179,12 +220,13 @@ export async function renderBooks() {
         if (grid) grid.innerHTML = html;
         document.querySelectorAll('.book-card').forEach(card => {
             card.addEventListener('click', (e) => {
-                if (e.target.closest('.admin-controls')) return;
+                if (e.target.closest('.admin-controls') || e.target.closest('.fmt-toggle')) return;
                 const bookId = card.dataset.id;
                 const book = books.find(b => b.id === bookId);
                 if (book) openModal(book);
             });
         });
+        attachFormatToggleEvents(grid);
         // attachBookDeleteEvents(grid, renderBooks);
     } catch (err) {
         console.error('Error rendering books:', err);
@@ -192,99 +234,99 @@ export async function renderBooks() {
     }
 }
 
-// ── Books page state (FR #1) ────────────────────────────────────────────────
+// ── Category mapping ────────────────────────────────────────────────────────
+const CAT_GROUPS = {
+    poems:      b => (b.categories||[]).some(c=>/poetry|poem/i.test(c)),
+    novels:     b => (b.categories||[]).some(c=>/novel|fiction|prose/i.test(c)),
+    children:   b => (b.categories||[]).some(c=>/children|youth|kid/i.test(c)),
+    literature: b => (b.categories||[]).some(c=>/essay|literature|translation|travel|photo|antholog/i.test(c)),
+};
+let booksActiveCategory = 'all';
+
+// ── Books-page state ────────────────────────────────────────────────────────
 const BOOKS_PER_PAGE = 12;
-let booksCurrentPage = 1;
-let booksViewMode = 'grid'; // 'grid' | 'list'
-let booksActiveFilters = { search: '', lang: '', author: '', priceMin: '', priceMax: '', sort: 'title' };
+let booksCurrentPage  = 1;
+let booksViewMode     = 'grid';
+let booksActiveFilters = { search:'', lang:'', author:'', priceMin:'', priceMax:'', sort:'title' };
 
 function getBooksFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    booksCurrentPage  = parseInt(params.get('page')  || '1', 10);
-    booksViewMode     = params.get('view')   || 'grid';
-    booksActiveFilters = {
-        search:   params.get('search')   || '',
-        lang:     params.get('lang')     || '',
-        author:   params.get('author')   || '',
-        priceMin: params.get('priceMin') || '',
-        priceMax: params.get('priceMax') || '',
-        sort:     params.get('sort')     || 'title',
+    const p = new URLSearchParams(window.location.search);
+    booksCurrentPage    = parseInt(p.get('page') || '1', 10);
+    booksViewMode       = p.get('view') || 'grid';
+    booksActiveCategory = p.get('cat') || 'all';
+    booksActiveFilters  = {
+        search:   p.get('search')   || '',
+        lang:     p.get('lang')     || '',
+        author:   p.get('author')   || '',
+        priceMin: p.get('priceMin') || '',
+        priceMax: p.get('priceMax') || '',
+        sort:     p.get('sort')     || 'title',
     };
 }
 
 function pushBooksToURL() {
     const p = new URLSearchParams();
-    if (booksCurrentPage > 1)             p.set('page',     booksCurrentPage);
-    if (booksViewMode !== 'grid')          p.set('view',     booksViewMode);
-    if (booksActiveFilters.search)         p.set('search',   booksActiveFilters.search);
-    if (booksActiveFilters.lang)           p.set('lang',     booksActiveFilters.lang);
-    if (booksActiveFilters.author)         p.set('author',   booksActiveFilters.author);
-    if (booksActiveFilters.priceMin)       p.set('priceMin', booksActiveFilters.priceMin);
-    if (booksActiveFilters.priceMax)       p.set('priceMax', booksActiveFilters.priceMax);
-    if (booksActiveFilters.sort !== 'title') p.set('sort',   booksActiveFilters.sort);
+    if (booksCurrentPage > 1)                p.set('page',     booksCurrentPage);
+    if (booksViewMode !== 'grid')             p.set('view',     booksViewMode);
+    if (booksActiveCategory !== 'all')        p.set('cat',      booksActiveCategory);
+    if (booksActiveFilters.search)            p.set('search',   booksActiveFilters.search);
+    if (booksActiveFilters.lang)              p.set('lang',     booksActiveFilters.lang);
+    if (booksActiveFilters.author)            p.set('author',   booksActiveFilters.author);
+    if (booksActiveFilters.priceMin)          p.set('priceMin', booksActiveFilters.priceMin);
+    if (booksActiveFilters.priceMax)          p.set('priceMax', booksActiveFilters.priceMax);
+    if (booksActiveFilters.sort !== 'title')  p.set('sort',     booksActiveFilters.sort);
     const qs = p.toString();
-    const newURL = window.location.pathname + (qs ? '?' + qs : '');
-    history.replaceState(null, '', newURL);
+    history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
 }
 
 function applyBooksFilters(allBooks) {
     let list = [...allBooks];
+    // Category tab
+    if (booksActiveCategory !== 'all' && CAT_GROUPS[booksActiveCategory]) {
+        list = list.filter(CAT_GROUPS[booksActiveCategory]);
+    }
     const { search, lang, author, priceMin, priceMax, sort } = booksActiveFilters;
-
     if (search) {
         const q = search.toLowerCase();
         list = list.filter(b => {
-            const t = (currentLang === 'fr' ? (b.title_fr || b.title) : b.title).toLowerCase();
-            const a = (currentLang === 'fr' ? (b.author_fr || b.author) : b.author).toLowerCase();
+            const t = (currentLang==='fr'?(b.title_fr||b.title):b.title||'').toLowerCase();
+            const a = (currentLang==='fr'?(b.author_fr||b.author):b.author||'').toLowerCase();
             return t.includes(q) || a.includes(q);
         });
     }
-    if (lang) {
-        list = list.filter(b => (b.language || '').toLowerCase().includes(lang.toLowerCase()));
-    }
-    if (author) {
-        list = list.filter(b => {
-            const a = (currentLang === 'fr' ? (b.author_fr || b.author) : b.author);
-            return a === author;
-        });
-    }
-    const pMin = parseFloat(priceMin);
-    const pMax = parseFloat(priceMax);
+    if (lang)   list = list.filter(b => (b.language||'').toLowerCase().includes(lang.toLowerCase()));
+    if (author) list = list.filter(b => {
+        const a = currentLang==='fr'?(b.author_fr||b.author):b.author;
+        return a === author;
+    });
+    const pMin = parseFloat(priceMin), pMax = parseFloat(priceMax);
     if (!isNaN(pMin)) list = list.filter(b => parseFloat(b.price) >= pMin);
     if (!isNaN(pMax)) list = list.filter(b => parseFloat(b.price) <= pMax);
-
     list.sort((a, b) => {
-        if (sort === 'author') {
-            const aa = (currentLang === 'fr' ? (a.author_fr || a.author) : a.author) || '';
-            const ba = (currentLang === 'fr' ? (b.author_fr || b.author) : b.author) || '';
-            return aa.localeCompare(ba);
-        }
+        if (sort === 'author')     { return (currentLang==='fr'?(a.author_fr||a.author):a.author||'').localeCompare(currentLang==='fr'?(b.author_fr||b.author):b.author||''); }
         if (sort === 'price_asc')  return parseFloat(a.price) - parseFloat(b.price);
         if (sort === 'price_desc') return parseFloat(b.price) - parseFloat(a.price);
-        if (sort === 'pub_date') {
-            return new Date(b.pub_date || 0) - new Date(a.pub_date || 0);
-        }
-        // default: title
-        const ta = (currentLang === 'fr' ? (a.title_fr || a.title) : a.title) || '';
-        const tb = (currentLang === 'fr' ? (b.title_fr || b.title) : b.title) || '';
+        if (sort === 'pub_date')   return new Date(b.pub_date||0) - new Date(a.pub_date||0);
+        const ta = currentLang==='fr'?(a.title_fr||a.title):a.title||'';
+        const tb = currentLang==='fr'?(b.title_fr||b.title):b.title||'';
         return ta.localeCompare(tb);
     });
     return list;
 }
 
 function generateBookListRowHTML(book) {
-    const title  = (currentLang === 'fr' && book.title_fr)  ? book.title_fr  : book.title;
-    const author = (currentLang === 'fr' && book.author_fr) ? book.author_fr : book.author;
-    const cover  = book.cover ? `background-image:url('${book.cover}');background-size:cover;background-position:center;` : 'background:#2d2d2d;';
+    const title  = currentLang==='fr'&&book.title_fr  ? book.title_fr  : book.title;
+    const author = currentLang==='fr'&&book.author_fr ? book.author_fr : book.author;
+    const cover  = normalizeCover(book.cover);
     return `
         <div class="book-list-row" data-id="${book.id}">
-            <div class="book-list-cover" style="${cover}"></div>
+            <div class="book-list-cover" style="${cover?`background-image:url('${cover}');background-size:cover;background-position:center;`:'background:#2d2d2d;'}"></div>
             <div class="book-list-info">
                 <div class="book-list-title">${title}</div>
                 <div class="book-list-author">${author}</div>
-                <div class="book-list-meta">${book.language || ''} · ${book.pub_date || ''}</div>
+                <div class="book-list-meta">${book.language||''} · ${book.pub_date||''}</div>
             </div>
-            <div class="book-list-price">$${parseFloat(book.price || 0).toFixed(2)}</div>
+            <div class="book-list-price">$${parseFloat(book.price||0).toFixed(2)}</div>
         </div>`;
 }
 
@@ -293,146 +335,123 @@ function renderBooksPagePagination(total) {
     if (!paginationEl) return;
     const totalPages = Math.ceil(total / BOOKS_PER_PAGE);
     if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
-
-    let html = '';
-    html += `<button class="page-btn" ${booksCurrentPage === 1 ? 'disabled' : ''} data-page="${booksCurrentPage - 1}"><i class="fas fa-chevron-left"></i></button>`;
-    for (let i = 1; i <= totalPages; i++) {
-        if (totalPages > 7 && i > 2 && i < totalPages - 1 && Math.abs(i - booksCurrentPage) > 1) {
-            if (i === 3 || i === totalPages - 2) html += `<span class="page-ellipsis">…</span>`;
-            continue;
+    let html = `<button class="page-btn" ${booksCurrentPage===1?'disabled':''} data-page="${booksCurrentPage-1}"><i class="fas fa-chevron-left"></i></button>`;
+    for (let i=1; i<=totalPages; i++) {
+        if (totalPages>7 && i>2 && i<totalPages-1 && Math.abs(i-booksCurrentPage)>1) {
+            if (i===3||i===totalPages-2) html += `<span class="page-ellipsis">…</span>`; continue;
         }
-        html += `<button class="page-btn ${i === booksCurrentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+        html += `<button class="page-btn ${i===booksCurrentPage?'active':''}" data-page="${i}">${i}</button>`;
     }
-    html += `<button class="page-btn" ${booksCurrentPage === totalPages ? 'disabled' : ''} data-page="${booksCurrentPage + 1}"><i class="fas fa-chevron-right"></i></button>`;
+    html += `<button class="page-btn" ${booksCurrentPage===totalPages?'disabled':''} data-page="${booksCurrentPage+1}"><i class="fas fa-chevron-right"></i></button>`;
     paginationEl.innerHTML = html;
-
     paginationEl.querySelectorAll('.page-btn:not([disabled])').forEach(btn => {
         btn.addEventListener('click', () => {
             booksCurrentPage = parseInt(btn.dataset.page, 10);
-            pushBooksToURL();
-            renderAllBooks();
-            booksPage?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            pushBooksToURL(); renderAllBooks();
+            booksPage?.scrollIntoView({behavior:'smooth', block:'start'});
         });
     });
 }
 
 function syncBooksFilterUI() {
-    const si = document.getElementById('booksSearchInput');
-    const lf = document.getElementById('booksLangFilter');
-    const af = document.getElementById('booksAuthorFilter');
-    const sf = document.getElementById('booksSortFilter');
-    const pMin = document.getElementById('booksPriceMin');
-    const pMax = document.getElementById('booksPriceMax');
+    const si=document.getElementById('booksSearchInput'), lf=document.getElementById('booksLangFilter'),
+          af=document.getElementById('booksAuthorFilter'), sf=document.getElementById('booksSortFilter'),
+          pMin=document.getElementById('booksPriceMin'), pMax=document.getElementById('booksPriceMax');
     if (si) si.value = booksActiveFilters.search;
     if (lf) lf.value = booksActiveFilters.lang;
     if (sf) sf.value = booksActiveFilters.sort;
     if (pMin) pMin.value = booksActiveFilters.priceMin;
     if (pMax) pMax.value = booksActiveFilters.priceMax;
-
-    // Populate author dropdown
     if (af) {
-        const authors = [...new Set(books.map(b => (currentLang === 'fr' ? (b.author_fr || b.author) : b.author)).filter(Boolean))].sort();
-        const currentAuthor = booksActiveFilters.author;
-        af.innerHTML = `<option value="">${langPack[currentLang].filterAllAuthors || 'All Authors'}</option>`;
-        authors.forEach(a => {
-            af.innerHTML += `<option value="${a}" ${a === currentAuthor ? 'selected' : ''}>${a}</option>`;
-        });
+        const authors = [...new Set(books.map(b=>(currentLang==='fr'?(b.author_fr||b.author):b.author)).filter(Boolean))].sort();
+        af.innerHTML = `<option value="">${langPack[currentLang].filterAllAuthors||'All Authors'}</option>`;
+        authors.forEach(a => { af.innerHTML += `<option value="${a}" ${a===booksActiveFilters.author?'selected':''}>${a}</option>`; });
     }
-
-    // View toggle buttons
-    document.getElementById('booksGridViewBtn')?.classList.toggle('active', booksViewMode === 'grid');
-    document.getElementById('booksListViewBtn')?.classList.toggle('active', booksViewMode === 'list');
+    document.getElementById('booksGridViewBtn')?.classList.toggle('active', booksViewMode==='grid');
+    document.getElementById('booksListViewBtn')?.classList.toggle('active', booksViewMode==='list');
+    // Sync category tabs
+    document.querySelectorAll('.cat-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.cat === booksActiveCategory);
+    });
 }
 
-function attachBooksFilterEvents() {
-    const applyBtn  = document.getElementById('booksFilterApply');
-    const resetBtn  = document.getElementById('booksFilterReset');
-    const gridBtn   = document.getElementById('booksGridViewBtn');
-    const listBtn   = document.getElementById('booksListViewBtn');
-    const searchIn  = document.getElementById('booksSearchInput');
+let booksEventsAttached = false;
 
-    // Search on enter key
-    searchIn?.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') applyBtn?.click();
-    });
-
+function attachBooksEvents() {
+    const applyBtn = document.getElementById('booksFilterApply');
+    const resetBtn = document.getElementById('booksFilterReset');
+    document.getElementById('booksSearchInput')?.addEventListener('keydown', e => { if (e.key==='Enter') applyBtn?.click(); });
     applyBtn?.addEventListener('click', () => {
         booksActiveFilters = {
-            search:   document.getElementById('booksSearchInput')?.value.trim() || '',
-            lang:     document.getElementById('booksLangFilter')?.value || '',
-            author:   document.getElementById('booksAuthorFilter')?.value || '',
-            priceMin: document.getElementById('booksPriceMin')?.value || '',
-            priceMax: document.getElementById('booksPriceMax')?.value || '',
-            sort:     document.getElementById('booksSortFilter')?.value || 'title',
+            search:   document.getElementById('booksSearchInput')?.value.trim()||'',
+            lang:     document.getElementById('booksLangFilter')?.value||'',
+            author:   document.getElementById('booksAuthorFilter')?.value||'',
+            priceMin: document.getElementById('booksPriceMin')?.value||'',
+            priceMax: document.getElementById('booksPriceMax')?.value||'',
+            sort:     document.getElementById('booksSortFilter')?.value||'title',
         };
-        booksCurrentPage = 1;
-        pushBooksToURL();
-        renderAllBooks();
+        booksCurrentPage = 1; pushBooksToURL(); renderAllBooks();
     });
-
     resetBtn?.addEventListener('click', () => {
-        booksActiveFilters = { search: '', lang: '', author: '', priceMin: '', priceMax: '', sort: 'title' };
-        booksCurrentPage = 1;
-        pushBooksToURL();
-        renderAllBooks();
+        booksActiveFilters = {search:'',lang:'',author:'',priceMin:'',priceMax:'',sort:'title'};
+        booksCurrentPage = 1; pushBooksToURL(); renderAllBooks();
     });
-
-    gridBtn?.addEventListener('click', () => { booksViewMode = 'grid'; pushBooksToURL(); renderAllBooks(); });
-    listBtn?.addEventListener('click', () => { booksViewMode = 'list'; pushBooksToURL(); renderAllBooks(); });
+    document.getElementById('booksGridViewBtn')?.addEventListener('click', ()=>{ booksViewMode='grid'; pushBooksToURL(); renderAllBooks(); });
+    document.getElementById('booksListViewBtn')?.addEventListener('click', ()=>{ booksViewMode='list'; pushBooksToURL(); renderAllBooks(); });
+    // Category tabs
+    document.querySelectorAll('.cat-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            booksActiveCategory = tab.dataset.cat;
+            booksCurrentPage = 1; pushBooksToURL(); renderAllBooks();
+        });
+    });
 }
 
-let booksFilterEventsAttached = false;
+export function resetBooksPageState() {
+    booksEventsAttached = false; booksCurrentPage = 1; booksActiveCategory = 'all';
+    booksActiveFilters = {search:'',lang:'',author:'',priceMin:'',priceMax:'',sort:'title'};
+}
 
 export async function renderAllBooks() {
     try {
         if (books.length === 0) await loadBooks();
-
-        // Read URL params on first call or when coming from a shared link
-        if (!booksFilterEventsAttached) {
-            getBooksFromURL();
-            attachBooksFilterEvents();
-            booksFilterEventsAttached = true;
-        }
-
+        if (!booksEventsAttached) { getBooksFromURL(); attachBooksEvents(); booksEventsAttached = true; }
         syncBooksFilterUI();
 
-        const filtered  = applyBooksFilters(books);
-        const total     = filtered.length;
-        const totalPages = Math.ceil(total / BOOKS_PER_PAGE);
-        if (booksCurrentPage > totalPages && totalPages > 0) booksCurrentPage = 1;
+        const filtered   = applyBooksFilters(books);
+        const total      = filtered.length;
+        const totalPages = Math.ceil(total / BOOKS_PER_PAGE) || 1;
+        if (booksCurrentPage > totalPages) booksCurrentPage = 1;
+        const pageBooks  = filtered.slice((booksCurrentPage-1)*BOOKS_PER_PAGE, booksCurrentPage*BOOKS_PER_PAGE);
 
-        const start = (booksCurrentPage - 1) * BOOKS_PER_PAGE;
-        const pageBooks = filtered.slice(start, start + BOOKS_PER_PAGE);
-
-        // Result count
         const countEl = document.getElementById('booksResultCount');
-        if (countEl) {
-            const showing = pageBooks.length;
-            countEl.textContent = currentLang === 'fr'
-                ? `${showing} livre${showing !== 1 ? 's' : ''} sur ${total}`
-                : `Showing ${showing} of ${total} book${total !== 1 ? 's' : ''}`;
-        }
+        if (countEl) countEl.textContent = currentLang==='fr'
+            ? `${pageBooks.length} livre${pageBooks.length!==1?'s':''} sur ${total}`
+            : `Showing ${pageBooks.length} of ${total} book${total!==1?'s':''}`;
 
-        // Render books
         if (booksGridAll) {
             if (booksViewMode === 'list') {
                 booksGridAll.className = 'book-list';
                 booksGridAll.innerHTML = pageBooks.map(b => generateBookListRowHTML(b)).join('');
                 booksGridAll.querySelectorAll('.book-list-row').forEach(row => {
-                    row.addEventListener('click', () => navigateTo(`/book/${row.dataset.id}`));
+                    row.addEventListener('click', () => {
+                        const book = books.find(b => b.id === row.dataset.id);
+                        if (book) navigateTo(`/book/${toSlug(book.title)}`);
+                    });
                 });
             } else {
                 booksGridAll.className = 'book-grid';
                 booksGridAll.innerHTML = pageBooks.map(b => generateBookCardHTML(b, false, currentLang)).join('');
                 booksGridAll.querySelectorAll('.book-card').forEach(card => {
-                    card.addEventListener('click', (e) => {
-                        if (e.target.closest('.admin-controls')) return;
-                        navigateTo(`/book/${card.dataset.id}`);
+                    card.addEventListener('click', e => {
+                        if (e.target.closest('.fmt-toggle')) return;
+                        const book = books.find(b => b.id === card.dataset.id);
+                        if (book) navigateTo(`/book/${toSlug(book.title)}`);
                     });
                 });
+                attachFormatToggleEvents(booksGridAll);
             }
         }
-
         renderBooksPagePagination(total);
     } catch (err) {
         console.error('Error rendering all books:', err);
@@ -557,7 +576,9 @@ export function renderNewsDetail(item) {
 
 export function renderBookDetail(book) {
     currentModalBook = book;
-    document.getElementById('detailCover').style.backgroundImage = `url('${book.cover}')`;
+    currentModalFormat = 'paperback';
+    const cover = normalizeCover(book.cover);
+    document.getElementById('detailCover').style.backgroundImage = cover ? `url('${cover}')` : '';
     document.getElementById('detailTitle').innerText = (currentLang === 'fr' && book.title_fr) ? book.title_fr : book.title;
     document.getElementById('detailAuthor').innerText = (currentLang === 'fr' && book.author_fr) ? book.author_fr : book.author;
     document.getElementById('detailPrice').innerText = `$${book.price}`;
@@ -568,8 +589,27 @@ export function renderBookDetail(book) {
     document.getElementById('detailPages').innerText = book.pages || '170';
     updateDetailLanguage(book);
     renderDetailReviews(book.id, currentLang, currentUser);
+    // Format selector
+    const detailFmtSel = document.getElementById('detailFormatSelector');
+    if (detailFmtSel) {
+        if (book.price_hardcover) {
+            detailFmtSel.style.display = '';
+            detailFmtSel.querySelectorAll('.format-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.fmt === 'paperback');
+                btn.onclick = () => {
+                    currentModalFormat = btn.dataset.fmt;
+                    detailFmtSel.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const price = currentModalFormat === 'hardcover' ? book.price_hardcover : book.price;
+                    document.getElementById('detailPrice').innerText = `$${parseFloat(price).toFixed(2)}`;
+                };
+            });
+        } else {
+            detailFmtSel.style.display = 'none';
+        }
+    }
     document.getElementById('detailAddToCart').onclick = () => {
-        addToCart(book);
+        addToCart(book, currentModalFormat);
         alert(langPack[currentLang].itemAddedToCart);
     };
     document.getElementById('detailAddToWishList').onclick = () => {
@@ -647,7 +687,9 @@ export function updateDetailLanguage(book) {
 
 export function openModal(book) {
     currentModalBook = book;
-    if (modalCover) modalCover.style.backgroundImage = `url('${book.cover}')`;
+    currentModalFormat = 'paperback';
+    const cover = normalizeCover(book.cover);
+    if (modalCover) modalCover.style.backgroundImage = cover ? `url('${cover}')` : '';
     if (modalTitle) modalTitle.innerText = (currentLang === 'fr' && book.title_fr) ? book.title_fr : book.title;
     if (modalAuthor) modalAuthor.innerText = (currentLang === 'fr' && book.author_fr) ? book.author_fr : book.author;
     if (modalPrice) modalPrice.innerText = `$${book.price}`;
@@ -670,6 +712,25 @@ export function openModal(book) {
     }
     if (modalAddToCart) modalAddToCart.dataset.bookId = book.id;
     if (modalAddToWishList) modalAddToWishList.dataset.bookId = book.id;
+    // Format selector
+    const modalFmtSel = document.getElementById('modalFormatSelector');
+    if (modalFmtSel) {
+        if (book.price_hardcover) {
+            modalFmtSel.style.display = '';
+            modalFmtSel.querySelectorAll('.format-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.fmt === 'paperback');
+                btn.onclick = () => {
+                    currentModalFormat = btn.dataset.fmt;
+                    modalFmtSel.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const price = currentModalFormat === 'hardcover' ? book.price_hardcover : book.price;
+                    if (modalPrice) modalPrice.innerText = `$${parseFloat(price).toFixed(2)}`;
+                };
+            });
+        } else {
+            modalFmtSel.style.display = 'none';
+        }
+    }
     if (modalOverlay) modalOverlay.classList.add('active');
 }
 
@@ -696,12 +757,6 @@ export function updateModalLanguage() {
         tabElements[2].innerText = langPack[currentLang].tabDetails;
         tabElements[3].innerText = langPack[currentLang].tabReviews;
     }
-}
-
-export function resetBooksPageState() {
-    booksFilterEventsAttached = false;
-    booksCurrentPage = 1;
-    booksActiveFilters = { search: '', lang: '', author: '', priceMin: '', priceMax: '', sort: 'title' };
 }
 
 export function closeModal() {

@@ -125,7 +125,15 @@ export async function saveReviews(newReviews) {
     reviews = newReviews;
 }
 
-// ---------- User roles (profiles) ----------
+// ---------- Orders ----------
+export async function saveOrder(order) {
+    try {
+        const { error } = await supabase.from('orders').insert([order]);
+        if (error) console.warn('Order save warning (table may not exist yet):', error.message);
+    } catch (err) {
+        console.warn('saveOrder failed:', err);
+    }
+}
 export async function getUserRole(userId) {
     const { data, error } = await supabase
         .from('profiles')

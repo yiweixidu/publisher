@@ -132,12 +132,49 @@ export const langPack = {
         statusDraft: 'Draft',
         publish: 'Publish',
         unpublish: 'Unpublish',
+        // FR #1 filter bar
         filterAllLanguages: 'All Languages',
         filterAllAuthors: 'All Authors',
         sortPriceAsc: 'Price: Low → High',
         sortPriceDesc: 'Price: High → Low',
         filterApply: 'Apply',
         filterReset: 'Reset',
+        // Books page categories
+        catAll: 'All',
+        catPoems: 'Acer Poems',
+        catNovels: 'Acer Novels',
+        catChildren: 'Acer Children',
+        catLiterature: 'Acer Literature',
+        // Format
+        paperback: 'Paperback',
+        hardcover: 'Hardcover',
+        // Checkout steps
+        checkoutStepShipping: 'Shipping',
+        checkoutStepDelivery: 'Delivery',
+        checkoutStepPayment: 'Payment',
+        checkoutStepReview: 'Review',
+        checkoutContinue: 'Continue',
+        checkoutReviewOrder: 'Review Order',
+        placeOrder: 'Place Order',
+        back: 'Back',
+        // Shipping address fields
+        shipAddress: 'Street Address *',
+        shipCity: 'City *',
+        shipProvince: 'Province / State *',
+        shipPostal: 'Postal Code *',
+        shipCountry: 'Country',
+        // Shipping methods
+        shippingStandard: 'Standard Shipping',
+        shippingStandardDesc: '5–10 business days',
+        shippingExpress: 'Express Shipping',
+        shippingExpressDesc: '2–3 business days',
+        shippingPickup: 'Local Pickup',
+        shippingPickupDesc: 'Montréal — contact us for details',
+        shippingFree: 'FREE',
+        // Payment
+        payCard: 'Card',
+        stripeNotice: 'Stripe-ready — add STRIPE_PK in constants.js to activate live payments',
+        paypalNotice: 'PayPal SDK ready — add PAYPAL_CLIENT_ID in constants.js to activate',
     },
 
     fr: {
@@ -276,12 +313,49 @@ export const langPack = {
         statusDraft: "Brouillon",
         publish: "Publier",
         unpublish: "Dépublier",
+        // FR #1 filter bar
         filterAllLanguages: 'Toutes les langues',
         filterAllAuthors: 'Tous les auteurs',
         sortPriceAsc: 'Prix : croissant',
         sortPriceDesc: 'Prix : décroissant',
         filterApply: 'Appliquer',
         filterReset: 'Réinitialiser',
+        // Books page categories
+        catAll: 'Tous',
+        catPoems: 'Poèmes Acer',
+        catNovels: 'Romans Acer',
+        catChildren: 'Jeunesse Acer',
+        catLiterature: 'Littérature Acer',
+        // Format
+        paperback: 'Broché',
+        hardcover: 'Relié',
+        // Checkout steps
+        checkoutStepShipping: 'Livraison',
+        checkoutStepDelivery: 'Transport',
+        checkoutStepPayment: 'Paiement',
+        checkoutStepReview: 'Révision',
+        checkoutContinue: 'Continuer',
+        checkoutReviewOrder: 'Vérifier la commande',
+        placeOrder: 'Passer la commande',
+        back: 'Retour',
+        // Shipping address fields
+        shipAddress: 'Adresse *',
+        shipCity: 'Ville *',
+        shipProvince: 'Province / État *',
+        shipPostal: 'Code postal *',
+        shipCountry: 'Pays',
+        // Shipping methods
+        shippingStandard: 'Livraison standard',
+        shippingStandardDesc: '5–10 jours ouvrables',
+        shippingExpress: 'Livraison express',
+        shippingExpressDesc: '2–3 jours ouvrables',
+        shippingPickup: 'Cueillette locale',
+        shippingPickupDesc: 'Montréal — contactez-nous pour les détails',
+        shippingFree: 'GRATUIT',
+        // Payment
+        payCard: 'Carte',
+        stripeNotice: 'Prêt pour Stripe — ajoutez STRIPE_PK dans constants.js pour activer',
+        paypalNotice: 'SDK PayPal prêt — ajoutez PAYPAL_CLIENT_ID dans constants.js pour activer',
     }
 };
 

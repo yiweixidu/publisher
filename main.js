@@ -3,7 +3,7 @@ import { BASE_PATH } from './constants.js';
 import { 
     setLanguage, renderBooks, renderAllBooks, renderNews, renderAllNews, renderNewsDetail,
     renderBookDetail, updateDetailLanguage, openModal, closeModal, translateUI, resetMetaTags, 
-    updateMetaTags, currentModalBook, currentNewsItem, resetBooksPageState
+    updateMetaTags, currentModalBook, currentNewsItem, currentModalFormat, resetBooksPageState
 } from './ui.js';
 import { langPack, currentLang } from './i18n.js';
 import { 
@@ -11,6 +11,7 @@ import {
     updateAdminNavLink, login, signup, initAuth, isAdminUser
 } from './auth.js';
 import { cart, loadCart, saveCart, addToCart, renderCartModal } from './cart.js';
+import { saveOrder } from './data.js';
 import { 
     showAdminBooksPage, hideAdminBooksPage, renderAdminBookList, openBookFormModal, initQuillEditors,
     setAdminSearchTerm, setAdminSortBy, showAdminNewsPage, hideAdminNewsPage, attachAdminNewsEvents 
@@ -30,8 +31,7 @@ const continueShoppingBtn = document.getElementById('continueShoppingBtn');
 const checkoutBtn = document.getElementById('checkoutBtn');
 const checkoutModal = document.getElementById('checkoutModal');
 const checkoutModalClose = document.getElementById('checkoutModalClose');
-const paymentForm = document.getElementById('paymentForm');
-const paymentError = document.getElementById('paymentError');
+// (paymentForm removed — now multi-step)
 const confirmationModal = document.getElementById('confirmationModal');
 const confirmationModalClose = document.getElementById('confirmationModalClose');
 const continueShoppingConfirmBtn = document.getElementById('continueShoppingConfirmBtn');
@@ -200,76 +200,219 @@ cartModal?.addEventListener('click', (e) => {
 });
 continueShoppingBtn?.addEventListener('click', () => cartModal?.classList.remove('active'));
 
-// Checkout
-checkoutBtn?.addEventListener('click', () => {
-    if (cart.length === 0) {
-        alert(langPack[currentLang].emptyCart);
-        return;
+// ═══════════════════════════════════════════════════════
+// Multi-Step Checkout  (FR #3 + #4)
+// ═══════════════════════════════════════════════════════
+const SHIPPING_COSTS = { standard: 5.00, express: 15.00, pickup: 0.00 };
+let coStep = 1;
+let coShipData = {};
+let coShipMethod = 'standard';
+let coPayMethod  = 'card';
+
+function goToCoStep(n) {
+    coStep = n;
+    document.querySelectorAll('.co-panel').forEach(p => p.classList.add('hidden'));
+    document.getElementById(`coStep${n}`)?.classList.remove('hidden');
+    // Update progress dots
+    document.querySelectorAll('.co-step-dot').forEach(dot => {
+        const s = parseInt(dot.dataset.step);
+        dot.classList.toggle('active',    s === n);
+        dot.classList.toggle('completed', s < n);
+    });
+}
+
+function openCheckout() {
+    coStep = 1;
+    coShipMethod = 'standard';
+    coPayMethod  = 'card';
+    // Pre-fill email if logged in
+    if (currentUser) {
+        const emailEl = document.getElementById('shipEmail');
+        if (emailEl && !emailEl.value) emailEl.value = currentUser.email;
     }
-    if (!currentUser) {
-        loginOverlay?.classList.add('active');
-        return;
-    }
-    cartModal?.classList.remove('active');
+    goToCoStep(1);
     checkoutModal?.classList.add('active');
-});
-checkoutModalClose?.addEventListener('click', () => {
+}
+
+function closeCheckout() {
     checkoutModal?.classList.remove('active');
-    if (paymentError) paymentError.textContent = '';
+    document.getElementById('paymentError') && (document.getElementById('paymentError').textContent = '');
+}
+
+checkoutBtn?.addEventListener('click', () => {
+    if (cart.length === 0) { alert(langPack[currentLang].emptyCart); return; }
+    if (!currentUser) { loginOverlay?.classList.add('active'); return; }
+    cartModal?.classList.remove('active');
+    openCheckout();
 });
-checkoutModal?.addEventListener('click', (e) => {
-    if (e.target === checkoutModal) {
-        checkoutModal.classList.remove('active');
-        if (paymentError) paymentError.textContent = '';
+checkoutModalClose?.addEventListener('click', closeCheckout);
+checkoutModal?.addEventListener('click', e => { if (e.target === checkoutModal) closeCheckout(); });
+
+// Step 1 → 2: validate shipping address
+document.getElementById('coNext1')?.addEventListener('click', () => {
+    const fields = ['shipFirstName','shipLastName','shipEmail','shipAddress','shipCity','shipProvince','shipPostal'];
+    const errEl  = document.getElementById('coErr1');
+    for (const id of fields) {
+        const el = document.getElementById(id);
+        if (!el?.value.trim()) {
+            if (errEl) errEl.textContent = currentLang === 'fr' ? 'Veuillez remplir tous les champs obligatoires.' : 'Please fill in all required fields.';
+            el?.focus(); return;
+        }
     }
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(document.getElementById('shipEmail').value.trim())) {
+        if (errEl) errEl.textContent = currentLang === 'fr' ? 'Adresse courriel invalide.' : 'Invalid email address.';
+        return;
+    }
+    if (errEl) errEl.textContent = '';
+    coShipData = {
+        firstName: document.getElementById('shipFirstName').value.trim(),
+        lastName:  document.getElementById('shipLastName').value.trim(),
+        email:     document.getElementById('shipEmail').value.trim(),
+        address:   document.getElementById('shipAddress').value.trim(),
+        city:      document.getElementById('shipCity').value.trim(),
+        province:  document.getElementById('shipProvince').value.trim(),
+        postal:    document.getElementById('shipPostal').value.trim(),
+        country:   document.getElementById('shipCountry').value,
+    };
+    goToCoStep(2);
 });
 
-// Payment form (unchanged)
-if (paymentForm) {
-    paymentForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const cardName = document.getElementById('cardName')?.value.trim();
-        const cardNumber = document.getElementById('cardNumber')?.value.trim();
-        const expiry = document.getElementById('expiry')?.value.trim();
-        const cvv = document.getElementById('cvv')?.value.trim();
+// Step 2 ← → 3
+document.getElementById('coBack2')?.addEventListener('click', () => goToCoStep(1));
+document.getElementById('coNext2')?.addEventListener('click', () => {
+    const sel = document.querySelector('input[name="shippingMethod"]:checked');
+    coShipMethod = sel ? sel.value : 'standard';
+    goToCoStep(3);
+});
 
+// Payment method tabs
+document.querySelectorAll('.pay-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        coPayMethod = tab.dataset.method;
+        document.querySelectorAll('.pay-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('payCardPanel')?.classList.toggle('hidden', coPayMethod !== 'card');
+        document.getElementById('payPaypalPanel')?.classList.toggle('hidden', coPayMethod !== 'paypal');
+    });
+});
+
+// Step 3 ← → 4: validate payment + build review
+document.getElementById('coBack3')?.addEventListener('click', () => goToCoStep(2));
+document.getElementById('coNext3')?.addEventListener('click', () => {
+    const errEl = document.getElementById('paymentError');
+    if (errEl) errEl.textContent = '';
+    if (coPayMethod === 'card') {
+        const cardName   = document.getElementById('cardName')?.value.trim();
+        const cardNumber = document.getElementById('cardNumber')?.value.replace(/\s/g,'');
+        const expiry     = document.getElementById('expiry')?.value.trim();
+        const cvv        = document.getElementById('cvv')?.value.trim();
         if (!cardName || !cardNumber || !expiry || !cvv) {
-            if (paymentError) paymentError.textContent = 'Please fill in all fields.';
+            if (errEl) errEl.textContent = currentLang==='fr' ? 'Veuillez remplir tous les champs.' : 'Please fill in all payment fields.';
             return;
         }
-        if (cardNumber.replace(/\s/g, '').length < 16) {
-            if (paymentError) paymentError.textContent = 'Invalid card number.';
+        if (cardNumber.length < 16) {
+            if (errEl) errEl.textContent = currentLang==='fr' ? 'Numéro de carte invalide.' : 'Invalid card number.';
             return;
         }
+    }
+    // Build review
+    const subtotal = cart.reduce((s,i) => s + i.price * i.quantity, 0);
+    const shipping = SHIPPING_COSTS[coShipMethod] ?? 5;
+    const tax      = subtotal * 0.15;   // 15% (QC)
+    const total    = subtotal + shipping + tax;
+    const isFr     = currentLang === 'fr';
+    const shippingLabel = {
+        standard: isFr ? 'Standard (5–10 jours)' : 'Standard (5–10 days)',
+        express:  isFr ? 'Express (2–3 jours)'   : 'Express (2–3 days)',
+        pickup:   isFr ? 'Cueillette locale'      : 'Local Pickup',
+    }[coShipMethod];
+    const itemsHtml = cart.map(i => {
+        const t = (isFr && i.title_fr) ? i.title_fr : i.title;
+        const fmt = i.format === 'hardcover' ? ' (HC)' : ' (PB)';
+        return `<div class="review-item"><span>${t}${fmt} × ${i.quantity}</span><span>$${(i.price*i.quantity).toFixed(2)}</span></div>`;
+    }).join('');
+    const payDisplay = coPayMethod === 'paypal' ? 'PayPal'
+        : `**** **** **** ${(document.getElementById('cardNumber')?.value||'').slice(-4)||'****'}`;
+    document.getElementById('coReviewContent').innerHTML = `
+        <div class="review-section">
+            <h4>${isFr?'Adresse de livraison':'Shipping Address'}</h4>
+            <p>${coShipData.firstName} ${coShipData.lastName}<br>
+               ${coShipData.address}<br>${coShipData.city}, ${coShipData.province} ${coShipData.postal}<br>${coShipData.country}</p>
+        </div>
+        <div class="review-section">
+            <h4>${isFr?'Mode de livraison':'Delivery Method'}</h4>
+            <p>${shippingLabel}</p>
+        </div>
+        <div class="review-section">
+            <h4>${isFr?'Articles':'Items'}</h4>
+            ${itemsHtml}
+        </div>
+        <div class="review-section review-totals">
+            <div class="review-item"><span>${langPack[currentLang].subtotal}</span><span>$${subtotal.toFixed(2)}</span></div>
+            <div class="review-item"><span>${langPack[currentLang].shipping}</span><span>$${shipping.toFixed(2)}</span></div>
+            <div class="review-item"><span>${isFr?'TPS+TVQ (15%)':'Tax (15% QC)'}</span><span>$${tax.toFixed(2)}</span></div>
+            <div class="review-item total-row"><strong>${langPack[currentLang].total}</strong><strong>$${total.toFixed(2)}</strong></div>
+        </div>
+        <div class="review-section">
+            <h4>${langPack[currentLang].paymentMethod}</h4>
+            <p>${payDisplay}</p>
+        </div>`;
+    goToCoStep(4);
+});
 
-        const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-        const shipping = 5.00;
-        const tax = subtotal * 0.10;
-        const total = subtotal + shipping + tax;
-        const orderItems = cart.map(item => `${item.title} x${item.quantity}`).join('<br>');
-
+// Step 4 ← Place Order
+document.getElementById('coBack4')?.addEventListener('click', () => goToCoStep(3));
+document.getElementById('coPlaceOrder')?.addEventListener('click', async () => {
+    const placeBtn = document.getElementById('coPlaceOrder');
+    const errEl    = document.getElementById('coReviewError');
+    if (placeBtn) { placeBtn.disabled = true; placeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+    try {
+        const subtotal = cart.reduce((s,i) => s + i.price * i.quantity, 0);
+        const shipping = SHIPPING_COSTS[coShipMethod] ?? 5;
+        const tax      = subtotal * 0.15;
+        const total    = subtotal + shipping + tax;
+        const orderId  = 'ord_' + Date.now() + Math.random().toString(36).substr(2,6);
+        const order = {
+            id: orderId,
+            user_id: currentUser?.id || null,
+            items: cart.map(i => ({ bookId:i.bookId, title:i.title, format:i.format, qty:i.quantity, price:i.price })),
+            shipping_address: coShipData,
+            shipping_method: coShipMethod,
+            subtotal: parseFloat(subtotal.toFixed(2)),
+            shipping_cost: shipping,
+            tax: parseFloat(tax.toFixed(2)),
+            total: parseFloat(total.toFixed(2)),
+            payment_method: coPayMethod,
+            status: 'pending',
+        };
+        await saveOrder(order);
+        // Build confirmation summary
+        const isFr = currentLang === 'fr';
+        const itemsHtml = cart.map(i => {
+            const t = (isFr && i.title_fr) ? i.title_fr : i.title;
+            return `${t} × ${i.quantity}`;
+        }).join('<br>');
         const orderSummaryDiv = document.getElementById('orderSummary');
         if (orderSummaryDiv) {
             orderSummaryDiv.innerHTML = `
-                <p><strong>${langPack[currentLang].orderNumber}:</strong> ${Math.floor(Math.random()*1000000)}</p>
-                <p><strong>${langPack[currentLang].items}:</strong><br> ${orderItems}</p>
+                <p><strong>${langPack[currentLang].orderNumber}:</strong> ${orderId.split('_')[1]}</p>
+                <p><strong>${langPack[currentLang].items}:</strong><br>${itemsHtml}</p>
                 <p><strong>${langPack[currentLang].subtotal}:</strong> $${subtotal.toFixed(2)}</p>
                 <p><strong>${langPack[currentLang].shipping}:</strong> $${shipping.toFixed(2)}</p>
-                <p><strong>${langPack[currentLang].tax}:</strong> $${tax.toFixed(2)}</p>
+                <p><strong>${isFr?'TPS+TVQ':'Tax (QC)'}:</strong> $${tax.toFixed(2)}</p>
                 <p><strong>${langPack[currentLang].total}:</strong> $${total.toFixed(2)}</p>
-                <p><strong>${langPack[currentLang].paymentMethod}:</strong> Visa ending in ${cardNumber.slice(-4)}</p>
-            `;
+                <p><strong>${isFr?'Livraison à':'Shipping to'}:</strong> ${coShipData.firstName} ${coShipData.lastName}, ${coShipData.city}</p>`;
         }
-
-        cart.length = 0;
-        saveCart();
-
-        checkoutModal?.classList.remove('active');
+        cart.length = 0; saveCart();
+        closeCheckout();
         confirmationModal?.classList.add('active');
-        if (paymentError) paymentError.textContent = '';
-        paymentForm.reset();
-    });
-}
+    } catch (err) {
+        if (errEl) errEl.textContent = err.message || (currentLang==='fr' ? 'Erreur lors de la commande.' : 'Order failed. Please try again.');
+    } finally {
+        if (placeBtn) { placeBtn.disabled = false; placeBtn.innerHTML = `<i class="fas fa-lock"></i> ${langPack[currentLang].placeOrder}`; }
+    }
+});
 
 // Confirmation modal
 confirmationModalClose?.addEventListener('click', () => confirmationModal?.classList.remove('active'));
@@ -340,7 +483,7 @@ modalOverlay?.addEventListener('click', (e) => {
 });
 modalAddToCart?.addEventListener('click', () => {
     if (currentModalBook) {
-        addToCart(currentModalBook);
+        addToCart(currentModalBook, currentModalFormat || 'paperback');
         alert(langPack[currentLang].itemAddedToCart);
         closeModal();
     }
@@ -371,80 +514,48 @@ contactModal.addEventListener('click', (e) => {
     if (e.target === contactModal) contactModal.classList.remove('active');
 });
 
-// ── Contact form → Formspree ──────────────────────────────────────────────
-// Sign up at https://formspree.io, create a form, and replace the ID below.
-// Free tier: 50 submissions / month, no backend needed.
-const FORMSPREE_ENDPOINT = 'https://formspree.io/f/YOUR_FORM_ID'; // ← replace
-
-contactForm.addEventListener('submit', async (e) => {
+contactForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
     const firstName = document.getElementById('contactFirstName').value.trim();
-    const lastName  = document.getElementById('contactLastName').value.trim();
-    const email     = document.getElementById('contactEmail').value.trim();
-    const message   = document.getElementById('contactMessage').value.trim();
+    const lastName = document.getElementById('contactLastName').value.trim();
+    const email = document.getElementById('contactEmail').value.trim();
+    const message = document.getElementById('contactMessage').value.trim();
     const contactError = document.getElementById('contactError');
-    const sendBtn   = contactForm.querySelector('[type="submit"]');
 
     if (contactError) contactError.textContent = '';
 
     function isValidName(name) {
-        return name.length > 0 && /[\p{L}]/u.test(name);
+        if (name.length === 0) return false;
+        return /[\p{L}]/u.test(name);
     }
+
     if (!isValidName(firstName)) {
-        contactError.textContent = currentLang === 'fr'
-            ? 'Veuillez entrer un prénom valide.'
-            : 'Please enter a valid first name.';
+        contactError.textContent = 'Please enter a valid first name (letters only).';
         return;
     }
     if (!isValidName(lastName)) {
-        contactError.textContent = currentLang === 'fr'
-            ? 'Veuillez entrer un nom de famille valide.'
-            : 'Please enter a valid last name.';
+        contactError.textContent = 'Please enter a valid last name (letters only).';
         return;
     }
+
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
-        contactError.textContent = currentLang === 'fr'
-            ? 'Adresse courriel invalide.'
-            : 'Invalid email address.';
-        return;
-    }
-    if (!message) {
-        contactError.textContent = currentLang === 'fr'
-            ? 'Le message ne peut pas être vide.'
-            : 'Message cannot be empty.';
+        contactError.textContent = 'Invalid email address.';
         return;
     }
 
-    if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '…'; }
-
-    try {
-        const res = await fetch(FORMSPREE_ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ firstName, lastName, email, message,
-                _subject: `Acer Books — message from ${firstName} ${lastName}` })
-        });
-
-        if (res.ok) {
-            contactModal.classList.remove('active');
-            contactForm.reset();
-            alert(currentLang === 'fr'
-                ? '✅ Message envoyé ! Nous vous répondrons sous peu.'
-                : '✅ Message sent! We\'ll get back to you shortly.');
-        } else {
-            const data = await res.json().catch(() => ({}));
-            contactError.textContent = data.error
-                || (currentLang === 'fr' ? 'Erreur d\'envoi. Réessayez.' : 'Send failed. Please try again.');
-        }
-    } catch (_) {
-        contactError.textContent = currentLang === 'fr'
-            ? 'Erreur réseau. Réessayez plus tard.'
-            : 'Network error. Please try again later.';
-    } finally {
-        if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = langPack[currentLang].send; }
+    if (message.length === 0) {
+        contactError.textContent = 'Message cannot be empty.';
+        return;
     }
+
+    const subject = 'Contact Form Submission from Acer Books';
+    const body = `First Name: ${firstName}\nLast Name: ${lastName}\nEmail: ${email}\nMessage:\n${message}`;
+    const mailtoLink = `mailto:yiweixidu@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    window.location.href = mailtoLink;
+    contactModal.classList.remove('active');
 });
 
 // Hamburger menu
