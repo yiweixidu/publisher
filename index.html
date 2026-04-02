@@ -37,10 +37,7 @@
                         <span id="adminToggleText" style="font-size:0.8rem;">Admin</span>
                         <span id="adminSwitch" class="switch" role="switch" tabindex="0"></span>
                     </div>
-                    <div class="lang-switch">
-                            <a href="#" id="langEn" class="active">EN</a>
-                            <a href="#" id="langFr">FR</a>
-                    </div>
+
                 </div>
             </nav>
 
@@ -63,7 +60,7 @@
                 <h2 data-i18n="sectionRecent">recent & recommended</h2>
                 <a href="#" class="view-link" id="booksViewAllLink" data-i18n="viewAll">view all <i class="fas fa-chevron-right"></i></a>
             </div>
-            <div id="bookGrid" class="book-grid"></div>
+            <div id="bookGrid" class="book-grid home-grid"></div>
 
             <!-- About panel -->
             <div class="about-panel">
@@ -86,6 +83,11 @@
             <!-- Footer -->
             <footer>
                 <div data-i18n="footerAddr">© 2025 Acer Books — 5470 rue Saint-Laurent, Montreal</div>
+                <div class="footer-lang-switch">
+                    <a href="#" id="langEn" class="footer-lang active">EN</a>
+                    <span class="footer-lang-sep">|</span>
+                    <a href="#" id="langFr" class="footer-lang">FR</a>
+                </div>
                 <div class="footer-links">
                     <a href="#"><i class="fab fa-instagram"></i></a>
                     <a href="#"><i class="fab fa-facebook-f"></i></a>
@@ -102,7 +104,16 @@
                 <button class="btn-outline-red" id="backToHomeFromBooks" data-i18n="backToHome"><i class="fas fa-arrow-left"></i> Back to Home</button>
             </div>
 
-            <!-- ── Filter Bar (FR #1) ── -->
+            <!-- Category Tabs -->
+            <div class="books-category-tabs">
+                <button class="cat-tab active" data-cat="all"        data-i18n="catAll">All</button>
+                <button class="cat-tab"        data-cat="poems"      data-i18n="catPoems">Acer Poems</button>
+                <button class="cat-tab"        data-cat="novels"     data-i18n="catNovels">Acer Novels</button>
+                <button class="cat-tab"        data-cat="children"   data-i18n="catChildren">Acer Children</button>
+                <button class="cat-tab"        data-cat="literature" data-i18n="catLiterature">Acer Literature</button>
+            </div>
+
+            <!-- Filter Bar -->
             <div class="books-filter-bar">
                 <div class="books-filter-row">
                     <div class="books-search-wrap">
@@ -125,18 +136,18 @@
                         <option value="" data-i18n="filterAllAuthors">All Authors</option>
                     </select>
                     <select id="booksSortFilter" class="books-filter-select">
-                        <option value="title"    data-i18n="sortTitle">Sort by Title</option>
-                        <option value="author"   data-i18n="sortAuthor">Sort by Author</option>
+                        <option value="title"     data-i18n="sortTitle">Sort by Title</option>
+                        <option value="author"    data-i18n="sortAuthor">Sort by Author</option>
                         <option value="price_asc" data-i18n="sortPriceAsc">Price: Low → High</option>
                         <option value="price_desc" data-i18n="sortPriceDesc">Price: High → Low</option>
-                        <option value="pub_date" data-i18n="sortPubDate">Publication Date</option>
+                        <option value="pub_date"  data-i18n="sortPubDate">Publication Date</option>
                     </select>
                     <div class="books-price-range">
                         <input type="number" id="booksPriceMin" class="books-price-input" placeholder="Min $" min="0">
                         <span class="price-sep">–</span>
                         <input type="number" id="booksPriceMax" class="books-price-input" placeholder="Max $" min="0">
                     </div>
-                    <button id="booksFilterApply" class="btn-outline-red btn-sm" data-i18n="filterApply">Apply</button>
+                    <button id="booksFilterApply" class="btn-sm" data-i18n="filterApply">Apply</button>
                     <button id="booksFilterReset" class="btn-sm-ghost" data-i18n="filterReset">Reset</button>
                 </div>
             </div>
@@ -159,6 +170,11 @@
                     <h2 id="detailAuthor" class="detail-author"></h2>
                     <div id="detailPrice" class="detail-price"></div>
                     <div id="detailAvailability" class="detail-availability"></div>
+                    <!-- Format selector -->
+                    <div class="format-selector" id="detailFormatSelector" style="display:none;">
+                        <button class="format-btn active" data-fmt="paperback" data-i18n="paperback">Paperback</button>
+                        <button class="format-btn" data-fmt="hardcover" data-i18n="hardcover">Hardcover</button>
+                    </div>
                     <div class="detail-actions">
                         <button class="btn-primary" id="detailAddToCart"><i class="fas fa-shopping-cart"></i> ADD TO CART</button>
                         <button class="btn-secondary" id="detailAddToWishList"><i class="fas fa-heart"></i> ADD TO WISH LIST</button>
@@ -201,6 +217,11 @@
                 <div class="modal-author" id="modalAuthor"></div>
                 <div class="modal-price" id="modalPrice"></div>
                 <div class="modal-availability" id="modalAvailability">At Distributor - We Can Usually Get It in 3-8 Days! NON-RETURNABLE - Arrival Times Vary, Often 1-2 Weeks</div>
+                <!-- Format selector -->
+                <div class="format-selector" id="modalFormatSelector" style="display:none;">
+                    <button class="format-btn active" data-fmt="paperback" data-i18n="paperback">Paperback</button>
+                    <button class="format-btn" data-fmt="hardcover" data-i18n="hardcover">Hardcover</button>
+                </div>
                 <div class="modal-actions">
                     <button class="btn-primary" id="modalAddToCart"><i class="fas fa-shopping-cart"></i> ADD TO CART</button>
                     <button class="btn-secondary" id="modalAddToWishList"><i class="fas fa-heart"></i> ADD TO WISH LIST</button>
@@ -311,33 +332,129 @@
         </div>
     </div>
 
-    <!-- Checkout Modal -->
+    <!-- Checkout Modal — Multi-Step -->
     <div id="checkoutModal" class="modal-overlay">
         <div class="modal-content checkout-modal-content">
             <span class="modal-close" id="checkoutModalClose"><i class="fas fa-times"></i></span>
             <h2 class="checkout-title" data-i18n="checkoutTitle">Checkout</h2>
-            <form id="paymentForm">
-                <div class="form-group">
-                    <label for="cardName" data-i18n="nameOnCard">Name on Card</label>
-                    <input type="text" id="cardName" class="checkout-input" placeholder="John Doe" required>
+
+            <!-- Progress Bar -->
+            <div class="co-progress">
+                <div class="co-step-dot active" data-step="1"><span>1</span><small data-i18n="checkoutStepShipping">Shipping</small></div>
+                <div class="co-line"></div>
+                <div class="co-step-dot" data-step="2"><span>2</span><small data-i18n="checkoutStepDelivery">Delivery</small></div>
+                <div class="co-line"></div>
+                <div class="co-step-dot" data-step="3"><span>3</span><small data-i18n="checkoutStepPayment">Payment</small></div>
+                <div class="co-line"></div>
+                <div class="co-step-dot" data-step="4"><span>4</span><small data-i18n="checkoutStepReview">Review</small></div>
+            </div>
+
+            <!-- Step 1: Shipping Address -->
+            <div class="co-panel" id="coStep1">
+                <div class="form-row">
+                    <div class="form-group half"><label data-i18n="contactFirstName">First Name *</label><input type="text" id="shipFirstName" class="checkout-input" required></div>
+                    <div class="form-group half"><label data-i18n="contactLastName">Last Name *</label><input type="text" id="shipLastName" class="checkout-input" required></div>
                 </div>
-                <div class="form-group">
-                    <label for="cardNumber" data-i18n="cardNumber">Card Number</label>
-                    <input type="text" id="cardNumber" class="checkout-input" placeholder="1234 5678 9012 3456" required>
+                <div class="form-group"><label data-i18n="contactEmail">Email *</label><input type="email" id="shipEmail" class="checkout-input" required></div>
+                <div class="form-group"><label data-i18n="shipAddress">Street Address *</label><input type="text" id="shipAddress" class="checkout-input" placeholder="123 Main St" required></div>
+                <div class="form-row">
+                    <div class="form-group half"><label data-i18n="shipCity">City *</label><input type="text" id="shipCity" class="checkout-input" required></div>
+                    <div class="form-group half"><label data-i18n="shipProvince">Province / State *</label><input type="text" id="shipProvince" class="checkout-input" required></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group half">
-                        <label for="expiry" data-i18n="expiry">Expiry (MM/YY)</label>
-                        <input type="text" id="expiry" class="checkout-input" placeholder="MM/YY" required>
-                    </div>
-                    <div class="form-group half">
-                        <label for="cvv" data-i18n="cvv">CVV</label>
-                        <input type="text" id="cvv" class="checkout-input" placeholder="123" required>
+                    <div class="form-group half"><label data-i18n="shipPostal">Postal Code *</label><input type="text" id="shipPostal" class="checkout-input" required></div>
+                    <div class="form-group half"><label data-i18n="shipCountry">Country</label>
+                        <select id="shipCountry" class="checkout-input">
+                            <option value="CA">Canada</option><option value="US">United States</option>
+                            <option value="GB">United Kingdom</option><option value="FR">France</option><option value="OTHER">Other</option>
+                        </select>
                     </div>
                 </div>
-                <button type="submit" class="btn-primary" id="payNowBtn"><span data-i18n="payNow">Pay Now</span></button>
-            </form>
-            <div id="paymentError" class="payment-error"></div>
+                <div class="co-error" id="coErr1"></div>
+                <div class="co-nav"><button class="btn-primary" id="coNext1"><span data-i18n="checkoutContinue">Continue</span> →</button></div>
+            </div>
+
+            <!-- Step 2: Delivery Method -->
+            <div class="co-panel hidden" id="coStep2">
+                <div class="shipping-options">
+                    <label class="shipping-option"><input type="radio" name="shippingMethod" value="standard" checked>
+                        <div class="so-body"><div class="so-name" data-i18n="shippingStandard">Standard Shipping</div><div class="so-desc" data-i18n="shippingStandardDesc">5–10 business days</div></div>
+                        <div class="so-price">$5.00</div>
+                    </label>
+                    <label class="shipping-option"><input type="radio" name="shippingMethod" value="express">
+                        <div class="so-body"><div class="so-name" data-i18n="shippingExpress">Express Shipping</div><div class="so-desc" data-i18n="shippingExpressDesc">2–3 business days</div></div>
+                        <div class="so-price">$15.00</div>
+                    </label>
+                    <label class="shipping-option"><input type="radio" name="shippingMethod" value="pickup">
+                        <div class="so-body"><div class="so-name" data-i18n="shippingPickup">Local Pickup</div><div class="so-desc" data-i18n="shippingPickupDesc">Montréal — contact us for details</div></div>
+                        <div class="so-price" data-i18n="shippingFree">FREE</div>
+                    </label>
+                </div>
+                <div class="co-nav">
+                    <button class="btn-outline-red" id="coBack2">← <span data-i18n="back">Back</span></button>
+                    <button class="btn-primary" id="coNext2"><span data-i18n="checkoutContinue">Continue</span> →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Payment -->
+            <div class="co-panel hidden" id="coStep3">
+                <div class="payment-method-tabs">
+                    <button class="pay-tab active" data-method="card"><i class="fas fa-credit-card"></i> <span data-i18n="payCard">Card</span></button>
+                    <button class="pay-tab" data-method="paypal"><i class="fab fa-paypal"></i> PayPal</button>
+                </div>
+
+                <!-- Card panel -->
+                <div id="payCardPanel" class="pay-panel">
+                    <div class="gateway-notice">
+                        <i class="fas fa-lock"></i>
+                        <span data-i18n="stripeNotice">Stripe-ready — add <code>STRIPE_PK</code> in constants.js to activate live payments</span>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="nameOnCard">Name on Card</label>
+                        <input type="text" id="cardName" class="checkout-input" placeholder="Full Name">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="cardNumber">Card Number</label>
+                        <div class="card-input-wrap">
+                            <input type="text" id="cardNumber" class="checkout-input" placeholder="1234 5678 9012 3456" maxlength="19">
+                            <span class="card-icons"><i class="fab fa-cc-visa"></i><i class="fab fa-cc-mastercard"></i><i class="fab fa-cc-amex"></i></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half"><label data-i18n="expiry">Expiry (MM/YY)</label><input type="text" id="expiry" class="checkout-input" placeholder="MM / YY" maxlength="7"></div>
+                        <div class="form-group half"><label data-i18n="cvv">CVV</label><input type="text" id="cvv" class="checkout-input" placeholder="123" maxlength="4"></div>
+                    </div>
+                </div>
+
+                <!-- PayPal panel -->
+                <div id="payPaypalPanel" class="pay-panel hidden">
+                    <div class="gateway-notice paypal-notice">
+                        <i class="fab fa-paypal"></i>
+                        <span data-i18n="paypalNotice">PayPal SDK ready — add <code>PAYPAL_CLIENT_ID</code> in constants.js to activate</span>
+                    </div>
+                    <div id="paypalButtonContainer" class="paypal-btn-area">
+                        <button class="paypal-demo-btn" type="button">
+                            <i class="fab fa-paypal"></i> Pay with PayPal <small>(demo)</small>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="paymentError" class="payment-error"></div>
+                <div class="co-nav">
+                    <button class="btn-outline-red" id="coBack3">← <span data-i18n="back">Back</span></button>
+                    <button class="btn-primary" id="coNext3"><span data-i18n="checkoutReviewOrder">Review Order</span> →</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Review & Place Order -->
+            <div class="co-panel hidden" id="coStep4">
+                <div id="coReviewContent" class="co-review"></div>
+                <div id="coReviewError" class="payment-error"></div>
+                <div class="co-nav">
+                    <button class="btn-outline-red" id="coBack4">← <span data-i18n="back">Back</span></button>
+                    <button class="btn-primary" id="coPlaceOrder"><i class="fas fa-lock"></i> <span data-i18n="placeOrder">Place Order</span></button>
+                </div>
+            </div>
         </div>
     </div>
 
