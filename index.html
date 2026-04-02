@@ -171,7 +171,11 @@
                         <span id="detailHcBadge" class="hc-badge" style="display:none;">HARDCOVER</span>
                     </div>
                     <div id="detailAvailability" class="detail-availability"></div>
-                    <!-- Format selector replaced by clickable HC badge -->
+                    <!-- Format selector (shown when hardcover price exists) -->
+                    <div class="format-selector" id="detailFormatSelector" style="display:none;">
+                        <button class="format-btn active" data-fmt="paperback" data-i18n="paperback">Paperback</button>
+                        <button class="format-btn" data-fmt="hardcover" data-i18n="hardcover">Hardcover</button>
+                    </div>
                     <div class="detail-actions">
                         <button class="btn-primary" id="detailAddToCart"><i class="fas fa-shopping-cart"></i> ADD TO CART</button>
                         <button class="btn-secondary" id="detailAddToWishList"><i class="fas fa-heart"></i> ADD TO WISH LIST</button>
@@ -217,7 +221,11 @@
                     <span id="modalHcBadge" class="hc-badge" style="display:none;">HARDCOVER</span>
                 </div>
                 <div class="modal-availability" id="modalAvailability">At Distributor - We Can Usually Get It in 3-8 Days! NON-RETURNABLE - Arrival Times Vary, Often 1-2 Weeks</div>
-                <!-- Format selector replaced by clickable HC badge -->
+                <!-- Format selector (shown when hardcover price exists) -->
+                <div class="format-selector" id="modalFormatSelector" style="display:none;">
+                    <button class="format-btn active" data-fmt="paperback" data-i18n="paperback">Paperback</button>
+                    <button class="format-btn" data-fmt="hardcover" data-i18n="hardcover">Hardcover</button>
+                </div>
                 <div class="modal-actions">
                     <button class="btn-primary" id="modalAddToCart"><i class="fas fa-shopping-cart"></i> ADD TO CART</button>
                     <button class="btn-secondary" id="modalAddToWishList"><i class="fas fa-heart"></i> ADD TO WISH LIST</button>
@@ -256,8 +264,9 @@
         <div class="login-modal">
             <span class="login-close" id="loginClose"><i class="fas fa-times"></i></span>
             <h2 class="login-title" data-i18n="login">Login</h2>
-            <input type="text" id="loginUsername" class="login-input" placeholder="Username">
-            <input type="password" id="loginPassword" class="login-input" placeholder="Password">
+            <input type="text" id="loginUsername" class="login-input" placeholder="Email" autocomplete="email">
+            <input type="password" id="loginPassword" class="login-input" placeholder="Password" autocomplete="current-password">
+            <a href="#" id="forgotPasswordLink" class="forgot-pw-link">Forgot password?</a>
             <button id="loginBtn" class="login-btn" data-i18n="loginBtn">Sign In</button>
             <a href="#" id="goToSignupLink" data-i18n="noAccount">Don't have an account? Sign up</a>
             <div id="loginError" class="login-error"></div>
@@ -271,7 +280,7 @@
         <div class="login-modal">
             <span class="login-close" id="signupClose"><i class="fas fa-times"></i></span>
             <h2 class="login-title" data-i18n="signup">Sign Up</h2>
-            <input type="text" id="signupUsername" class="login-input" placeholder="Username *" required>
+            <input type="text" id="signupUsername" class="login-input" placeholder="Email *" autocomplete="email" required>
             <input type="text" id="signupDisplayName" class="login-input" placeholder="Display Name (optional)">
             <input type="password" id="signupPassword" class="login-input" placeholder="Password *" required>
             <input type="password" id="signupConfirmPassword" class="login-input" placeholder="Confirm Password *" required>
@@ -367,6 +376,7 @@
                     </div>
                 </div>
                 <div class="co-error" id="coErr1"></div>
+                <label class="save-address-label"><input type="checkbox" id="saveAddressCheck"> Save this address for future use</label>
                 <div class="co-nav"><button class="btn-primary" id="coNext1"><span data-i18n="checkoutContinue">Continue</span> →</button></div>
             </div>
 
@@ -708,6 +718,120 @@
                 <button type="submit" class="btn-primary" id="sendContactBtn"><span data-i18n="send">Send</span></button>
             </form>
             <div id="contactError" class="contact-error"></div>
+        </div>
+    </div>
+
+    <!-- Account Dashboard Modal -->
+    <div id="accountModal" class="login-overlay">
+        <div class="modal-content account-modal-content">
+            <span class="modal-close" id="accountModalClose"><i class="fas fa-times"></i></span>
+
+            <div class="acc-header">
+                <div class="acc-avatar"><span id="accAvatarInitial">?</span></div>
+                <div class="acc-header-info">
+                    <div class="acc-header-name" id="accHeaderName"></div>
+                    <div class="acc-header-email" id="accHeaderEmail"></div>
+                </div>
+            </div>
+
+            <div class="acc-nav">
+                <button class="acc-tab active" data-tab="profile"><i class="fas fa-user"></i> Profile</button>
+                <button class="acc-tab" data-tab="orders"><i class="fas fa-box"></i> Orders</button>
+                <button class="acc-tab" data-tab="wishlist"><i class="fas fa-heart"></i> Wishlist</button>
+                <button class="acc-tab" data-tab="addresses"><i class="fas fa-map-marker-alt"></i> Addresses</button>
+            </div>
+
+            <div class="acc-body">
+
+                <!-- Profile tab -->
+                <div class="acc-pane active" id="acc-profile">
+                    <p class="acc-section-title">Personal Information</p>
+                    <div class="acc-form-group">
+                        <label>Display Name</label>
+                        <input type="text" id="profileDisplayName" class="acc-input" placeholder="Your name">
+                    </div>
+                    <div class="acc-form-group">
+                        <label>Email</label>
+                        <input type="email" id="profileEmail" class="acc-input" readonly>
+                    </div>
+                    <button class="btn-primary acc-action-btn" id="saveProfileBtn">Save Changes</button>
+
+                    <p class="acc-section-title">Change Password</p>
+                    <div class="acc-form-group">
+                        <label>New Password</label>
+                        <input type="password" id="profileNewPw" class="acc-input" placeholder="At least 6 characters" autocomplete="new-password">
+                    </div>
+                    <div class="acc-form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="profileConfirmPw" class="acc-input" placeholder="Repeat new password" autocomplete="new-password">
+                    </div>
+                    <button class="btn-outline-red acc-action-btn" id="changePasswordBtn">Update Password</button>
+                    <div id="profileMsg" class="acc-msg"></div>
+                </div>
+
+                <!-- Orders tab -->
+                <div class="acc-pane" id="acc-orders">
+                    <div id="orderHistoryList"></div>
+                </div>
+
+                <!-- Wishlist tab -->
+                <div class="acc-pane" id="acc-wishlist">
+                    <div id="wishlistItems"></div>
+                </div>
+
+                <!-- Addresses tab -->
+                <div class="acc-pane" id="acc-addresses">
+                    <div id="savedAddressesList"></div>
+                    <button class="btn-outline-red acc-action-btn" id="addAddressBtn" style="margin-top:1rem;">
+                        <i class="fas fa-plus"></i> Add Address
+                    </button>
+                    <div class="add-address-form" id="addAddressForm">
+                        <p class="acc-section-title">New Address</p>
+                        <div class="add-address-row">
+                            <div class="acc-form-group"><label>First Name</label><input type="text" id="addrFirstName" class="acc-input"></div>
+                            <div class="acc-form-group"><label>Last Name</label><input type="text" id="addrLastName" class="acc-input"></div>
+                        </div>
+                        <div class="acc-form-group"><label>Street Address</label><input type="text" id="addrStreet" class="acc-input"></div>
+                        <div class="add-address-row">
+                            <div class="acc-form-group"><label>City</label><input type="text" id="addrCity" class="acc-input"></div>
+                            <div class="acc-form-group"><label>Province / State</label><input type="text" id="addrProvince" class="acc-input"></div>
+                        </div>
+                        <div class="add-address-row">
+                            <div class="acc-form-group"><label>Postal Code</label><input type="text" id="addrPostal" class="acc-input"></div>
+                            <div class="acc-form-group"><label>Country</label>
+                                <select id="addrCountry" class="acc-input">
+                                    <option value="CA">Canada</option>
+                                    <option value="US">United States</option>
+                                    <option value="GB">United Kingdom</option>
+                                    <option value="FR">France</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="acc-form-actions">
+                            <button class="btn-primary acc-action-btn" id="saveAddressBtn">Save</button>
+                            <button class="btn-outline-red acc-action-btn" id="cancelAddressBtn">Cancel</button>
+                        </div>
+                        <div id="addAddressMsg" class="acc-msg"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Reset Modal -->
+    <div id="resetPasswordOverlay" class="login-overlay">
+        <div class="login-modal">
+            <span class="login-close" id="resetPasswordClose"><i class="fas fa-times"></i></span>
+            <h2 class="login-title">Reset Password</h2>
+            <p class="reset-pw-desc">Enter your email address and we'll send you a link to reset your password.</p>
+            <input type="email" id="resetEmail" class="login-input" placeholder="Email address" autocomplete="email">
+            <button id="sendResetBtn" class="login-btn">Send Reset Link</button>
+            <div id="resetMsg" class="acc-msg" style="text-align:center;margin-top:.8rem;"></div>
+            <p style="text-align:center;margin-top:1.2rem;">
+                <a href="#" id="backToLoginFromReset" style="font-size:.85rem;color:#b00;">← Back to Login</a>
+            </p>
         </div>
     </div>
 
