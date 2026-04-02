@@ -580,28 +580,30 @@ export function renderBookDetail(book) {
     document.getElementById('detailPages').innerText = book.pages || '170';
     updateDetailLanguage(book);
     renderDetailReviews(book.id, currentLang, currentUser);
-    // HC badge + format selector
+    // HC badge acts as the format toggle button
     const detailHcBadge = document.getElementById('detailHcBadge');
-    const detailFmtSel  = document.getElementById('detailFormatSelector');
     if (book.price_hardcover) {
-        if (detailHcBadge) detailHcBadge.style.display = '';
-        if (detailFmtSel) {
-            detailFmtSel.style.display = '';
-            detailFmtSel.querySelectorAll('.format-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.fmt === 'paperback');
-                btn.onclick = () => {
-                    currentModalFormat = btn.dataset.fmt;
-                    detailFmtSel.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    const price = currentModalFormat === 'hardcover' ? book.price_hardcover : book.price;
-                    document.getElementById('detailPrice').innerText = `$${parseFloat(price).toFixed(2)}`;
-                    if (detailHcBadge) detailHcBadge.classList.toggle('hc-badge--active', currentModalFormat === 'hardcover');
-                };
+        if (detailHcBadge) {
+            detailHcBadge.style.display = '';
+            detailHcBadge.style.cursor = 'pointer';
+            detailHcBadge.classList.remove('hc-badge--active');
+            // Clone to drop any previously attached listener
+            const freshDetail = detailHcBadge.cloneNode(true);
+            detailHcBadge.parentNode.replaceChild(freshDetail, detailHcBadge);
+            freshDetail.addEventListener('click', () => {
+                if (currentModalFormat === 'hardcover') {
+                    currentModalFormat = 'paperback';
+                    freshDetail.classList.remove('hc-badge--active');
+                    document.getElementById('detailPrice').innerText = `$${parseFloat(book.price).toFixed(2)}`;
+                } else {
+                    currentModalFormat = 'hardcover';
+                    freshDetail.classList.add('hc-badge--active');
+                    document.getElementById('detailPrice').innerText = `$${parseFloat(book.price_hardcover).toFixed(2)}`;
+                }
             });
         }
     } else {
         if (detailHcBadge) detailHcBadge.style.display = 'none';
-        if (detailFmtSel)  detailFmtSel.style.display  = 'none';
     }
     document.getElementById('detailAddToCart').onclick = () => {
         addToCart(book, currentModalFormat);
@@ -710,28 +712,29 @@ export function openModal(book) {
     }
     if (modalAddToCart) modalAddToCart.dataset.bookId = book.id;
     if (modalAddToWishList) modalAddToWishList.dataset.bookId = book.id;
-    // HC badge + format selector
+    // HC badge acts as the format toggle button
     const modalHcBadge = document.getElementById('modalHcBadge');
-    const modalFmtSel  = document.getElementById('modalFormatSelector');
     if (book.price_hardcover) {
-        if (modalHcBadge) modalHcBadge.style.display = '';
-        if (modalFmtSel) {
-            modalFmtSel.style.display = '';
-            modalFmtSel.querySelectorAll('.format-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.fmt === 'paperback');
-                btn.onclick = () => {
-                    currentModalFormat = btn.dataset.fmt;
-                    modalFmtSel.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    const price = currentModalFormat === 'hardcover' ? book.price_hardcover : book.price;
-                    if (modalPrice) modalPrice.innerText = `$${parseFloat(price).toFixed(2)}`;
-                    if (modalHcBadge) modalHcBadge.classList.toggle('hc-badge--active', currentModalFormat === 'hardcover');
-                };
+        if (modalHcBadge) {
+            modalHcBadge.style.display = '';
+            modalHcBadge.style.cursor = 'pointer';
+            modalHcBadge.classList.remove('hc-badge--active');
+            const freshModal = modalHcBadge.cloneNode(true);
+            modalHcBadge.parentNode.replaceChild(freshModal, modalHcBadge);
+            freshModal.addEventListener('click', () => {
+                if (currentModalFormat === 'hardcover') {
+                    currentModalFormat = 'paperback';
+                    freshModal.classList.remove('hc-badge--active');
+                    if (modalPrice) modalPrice.innerText = `$${parseFloat(book.price).toFixed(2)}`;
+                } else {
+                    currentModalFormat = 'hardcover';
+                    freshModal.classList.add('hc-badge--active');
+                    if (modalPrice) modalPrice.innerText = `$${parseFloat(book.price_hardcover).toFixed(2)}`;
+                }
             });
         }
     } else {
         if (modalHcBadge) modalHcBadge.style.display = 'none';
-        if (modalFmtSel)  modalFmtSel.style.display  = 'none';
     }
     if (modalOverlay) modalOverlay.classList.add('active');
 }
