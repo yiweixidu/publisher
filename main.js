@@ -453,6 +453,59 @@ printReceiptBtn?.addEventListener('click', () => {
     printWindow.document.close();
 });
 
+// ── Navbar section-scroll ─────────────────────────────────────────────────
+// Each nav link scrolls to its homepage section.
+// If we're not on the homepage, navigate there first then scroll.
+
+function isOnHomepage() {
+    const mainContent = document.getElementById('mainContent');
+    return mainContent && mainContent.style.display !== 'none';
+}
+
+function scrollToSection(sectionId) {
+    const el = sectionId ? document.getElementById(sectionId) : null;
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function navToSection(sectionId) {
+    if (isOnHomepage()) {
+        scrollToSection(sectionId);
+    } else {
+        // Navigate home, then scroll after the route renders
+        navigateTo('/');
+        // routeChanged fires after handleRoute(); give the DOM a tick to paint
+        const onRouteChanged = () => {
+            window.removeEventListener('routeChanged', onRouteChanged);
+            setTimeout(() => scrollToSection(sectionId), 80);
+        };
+        window.addEventListener('routeChanged', onRouteChanged);
+    }
+}
+
+document.getElementById('navHome')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navToSection(null); // scroll to very top
+});
+
+document.getElementById('navBooks')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navToSection('sectionBooks');
+});
+
+document.getElementById('navAbout')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navToSection('sectionAbout');
+});
+
+document.getElementById('navNews')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navToSection('sectionNews');
+});
+
 // Navigation links
 booksViewAllLink?.addEventListener('click', (e) => { e.preventDefault(); resetBooksPageState(); navigateTo('/books'); });
 newsMoreLink?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('/news'); });
