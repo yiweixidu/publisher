@@ -77,19 +77,31 @@ function initModalTabs() {
 
 document.addEventListener('DOMContentLoaded', initModalTabs);
 
+// ============================================
+// Language Switcher — Dynamic Content Handler
+// FR #7 — Language Switcher | Card 18
+// Acer Books — Publisher E-commerce Platform
+// Contributor: Ana-Laurya Fay
+// Date: 2026-03-29
+// ============================================
+// Listens for the custom 'languageChanged' event fired by setLanguage() in i18n.js
+// Re-renders all visible dynamic content in the selected language
+// Fulfills checklist item: "Ensure dynamic content (books, news) switches language"
+
 function handleLanguageChange(event) {
-    const lang = event.detail;
-    translateUI(lang);
-    renderNews();
-    if (modalOverlay?.classList.contains('active')) updateModalLanguage();
-    if (cartModal?.classList.contains('active')) renderCartModal();
-    if (newsListPage && newsListPage.style.display === 'block') renderAllNews();
-    if (newsDetailPage && newsDetailPage.style.display === 'block' && currentNewsItem) renderNewsDetail(currentNewsItem);
-    if (detailPage && detailPage.style.display === 'block' && currentModalBook) {
-        updateDetailLanguage(currentModalBook);
-        renderDetailReviews(currentModalBook.id, lang, currentUser);
+    const lang = event.detail; // extract selected language from event
+    translateUI(lang); // update all static UI text
+    renderNews(); // re-render news section
+    renderBooks(); // added by Ana-Laurya Fay — re-renders homepage book grid
+    if (modalOverlay?.classList.contains('active')) updateModalLanguage(); // update open book modal if active
+    if (cartModal?.classList.contains('active')) renderCartModal(); // update open cart if active
+    if (newsListPage && newsListPage.style.display === 'block') renderAllNews(); // update news list page if visible
+    if (newsDetailPage && newsDetailPage.style.display === 'block' && currentNewsItem) renderNewsDetail(currentNewsItem); // update news detail page if visible
+    if (detailPage && detailPage.style.display === 'block' && currentModalBook) { // update book detail page if visible
+        updateDetailLanguage(currentModalBook); // update book detail text in selected language
+        renderDetailReviews(currentModalBook.id, lang, currentUser); // update reviews in selected language
     }
-    if (booksPage && booksPage.style.display === 'block') renderAllBooks();
+    if (booksPage && booksPage.style.display === 'block') renderAllBooks(); // update full books page if visible
 }
 
 window.addEventListener('languageChanged', handleLanguageChange);
