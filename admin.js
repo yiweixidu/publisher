@@ -26,6 +26,8 @@ const formPubDate = document.getElementById('formPubDate');
 const formPages = document.getElementById('formPages');
 const formLanguage = document.getElementById('formLanguage');
 const formPrice = document.getElementById('formPrice');
+const formPriceHardcover = document.getElementById('formPriceHardcover');
+const formAcerSeries = document.getElementById('formAcerSeries');
 const formStockStatus = document.getElementById('formStockStatus');
 const formCover = document.getElementById('formCover');
 const coverPreview = document.getElementById('coverPreview');
@@ -126,7 +128,7 @@ export async function renderAdminBookList() {
         <div class="admin-book-row" data-id="${book.id}">
             <div>${title}</div>
             <div>${author}</div>
-            <div>$${book.price}</div>
+            <div>$${parseFloat(book.price).toFixed(2)}${book.price_hardcover ? `<span class="admin-hc-tag"> / HC $${parseFloat(book.price_hardcover).toFixed(2)}</span>` : ''}</div>
             <div>${book.stock_status || 'In Stock'}</div>
             <div class="actions">
                 <button class="edit-book" data-id="${book.id}" data-i18n="editBook">Edit</button>
@@ -203,6 +205,11 @@ export function openBookFormModal(book = null) {
         formPages.value = book.pages || '';
         formLanguage.value = book.language || '';
         formPrice.value = book.price || '';
+        formPriceHardcover.value = book.price_hardcover || '';
+        if (formAcerSeries) {
+            const series = (book.categories||[]).find(c => c.startsWith('Acer '));
+            formAcerSeries.value = series || '';
+        }
         formStockStatus.value = book.stock_status || 'In Stock';
         if (descriptionQuill) descriptionQuill.root.innerHTML = book.description || '';
         if (bioQuill) bioQuill.root.innerHTML = book.author_bio || '';
@@ -254,13 +261,21 @@ async function saveBookFromForm() {
         title_fr: formTitle.value.trim() || null,
         author: formAuthor.value.trim(),
         author_fr: formAuthor.value.trim() || null,
-        categories: formCategories.value.split(',').map(s => s.trim()).filter(s => s),
+        categories: (() => {
+            const base = formCategories.value.split(',').map(s=>s.trim()).filter(Boolean);
+            const series = formAcerSeries?.value;
+            if (series && !base.includes(series)) base.unshift(series);
+            return base;
+        })(),
         isbn: formIsbn.value.trim(),
         publisher: formPublisher.value.trim(),
         pub_date: formPubDate.value.trim(),
         pages: parseInt(formPages.value) || null,
         language: formLanguage.value.trim(),
         price: parseFloat(formPrice.value).toFixed(2),
+        price_hardcover: formPriceHardcover.value.trim() !== ''
+            ? parseFloat(formPriceHardcover.value)
+            : null,
         stock_status: formStockStatus.value,
         description: document.getElementById('formDescription').value,
         description_fr: document.getElementById('formDescription').value || null,
