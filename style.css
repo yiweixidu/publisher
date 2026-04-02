@@ -1,4 +1,3 @@
-
 * { margin:0; padding:0; box-sizing:border-box; }
 .hidden { display: none !important; }
 body { font-family:'Inter',sans-serif; background:#fff; color:#1e1e1e; line-height:1.5; }
@@ -326,3 +325,213 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .contact-input, .contact-textarea { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; }
 .contact-textarea { resize: vertical; }
 .contact-error { color: #ff0000; font-size: 0.9rem; margin-top: 0.5rem; text-align: center; }
+/* ═══════════════════════════════════════════════════════════════
+   FR #1 — Books Page: Filter Bar, List View & Pagination
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Filter bar wrapper ── */
+.books-filter-bar {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+/* ── Top row: search + view toggle ── */
+.books-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.books-search-wrap {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.books-search-wrap .fa-search {
+    position: absolute;
+    left: 0.85rem;
+    color: #666;
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+.books-search-input {
+    width: 100%;
+    padding: 0.55rem 0.9rem 0.55rem 2.2rem;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #eee;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.books-search-input:focus { border-color: #e00; }
+
+/* ── View toggle buttons ── */
+.books-view-toggle {
+    display: flex;
+    gap: 0.4rem;
+}
+.view-btn {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 7px;
+    color: #888;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.view-btn.active, .view-btn:hover { background: #e00; border-color: #e00; color: #fff; }
+
+/* ── Filter controls row ── */
+.books-filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+.books-filter-select {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #ccc;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.books-filter-select:focus { border-color: #e00; }
+
+.books-price-range {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.price-sep { color: #555; font-size: 0.9rem; }
+.books-price-input {
+    width: 70px;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #ccc;
+    padding: 0.45rem 0.55rem;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.books-price-input:focus { border-color: #e00; }
+.books-price-input::-webkit-inner-spin-button { display: none; }
+
+.btn-sm {
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+    border-radius: 7px;
+    border: 1.5px solid #e00;
+    background: #e00;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+.btn-sm:hover { opacity: 0.85; }
+.btn-sm-ghost {
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+    border-radius: 7px;
+    border: 1.5px solid #444;
+    background: transparent;
+    color: #aaa;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+.btn-sm-ghost:hover { border-color: #e00; color: #e00; }
+
+/* ── Result count ── */
+.books-result-count {
+    font-size: 0.82rem;
+    color: #666;
+    margin: 0 0 0.75rem;
+    letter-spacing: 0.03em;
+}
+
+/* ── List view ── */
+.book-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.book-list-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #1e1e1e;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-radius: 6px;
+}
+.book-list-row:hover { background: #161616; }
+.book-list-cover {
+    width: 48px;
+    height: 68px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    background: #2d2d2d;
+    background-size: cover;
+    background-position: center;
+}
+.book-list-info { flex: 1; min-width: 0; }
+.book-list-title  { font-size: 0.95rem; font-weight: 600; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.book-list-author { font-size: 0.82rem; color: #888; margin-top: 0.2rem; }
+.book-list-meta   { font-size: 0.75rem; color: #555; margin-top: 0.15rem; }
+.book-list-price  { font-size: 0.9rem; font-weight: 700; color: #e00; flex-shrink: 0; }
+
+/* ── Pagination ── */
+.books-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+.page-btn {
+    background: #111;
+    border: 1px solid #2e2e2e;
+    border-radius: 7px;
+    color: #aaa;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.88rem;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.page-btn:hover:not([disabled]) { background: #e00; border-color: #e00; color: #fff; }
+.page-btn.active                { background: #e00; border-color: #e00; color: #fff; font-weight: 700; }
+.page-btn[disabled]             { opacity: 0.3; cursor: default; }
+.page-ellipsis                  { color: #555; font-size: 0.9rem; padding: 0 0.2rem; }
+
+/* ── Responsive tweaks ── */
+@media (max-width: 600px) {
+    .books-filter-controls { gap: 0.4rem; }
+    .books-price-range { display: none; }   /* hide price range on very small screens */
+    .books-filter-select { font-size: 0.78rem; padding: 0.4rem 0.5rem; }
+}
