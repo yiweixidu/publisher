@@ -30,8 +30,17 @@ function updateCartBadge() {
     }
 }
 
-export function addToCart(book) {
-    const existingItem = cart.find(item => item.bookId === book.id);
+function normalizeCover(cover) {
+    if (!cover) return '';
+    if (cover.startsWith('http') || cover.startsWith('/') || cover.startsWith('data:')) return cover;
+    return '/' + cover;
+}
+
+export function addToCart(book, format = 'paperback') {
+    const price = (format === 'hardcover' && book.price_hardcover)
+        ? parseFloat(book.price_hardcover)
+        : parseFloat(book.price);
+    const existingItem = cart.find(item => item.bookId === book.id && item.format === format);
     if (existingItem) {
         existingItem.quantity += 1;
     } else {
@@ -41,9 +50,12 @@ export function addToCart(book) {
             title_fr: book.title_fr,
             author: book.author,
             author_fr: book.author_fr,
-            price: parseFloat(book.price),
-            cover: book.cover,
-            quantity: 1
+            price: price,
+            price_paperback: parseFloat(book.price),
+            price_hardcover: book.price_hardcover ? parseFloat(book.price_hardcover) : null,
+            cover: normalizeCover(book.cover),
+            quantity: 1,
+            format: format
         });
     }
     saveCart();
@@ -64,11 +76,12 @@ export function renderCartModal() {
     cart.forEach((item, index) => {
         const displayTitle = (currentLang === 'fr' && item.title_fr) ? item.title_fr : item.title;
         const displayAuthor = (currentLang === 'fr' && item.author_fr) ? item.author_fr : item.author;
+        const fmtLabel = item.format === 'hardcover' ? ' <span class="cart-fmt-badge">HC</span>' : ' <span class="cart-fmt-badge">PB</span>';
         html += `
             <div class="cart-item" data-index="${index}">
                 <div class="cart-item-cover" style="background-image: url('${item.cover || ''}');"></div>
                 <div class="cart-item-details">
-                    <div class="cart-item-title">${displayTitle}</div>
+                    <div class="cart-item-title">${displayTitle}${fmtLabel}</div>
                     <div class="cart-item-author">${displayAuthor}</div>
                     <div class="cart-item-price">$${item.price.toFixed(2)}</div>
                 </div>
