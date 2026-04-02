@@ -132,6 +132,12 @@ export const langPack = {
         statusDraft: 'Draft',
         publish: 'Publish',
         unpublish: 'Unpublish',
+        filterAllLanguages: 'All Languages',
+        filterAllAuthors: 'All Authors',
+        sortPriceAsc: 'Price: Low → High',
+        sortPriceDesc: 'Price: High → Low',
+        filterApply: 'Apply',
+        filterReset: 'Reset',
     },
 
     fr: {
@@ -270,6 +276,12 @@ export const langPack = {
         statusDraft: "Brouillon",
         publish: "Publier",
         unpublish: "Dépublier",
+        filterAllLanguages: 'Toutes les langues',
+        filterAllAuthors: 'Tous les auteurs',
+        sortPriceAsc: 'Prix : croissant',
+        sortPriceDesc: 'Prix : décroissant',
+        filterApply: 'Appliquer',
+        filterReset: 'Réinitialiser',
     }
 };
 

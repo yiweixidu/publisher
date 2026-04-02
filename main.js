@@ -3,7 +3,7 @@ import { BASE_PATH } from './constants.js';
 import { 
     setLanguage, renderBooks, renderAllBooks, renderNews, renderAllNews, renderNewsDetail,
     renderBookDetail, updateDetailLanguage, openModal, closeModal, translateUI, resetMetaTags, 
-    updateMetaTags, currentModalBook, currentNewsItem
+    updateMetaTags, currentModalBook, currentNewsItem, resetBooksPageState
 } from './ui.js';
 import { langPack, currentLang } from './i18n.js';
 import { 
@@ -311,7 +311,7 @@ printReceiptBtn?.addEventListener('click', () => {
 });
 
 // Navigation links
-booksViewAllLink?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('/books'); });
+booksViewAllLink?.addEventListener('click', (e) => { e.preventDefault(); resetBooksPageState(); navigateTo('/books'); });
 newsMoreLink?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('/news'); });
 backToHomeFromNews?.addEventListener('click', () => navigateTo('/'));
 backToNewsList?.addEventListener('click', () => navigateTo('/news'));
@@ -371,48 +371,80 @@ contactModal.addEventListener('click', (e) => {
     if (e.target === contactModal) contactModal.classList.remove('active');
 });
 
-contactForm.addEventListener('submit', (e) => {
+// ── Contact form → Formspree ──────────────────────────────────────────────
+// Sign up at https://formspree.io, create a form, and replace the ID below.
+// Free tier: 50 submissions / month, no backend needed.
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/YOUR_FORM_ID'; // ← replace
+
+contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const firstName = document.getElementById('contactFirstName').value.trim();
-    const lastName = document.getElementById('contactLastName').value.trim();
-    const email = document.getElementById('contactEmail').value.trim();
-    const message = document.getElementById('contactMessage').value.trim();
+    const lastName  = document.getElementById('contactLastName').value.trim();
+    const email     = document.getElementById('contactEmail').value.trim();
+    const message   = document.getElementById('contactMessage').value.trim();
     const contactError = document.getElementById('contactError');
+    const sendBtn   = contactForm.querySelector('[type="submit"]');
 
     if (contactError) contactError.textContent = '';
 
     function isValidName(name) {
-        if (name.length === 0) return false;
-        return /[\p{L}]/u.test(name);
+        return name.length > 0 && /[\p{L}]/u.test(name);
     }
-
     if (!isValidName(firstName)) {
-        contactError.textContent = 'Please enter a valid first name (letters only).';
+        contactError.textContent = currentLang === 'fr'
+            ? 'Veuillez entrer un prénom valide.'
+            : 'Please enter a valid first name.';
         return;
     }
     if (!isValidName(lastName)) {
-        contactError.textContent = 'Please enter a valid last name (letters only).';
+        contactError.textContent = currentLang === 'fr'
+            ? 'Veuillez entrer un nom de famille valide.'
+            : 'Please enter a valid last name.';
         return;
     }
-
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
-        contactError.textContent = 'Invalid email address.';
+        contactError.textContent = currentLang === 'fr'
+            ? 'Adresse courriel invalide.'
+            : 'Invalid email address.';
+        return;
+    }
+    if (!message) {
+        contactError.textContent = currentLang === 'fr'
+            ? 'Le message ne peut pas être vide.'
+            : 'Message cannot be empty.';
         return;
     }
 
-    if (message.length === 0) {
-        contactError.textContent = 'Message cannot be empty.';
-        return;
+    if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '…'; }
+
+    try {
+        const res = await fetch(FORMSPREE_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ firstName, lastName, email, message,
+                _subject: `Acer Books — message from ${firstName} ${lastName}` })
+        });
+
+        if (res.ok) {
+            contactModal.classList.remove('active');
+            contactForm.reset();
+            alert(currentLang === 'fr'
+                ? '✅ Message envoyé ! Nous vous répondrons sous peu.'
+                : '✅ Message sent! We\'ll get back to you shortly.');
+        } else {
+            const data = await res.json().catch(() => ({}));
+            contactError.textContent = data.error
+                || (currentLang === 'fr' ? 'Erreur d\'envoi. Réessayez.' : 'Send failed. Please try again.');
+        }
+    } catch (_) {
+        contactError.textContent = currentLang === 'fr'
+            ? 'Erreur réseau. Réessayez plus tard.'
+            : 'Network error. Please try again later.';
+    } finally {
+        if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = langPack[currentLang].send; }
     }
-
-    const subject = 'Contact Form Submission from Acer Books';
-    const body = `First Name: ${firstName}\nLast Name: ${lastName}\nEmail: ${email}\nMessage:\n${message}`;
-    const mailtoLink = `mailto:yiweixidu@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-    window.location.href = mailtoLink;
-    contactModal.classList.remove('active');
 });
 
 // Hamburger menu

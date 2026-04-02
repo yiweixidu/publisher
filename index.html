@@ -101,7 +101,49 @@
                 <h2 data-i18n="allBooks">All Books</h2>
                 <button class="btn-outline-red" id="backToHomeFromBooks" data-i18n="backToHome"><i class="fas fa-arrow-left"></i> Back to Home</button>
             </div>
+
+            <!-- ── Filter Bar (FR #1) ── -->
+            <div class="books-filter-bar">
+                <div class="books-filter-row">
+                    <div class="books-search-wrap">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="booksSearchInput" class="books-search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Search by title or author…">
+                    </div>
+                    <div class="books-view-toggle">
+                        <button id="booksGridViewBtn" class="view-btn active" title="Grid view"><i class="fas fa-th"></i></button>
+                        <button id="booksListViewBtn" class="view-btn" title="List view"><i class="fas fa-list"></i></button>
+                    </div>
+                </div>
+                <div class="books-filter-controls">
+                    <select id="booksLangFilter" class="books-filter-select">
+                        <option value="" data-i18n="filterAllLanguages">All Languages</option>
+                        <option value="Chinese">Chinese</option>
+                        <option value="English">English</option>
+                        <option value="French">French</option>
+                    </select>
+                    <select id="booksAuthorFilter" class="books-filter-select">
+                        <option value="" data-i18n="filterAllAuthors">All Authors</option>
+                    </select>
+                    <select id="booksSortFilter" class="books-filter-select">
+                        <option value="title"    data-i18n="sortTitle">Sort by Title</option>
+                        <option value="author"   data-i18n="sortAuthor">Sort by Author</option>
+                        <option value="price_asc" data-i18n="sortPriceAsc">Price: Low → High</option>
+                        <option value="price_desc" data-i18n="sortPriceDesc">Price: High → Low</option>
+                        <option value="pub_date" data-i18n="sortPubDate">Publication Date</option>
+                    </select>
+                    <div class="books-price-range">
+                        <input type="number" id="booksPriceMin" class="books-price-input" placeholder="Min $" min="0">
+                        <span class="price-sep">–</span>
+                        <input type="number" id="booksPriceMax" class="books-price-input" placeholder="Max $" min="0">
+                    </div>
+                    <button id="booksFilterApply" class="btn-outline-red btn-sm" data-i18n="filterApply">Apply</button>
+                    <button id="booksFilterReset" class="btn-sm-ghost" data-i18n="filterReset">Reset</button>
+                </div>
+            </div>
+
+            <p id="booksResultCount" class="books-result-count"></p>
             <div id="booksGrid" class="book-grid"></div>
+            <div id="booksPagination" class="books-pagination"></div>
         </div>
     </div>
 
