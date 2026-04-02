@@ -56,14 +56,14 @@
             </div>
 
             <!-- Featured books -->
-            <div class="section-heading">
+            <div id="sectionBooks" class="section-heading">
                 <h2 data-i18n="sectionRecent">recent & recommended</h2>
                 <a href="#" class="view-link" id="booksViewAllLink" data-i18n="viewAll">view all <i class="fas fa-chevron-right"></i></a>
             </div>
             <div id="bookGrid" class="book-grid home-grid"></div>
 
             <!-- About panel -->
-            <div class="about-panel">
+            <div id="sectionAbout" class="about-panel">
                 <div class="about-text">
                     <h3 data-i18n="aboutTitle">Acer Books · founded by Tao Zhijian, PhD</h3>
                     <p data-i18n="aboutP1">Translator, scholar, and member of the Chinese Writers Association in Quebec. After publishing the acclaimed <em>The Waste Land / The Love Song</em> and <em>English Poems in Chinese Poetic Forms</em>, Tao launched Acer Books to bridge cultures through finely crafted editions. Every cover reflects an artist's eye — many photographs you see here are his own.</p>
@@ -74,7 +74,7 @@
             </div>
 
             <!-- News grid -->
-            <div class="section-heading">
+            <div id="sectionNews" class="section-heading">
                 <h2 data-i18n="sectionNews">news & events</h2>
                 <a href="#" class="view-link" id="newsMoreLink" data-i18n="moreNews">more</a>
             </div>
@@ -102,15 +102,6 @@
             <div class="page-header">
                 <h2 data-i18n="allBooks">All Books</h2>
                 <button class="btn-outline-red" id="backToHomeFromBooks" data-i18n="backToHome"><i class="fas fa-arrow-left"></i> Back to Home</button>
-            </div>
-
-            <!-- Category Tabs -->
-            <div class="books-category-tabs">
-                <button class="cat-tab active" data-cat="all"        data-i18n="catAll">All</button>
-                <button class="cat-tab"        data-cat="poems"      data-i18n="catPoems">Acer Poems</button>
-                <button class="cat-tab"        data-cat="novels"     data-i18n="catNovels">Acer Novels</button>
-                <button class="cat-tab"        data-cat="children"   data-i18n="catChildren">Acer Children</button>
-                <button class="cat-tab"        data-cat="literature" data-i18n="catLiterature">Acer Literature</button>
             </div>
 
             <!-- Filter Bar -->
@@ -147,6 +138,13 @@
                         <span class="price-sep">–</span>
                         <input type="number" id="booksPriceMax" class="books-price-input" placeholder="Max $" min="0">
                     </div>
+                    <select id="booksCatFilter" class="books-filter-select">
+                        <option value="all">All Series</option>
+                        <option value="Acer Novels">Acer Novels</option>
+                        <option value="Acer Poems">Acer Poems</option>
+                        <option value="Acer Children">Acer Children</option>
+                        <option value="Acer Literature">Acer Literature</option>
+                    </select>
                     <button id="booksFilterApply" class="btn-sm" data-i18n="filterApply">Apply</button>
                     <button id="booksFilterReset" class="btn-sm-ghost" data-i18n="filterReset">Reset</button>
                 </div>
@@ -168,9 +166,12 @@
                 <div class="detail-right">
                     <h1 id="detailTitle" class="detail-title"></h1>
                     <h2 id="detailAuthor" class="detail-author"></h2>
-                    <div id="detailPrice" class="detail-price"></div>
+                    <div class="detail-price-row">
+                        <div id="detailPrice" class="detail-price"></div>
+                        <span id="detailHcBadge" class="hc-badge" style="display:none;">HARDCOVER</span>
+                    </div>
                     <div id="detailAvailability" class="detail-availability"></div>
-                    <!-- Format selector -->
+                    <!-- Format selector (shown when hardcover price exists) -->
                     <div class="format-selector" id="detailFormatSelector" style="display:none;">
                         <button class="format-btn active" data-fmt="paperback" data-i18n="paperback">Paperback</button>
                         <button class="format-btn" data-fmt="hardcover" data-i18n="hardcover">Hardcover</button>
@@ -215,9 +216,12 @@
             <div class="modal-right">
                 <div class="modal-title" id="modalTitle"></div>
                 <div class="modal-author" id="modalAuthor"></div>
-                <div class="modal-price" id="modalPrice"></div>
+                <div class="modal-price-row">
+                    <div class="modal-price" id="modalPrice"></div>
+                    <span id="modalHcBadge" class="hc-badge" style="display:none;">HARDCOVER</span>
+                </div>
                 <div class="modal-availability" id="modalAvailability">At Distributor - We Can Usually Get It in 3-8 Days! NON-RETURNABLE - Arrival Times Vary, Often 1-2 Weeks</div>
-                <!-- Format selector -->
+                <!-- Format selector (shown when hardcover price exists) -->
                 <div class="format-selector" id="modalFormatSelector" style="display:none;">
                     <button class="format-btn active" data-fmt="paperback" data-i18n="paperback">Paperback</button>
                     <button class="format-btn" data-fmt="hardcover" data-i18n="hardcover">Hardcover</button>
@@ -551,9 +555,28 @@
                 <input type="number" id="formPages" placeholder="Pages" min="1" data-i18n-placeholder="pagesPlaceholder">
                 <input type="text" id="formLanguage" placeholder="Language" data-i18n-placeholder="languagePlaceholder">
             </div>
-            <!-- Row 5：Price, StockStatus -->
+            <!-- Row 5: Paperback Price + Hardcover Price -->
             <div class="form-row">
-                <input type="number" step="0.01" id="formPrice" placeholder="Price *" required data-i18n-placeholder="pricePlaceholder">
+                <div class="form-group half">
+                    <label class="form-field-label">Paperback Price (CAD) *</label>
+                    <input type="number" step="0.01" id="formPrice" placeholder="e.g. 18.99" required>
+                </div>
+                <div class="form-group half">
+                    <label class="form-field-label">Hardcover Price (CAD)
+                        <span class="label-hint">— leave blank if no hardcover</span>
+                    </label>
+                    <input type="number" step="0.01" id="formPriceHardcover" placeholder="e.g. 28.99" min="0">
+                </div>
+            </div>
+            <!-- Row 6: Acer Series + Stock Status -->
+            <div class="form-row">
+                <select id="formAcerSeries" class="form-select">
+                    <option value="">— Acer Series —</option>
+                    <option value="Acer Poems">Acer Poems</option>
+                    <option value="Acer Novels">Acer Novels</option>
+                    <option value="Acer Children">Acer Children</option>
+                    <option value="Acer Literature">Acer Literature</option>
+                </select>
                 <select id="formStockStatus">
                     <option value="In Stock" data-i18n="inStock">In Stock</option>
                     <option value="Out of Stock" data-i18n="outOfStock">Out of Stock</option>

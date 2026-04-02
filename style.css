@@ -642,3 +642,118 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 }
 .cat-tab:hover  { border-color: #e00 !important; color: #e00 !important; background: #fff5f5 !important; }
 .cat-tab.active { background: #e00 !important; border-color: #e00 !important; color: #fff !important; }
+/* ══════════════════════════════════════════════════════════════════════
+   NEW FEATURES — HC badge, category dropdown, filter bar, nav, admin
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Price row wrappers (detail page + modal) ── */
+.detail-price-row,
+.modal-price-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.3rem;
+}
+
+/* ── HARDCOVER badge ── */
+.hc-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    padding: 0.18rem 0.55rem;
+    border-radius: 4px;
+    border: 1.5px solid #b00;
+    color: #b00;
+    background: transparent;
+    user-select: none;
+    cursor: default;
+    transition: background 0.18s, color 0.18s;
+}
+.hc-badge--active { background: #b00; color: #fff; }
+
+/* ── Paperback / Hardcover format selector ── */
+.format-selector {
+    display: flex;
+    gap: 0.45rem;
+    margin: 0.5rem 0 0.6rem;
+}
+.format-btn {
+    padding: 0.32rem 0.85rem;
+    border-radius: 6px;
+    border: 1.5px solid #ddd;
+    background: transparent;
+    color: #999;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: border-color 0.18s, color 0.18s, background 0.18s;
+}
+.format-btn.active { border-color: #b00; color: #b00; background: #fff5f5; font-weight: 600; }
+.format-btn:hover:not(.active) { border-color: #b00; color: #b00; }
+
+/* ── PB | HC toggle on book cards ── */
+.book-price-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; }
+.book-price { font-size: 0.9rem; font-weight: 700; color: #c00; }
+.fmt-toggle { display: flex; align-items: center; gap: 0.2rem; }
+.fmt-btn { font-size: 0.62rem; font-weight: 700; color: #aaa; cursor: pointer;
+           padding: 0.08rem 0.3rem; border-radius: 3px; border: 1px solid #ddd;
+           transition: all 0.15s; user-select: none; }
+.fmt-btn.active { background: #c00; border-color: #c00; color: #fff; }
+.fmt-sep { color: #ccc; font-size: 0.65rem; }
+
+/* ── Cart format badge ── */
+.cart-fmt-badge { font-size: 0.62rem; font-weight: 700; background: #c00; color: #fff;
+                  padding: 0.05rem 0.35rem; border-radius: 3px; margin-left: 0.3rem; }
+
+/* ── Admin form helpers ── */
+.form-field-label { display: block; font-size: 0.77rem; color: #555; margin-bottom: 0.3rem; font-weight: 500; }
+.label-hint { font-size: 0.68rem; color: #aaa; font-weight: 400; }
+.form-group.half { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.form-group.half input,
+.form-group.half select { width: 100%; }
+.admin-hc-tag { font-size: 0.75rem; color: #b00; font-weight: 500; }
+
+/* ── Acer Series dropdown in filter bar ── */
+#booksCatFilter { min-width: 130px; }
+
+/* ── White filter bar ── */
+.books-filter-bar { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.books-search-input { background: #f7f7f7; border: 1px solid #ddd; color: #111; }
+.books-search-input::placeholder { color: #bbb; }
+.books-search-input:focus { border-color: #c00; background: #fff; outline: none; }
+.books-search-wrap .fa-search { color: #bbb; }
+.books-filter-select { background: #f7f7f7; border: 1px solid #ddd; color: #333; }
+.books-filter-select:focus { border-color: #c00; outline: none; }
+.books-price-input { background: #f7f7f7; border: 1px solid #ddd; color: #333; }
+.books-price-input:focus { border-color: #c00; outline: none; }
+.price-sep { color: #ccc; }
+.btn-sm-ghost { border-color: #ddd; color: #666; background: #fff; }
+.btn-sm-ghost:hover { border-color: #c00; color: #c00; }
+.view-btn { background: #f7f7f7; border-color: #ddd; color: #aaa; }
+.view-btn.active, .view-btn:hover { background: #c00; border-color: #c00; color: #fff; }
+.books-result-count { color: #999; font-size: 0.82rem; margin: 0 0 0.75rem; }
+
+/* ── Mobile swipe on homepage grid ── */
+@media (max-width: 640px) {
+    .home-grid {
+        display: flex !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        gap: 1rem;
+        padding: 0.25rem 0.5rem 1rem;
+        scrollbar-width: none;
+    }
+    .home-grid::-webkit-scrollbar { display: none; }
+    .home-grid .book-card { flex: 0 0 72vw; max-width: 72vw; scroll-snap-align: center; }
+}
+
+/* ── Footer language switch ── */
+.footer-lang-switch { display: flex; align-items: center; justify-content: center; gap: 0.4rem; margin: 0.5rem 0; }
+.footer-lang { font-size: 0.72rem; color: #888; text-decoration: none; letter-spacing: 0.08em; transition: color 0.2s; }
+.footer-lang.active { color: #c00; font-weight: 600; }
+.footer-lang:hover  { color: #333; }
+.footer-lang-sep    { color: #ccc; font-size: 0.72rem; }
