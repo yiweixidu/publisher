@@ -265,13 +265,16 @@
             <span class="login-close" id="loginClose"><i class="fas fa-times"></i></span>
             <h2 class="login-title" data-i18n="login">Login</h2>
             <input type="text" id="loginUsername" class="login-input" placeholder="Email" autocomplete="email">
-            <input type="password" id="loginPassword" class="login-input" placeholder="Password" autocomplete="current-password">
+            <div class="pw-field-wrap">
+                <input type="password" id="loginPassword" class="login-input" placeholder="Password" autocomplete="current-password">
+                <button type="button" class="pw-toggle" id="loginPwToggle" tabindex="-1" aria-label="Show password">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
             <a href="#" id="forgotPasswordLink" class="forgot-pw-link">Forgot password?</a>
             <button id="loginBtn" class="login-btn" data-i18n="loginBtn">Sign In</button>
             <a href="#" id="goToSignupLink" data-i18n="noAccount">Don't have an account? Sign up</a>
             <div id="loginError" class="login-error"></div>
-            <p style="text-align:center; margin-top:1rem;">
-        </p>
         </div>
     </div>
 
@@ -280,10 +283,16 @@
         <div class="login-modal">
             <span class="login-close" id="signupClose"><i class="fas fa-times"></i></span>
             <h2 class="login-title" data-i18n="signup">Sign Up</h2>
-            <input type="text" id="signupUsername" class="login-input" placeholder="Email *" autocomplete="email" required>
+            <input type="text" id="signupUsername" class="login-input" placeholder="Username *" required>
             <input type="text" id="signupDisplayName" class="login-input" placeholder="Display Name (optional)">
-            <input type="password" id="signupPassword" class="login-input" placeholder="Password *" required>
-            <input type="password" id="signupConfirmPassword" class="login-input" placeholder="Confirm Password *" required>
+            <div class="pw-field-wrap">
+                <input type="password" id="signupPassword" class="login-input" placeholder="Password *" required autocomplete="new-password">
+                <button type="button" class="pw-toggle" id="signupPwToggle" tabindex="-1"><i class="fas fa-eye"></i></button>
+            </div>
+            <div class="pw-field-wrap">
+                <input type="password" id="signupConfirmPassword" class="login-input" placeholder="Confirm Password *" required autocomplete="new-password">
+                <button type="button" class="pw-toggle" id="signupPwToggle2" tabindex="-1"><i class="fas fa-eye"></i></button>
+            </div>
             <button id="signupBtn" class="login-btn" data-i18n="signupBtn">Sign Up</button>
             <div id="signupError" class="login-error"></div>
             <p style="text-align:center; margin-top:1rem;">
@@ -376,7 +385,6 @@
                     </div>
                 </div>
                 <div class="co-error" id="coErr1"></div>
-                <label class="save-address-label"><input type="checkbox" id="saveAddressCheck"> Save this address for future use</label>
                 <div class="co-nav"><button class="btn-primary" id="coNext1"><span data-i18n="checkoutContinue">Continue</span> →</button></div>
             </div>
 
@@ -626,12 +634,12 @@
         <div class="container">
             <div class="page-header">
                 <h2 data-i18n="manageNewsTitle">Manage News & Events</h2>
-                <button class="btn-outline-red" id="backToHomeFromAdminNews" data-i18n="backToHome">
-                    <i class="fas fa-arrow-left"></i> Back to Home
-                </button>
-            </div>
-            <div class="admin-controls">
-                <button id="addNewsAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> <span data-i18n="addNewsBtn">Add News</span></button>
+                <div class="page-header-actions">
+                    <button id="addNewsAdminBtn" class="btn-primary btn-add-news"><i class="fas fa-plus"></i> <span data-i18n="addNewsBtn">Add News</span></button>
+                    <button class="btn-outline-red" id="backToHomeFromAdminNews" data-i18n="backToHome">
+                        <i class="fas fa-arrow-left"></i> Back to Home
+                    </button>
+                </div>
             </div>
             <div id="adminNewsList" class="admin-news-list"></div>
         </div>
@@ -723,27 +731,28 @@
 
     <!-- Account Dashboard Modal -->
     <div id="accountModal" class="login-overlay">
-        <div class="modal-content account-modal-content">
-            <span class="modal-close" id="accountModalClose"><i class="fas fa-times"></i></span>
+        <div class="account-modal-content">
+            <button class="acc-modal-close" id="accountModalClose" aria-label="Close"><i class="fas fa-times"></i></button>
 
-            <div class="acc-header">
-                <div class="acc-avatar"><span id="accAvatarInitial">?</span></div>
-                <div class="acc-header-info">
+            <!-- Left sidebar -->
+            <div class="acc-sidebar">
+                <div class="acc-header">
+                    <div class="acc-avatar"><span id="accAvatarInitial">?</span></div>
                     <div class="acc-header-name" id="accHeaderName"></div>
                     <div class="acc-header-email" id="accHeaderEmail"></div>
                 </div>
+                <nav class="acc-nav">
+                    <button class="acc-tab active" data-tab="profile"><i class="fas fa-user"></i> Profile</button>
+                    <button class="acc-tab" data-tab="orders"><i class="fas fa-box"></i> Orders</button>
+                    <button class="acc-tab" data-tab="wishlist"><i class="fas fa-heart"></i> Wishlist</button>
+                    <button class="acc-tab" data-tab="addresses"><i class="fas fa-map-marker-alt"></i> Addresses</button>
+                </nav>
             </div>
 
-            <div class="acc-nav">
-                <button class="acc-tab active" data-tab="profile"><i class="fas fa-user"></i> Profile</button>
-                <button class="acc-tab" data-tab="orders"><i class="fas fa-box"></i> Orders</button>
-                <button class="acc-tab" data-tab="wishlist"><i class="fas fa-heart"></i> Wishlist</button>
-                <button class="acc-tab" data-tab="addresses"><i class="fas fa-map-marker-alt"></i> Addresses</button>
-            </div>
-
+            <!-- Right content -->
             <div class="acc-body">
 
-                <!-- Profile tab -->
+                <!-- Profile -->
                 <div class="acc-pane active" id="acc-profile">
                     <p class="acc-section-title">Personal Information</p>
                     <div class="acc-form-group">
@@ -769,18 +778,21 @@
                     <div id="profileMsg" class="acc-msg"></div>
                 </div>
 
-                <!-- Orders tab -->
+                <!-- Orders -->
                 <div class="acc-pane" id="acc-orders">
+                    <p class="acc-section-title">Order History</p>
                     <div id="orderHistoryList"></div>
                 </div>
 
-                <!-- Wishlist tab -->
+                <!-- Wishlist -->
                 <div class="acc-pane" id="acc-wishlist">
+                    <p class="acc-section-title">Saved Books</p>
                     <div id="wishlistItems"></div>
                 </div>
 
-                <!-- Addresses tab -->
+                <!-- Addresses -->
                 <div class="acc-pane" id="acc-addresses">
+                    <p class="acc-section-title">Saved Addresses</p>
                     <div id="savedAddressesList"></div>
                     <button class="btn-outline-red acc-action-btn" id="addAddressBtn" style="margin-top:1rem;">
                         <i class="fas fa-plus"></i> Add Address
@@ -816,7 +828,7 @@
                     </div>
                 </div>
 
-            </div>
+            </div><!-- /acc-body -->
         </div>
     </div>
 
@@ -825,10 +837,10 @@
         <div class="login-modal">
             <span class="login-close" id="resetPasswordClose"><i class="fas fa-times"></i></span>
             <h2 class="login-title">Reset Password</h2>
-            <p class="reset-pw-desc">Enter your email address and we'll send you a link to reset your password.</p>
+            <p style="color:#777;font-size:.86rem;line-height:1.55;margin-bottom:1.2rem;text-align:center;">Enter your email and we'll send you a reset link.</p>
             <input type="email" id="resetEmail" class="login-input" placeholder="Email address" autocomplete="email">
             <button id="sendResetBtn" class="login-btn">Send Reset Link</button>
-            <div id="resetMsg" class="acc-msg" style="text-align:center;margin-top:.8rem;"></div>
+            <div id="resetMsg" class="acc-msg" style="text-align:center;margin-top:.8rem;min-height:1.2em;"></div>
             <p style="text-align:center;margin-top:1.2rem;">
                 <a href="#" id="backToLoginFromReset" style="font-size:.85rem;color:#b00;">← Back to Login</a>
             </p>
