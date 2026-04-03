@@ -405,12 +405,12 @@ document.getElementById('coNext3')?.addEventListener('click', () => {
     document.getElementById('coReviewContent').innerHTML = `
         <div class="review-section">
             <h4>${isFr?'Adresse de livraison':'Shipping Address'}</h4>
-            <p>${coShipData.firstName} ${coShipData.lastName}<br>
+            <p style="color:#333;">${coShipData.firstName} ${coShipData.lastName}<br>
                ${coShipData.address}<br>${coShipData.city}, ${coShipData.province} ${coShipData.postal}<br>${coShipData.country}</p>
         </div>
         <div class="review-section">
             <h4>${isFr?'Mode de livraison':'Delivery Method'}</h4>
-            <p>${shippingLabel}</p>
+            <p style="color:#333;">${shippingLabel}</p>
         </div>
         <div class="review-section">
             <h4>${isFr?'Articles':'Items'}</h4>
@@ -424,7 +424,7 @@ document.getElementById('coNext3')?.addEventListener('click', () => {
         </div>
         <div class="review-section">
             <h4>${langPack[currentLang].paymentMethod}</h4>
-            <p>${payDisplay}</p>
+            <p style="color:#333;">${payDisplay}</p>
         </div>`;
     goToCoStep(4);
 });

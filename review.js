@@ -244,7 +244,7 @@ async function attachEventsToContainer(container, bookId, currentLang, currentUs
         });
     }
 
-    // 未登录时的“Login to comment”按钮
+    // 未登录时的“Login to review”按钮
     container.querySelectorAll('.login-prompt-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -346,7 +346,8 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
                 </div>
             `;
         } else {
-            html += `<button class="btn-outline-red login-prompt-btn">${langPack[currentLang].loginPrompt}</button>`;
+            const loginPromptText = currentLang === 'fr' ? 'Connectez-vous pour laisser un avis' : 'Login to review';
+            html += `<button class="btn-outline-red login-prompt-btn">${loginPromptText}</button>`;
         }
 
         html += `</div></div>`; // 关闭 comment-section 和 content-area
