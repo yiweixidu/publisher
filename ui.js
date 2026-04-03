@@ -366,49 +366,36 @@ function syncBooksFilterUI() {
 let booksEventsAttached = false;
 
 function attachBooksEvents() {
-    const applyBtn = document.getElementById('booksFilterApply');
-    const resetBtn = document.getElementById('booksFilterReset');
     const searchInput = document.getElementById('booksSearchInput');
     const langFilter = document.getElementById('booksLangFilter');
     const authorFilter = document.getElementById('booksAuthorFilter');
     const catFilter = document.getElementById('booksCatFilter');
     const gridBtn = document.getElementById('booksGridViewBtn');
     const listBtn = document.getElementById('booksListViewBtn');
-    
-    searchInput?.addEventListener('keydown', e => { if (e.key==='Enter') applyBtn?.click(); });
-    
-    applyBtn?.addEventListener('click', () => {
+
+    // 实时更新筛选并重新渲染
+    function updateFilters() {
         booksActiveFilters = {
             search:   searchInput?.value.trim() || '',
             lang:     langFilter?.value || '',
             author:   authorFilter?.value || '',
-            priceMin: '',   // removed from UI
-            priceMax: '',   // removed from UI
+            priceMin: '',
+            priceMax: '',
             sort:     'title',
         };
+        booksActiveCategory = catFilter?.value || 'all';
         booksCurrentPage = 1;
         pushBooksToURL();
         renderAllBooks();
-    });
+    }
+
+    searchInput?.addEventListener('input', updateFilters);
+    langFilter?.addEventListener('change', updateFilters);
+    authorFilter?.addEventListener('change', updateFilters);
+    catFilter?.addEventListener('change', updateFilters);
     
-    resetBtn?.addEventListener('click', () => {
-        booksActiveFilters = { search:'', lang:'', author:'', priceMin:'', priceMax:'', sort:'title' };
-        booksActiveCategory = 'all';
-        if (catFilter) catFilter.value = 'all';
-        booksCurrentPage = 1;
-        pushBooksToURL();
-        renderAllBooks();
-    });
-    
-    gridBtn?.addEventListener('click', () => { booksViewMode='grid'; pushBooksToURL(); renderAllBooks(); });
-    listBtn?.addEventListener('click', () => { booksViewMode='list'; pushBooksToURL(); renderAllBooks(); });
-    
-    catFilter?.addEventListener('change', e => {
-        booksActiveCategory = e.target.value;
-        booksCurrentPage = 1;
-        pushBooksToURL();
-        renderAllBooks();
-    });
+    gridBtn?.addEventListener('click', () => { booksViewMode = 'grid'; pushBooksToURL(); renderAllBooks(); });
+    listBtn?.addEventListener('click', () => { booksViewMode = 'list'; pushBooksToURL(); renderAllBooks(); });
 }
 
 export function resetBooksPageState() {
