@@ -8,7 +8,7 @@ import {
 import { langPack, currentLang } from './i18n.js';
 import { 
     adminMode, currentUser, logout, updateUserUI, bindInactivityEvents, openAdminLoginModal,
-    updateAdminNavLink, login, signup, initAuth, isAdminUser
+    updateAdminNavLink, login, signup, initAuth, isAdminUser, openLoginModal, resetLoginModalLinks
 } from './auth.js';
 import { cart, loadCart, saveCart, addToCart, renderCartModal } from './cart.js';
 import { saveOrder } from './data.js';
@@ -160,7 +160,7 @@ document.getElementById('resetPasswordOverlay')?.addEventListener('click', e => 
 document.getElementById('backToLoginFromReset')?.addEventListener('click', e => {
     e.preventDefault();
     document.getElementById('resetPasswordOverlay')?.classList.remove('active');
-    loginOverlay?.classList.add('active');
+    openLoginModal('user');
 });
 document.getElementById('sendResetBtn')?.addEventListener('click', async () => {
     const msgEl = document.getElementById('resetMsg');
@@ -175,15 +175,18 @@ document.getElementById('sendResetBtn')?.addEventListener('click', async () => {
     }
 });
 
-loginClose?.addEventListener('click', () => {
+// Close login modal and reset links
+function closeLoginModalAndReset() {
     loginOverlay?.classList.remove('active');
+    resetLoginModalLinks();
     document.getElementById('loginError').textContent = '';
-});
+}
+
+loginClose?.addEventListener('click', closeLoginModalAndReset);
 
 loginOverlay?.addEventListener('click', (e) => {
     if (e.target === loginOverlay) {
-        loginOverlay.classList.remove('active');
-        document.getElementById('loginError').textContent = '';
+        closeLoginModalAndReset();
     }
 });
 
@@ -197,7 +200,7 @@ goToSignupLink?.addEventListener('click', (e) => {
 goToLoginLink?.addEventListener('click', (e) => {
     e.preventDefault();
     signupOverlay?.classList.remove('active');
-    loginOverlay?.classList.add('active');
+    openLoginModal('user');
 });
 
 signupClose?.addEventListener('click', () => {
@@ -235,7 +238,7 @@ signupBtn?.addEventListener('click', async () => {
         await signup(email, password, displayName);
         alert(langPack[currentLang].signupSuccess);
         signupOverlay.classList.remove('active');
-        loginOverlay.classList.add('active');
+        openLoginModal('user');
         document.getElementById('signupUsername').value = '';
         document.getElementById('signupDisplayName').value = '';
         document.getElementById('signupPassword').value = '';
@@ -306,7 +309,7 @@ function closeCheckout() {
 
 checkoutBtn?.addEventListener('click', () => {
     if (cart.length === 0) { alert(langPack[currentLang].emptyCart); return; }
-    if (!currentUser) { loginOverlay?.classList.add('active'); return; }
+    if (!currentUser) { openLoginModal('user'); return; }
     cartModal?.classList.remove('active');
     openCheckout();
 });
@@ -511,7 +514,7 @@ printReceiptBtn?.addEventListener('click', () => {
                 </div>
                 <div class="footer">${footerText}</div>
             </div>
-            <script>window.onload = function() { window.print(); window.close(); }</script>
+            <script>window.onload = function() { window.print(); window.close(); }<\/script>
         </body>
         </html>
     `);
@@ -825,7 +828,7 @@ document.body.addEventListener('click', e => {
     const btn = e.target.closest('[data-wishlist-bookid]');
     if (!btn) return;
     e.stopPropagation();
-    if (!currentUser) { loginOverlay?.classList.add('active'); return; }
+    if (!currentUser) { openLoginModal('user'); return; }
     const bookId = btn.dataset.wishlistBookid;
     import('./data.js').then(({ books }) => {
         const book = books.find(b => b.id === bookId);

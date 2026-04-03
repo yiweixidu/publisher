@@ -30,6 +30,30 @@ function updateAdminSwitch() {
     }
 }
 
+// Reset login modal links to normal (user) mode
+export function resetLoginModalLinks() {
+    const forgotLink = document.getElementById('forgotPasswordLink');
+    const signupLink = document.getElementById('goToSignupLink');
+    if (forgotLink) forgotLink.style.display = 'block';
+    if (signupLink) signupLink.style.display = 'block';
+}
+
+// Open login modal with specified source ('user' or 'admin')
+export function openLoginModal(source = 'user') {
+    const forgotLink = document.getElementById('forgotPasswordLink');
+    const signupLink = document.getElementById('goToSignupLink');
+    if (forgotLink && signupLink) {
+        if (source === 'admin') {
+            forgotLink.style.display = 'none';
+            signupLink.style.display = 'none';
+        } else {
+            forgotLink.style.display = 'block';
+            signupLink.style.display = 'block';
+        }
+    }
+    loginOverlay?.classList.add('active');
+}
+
 // Helper: update UI based on user login state
 export async function updateUserUI() {
     if (currentUser) {
@@ -58,7 +82,7 @@ export async function updateUserUI() {
     } else {
         userSection.innerHTML = `<button class="btn-outline-red" id="showLoginBtn">Login</button>`;
         document.getElementById('showLoginBtn')?.addEventListener('click', () => {
-            loginOverlay?.classList.add('active');
+            openLoginModal('user');
         });
     }
 }
@@ -78,6 +102,7 @@ export async function login(email, password) {
     updateAdminSwitch();
     updateUserUI();
     loginOverlay?.classList.remove('active');
+    resetLoginModalLinks(); // ensure links are restored for next time
     window.dispatchEvent(new CustomEvent('userLogin'));
     return true;
 }
@@ -108,7 +133,6 @@ export async function signup(email, password, displayName) {
     return true;
 }
 
-
 export async function resetPassword(email) {
     // Always redirect to the live site, not window.location.origin,
     // because Supabase must match an allowed URL in the dashboard.
@@ -118,6 +142,7 @@ export async function resetPassword(email) {
     });
     if (error) throw error;
 }
+
 // Initialize session from Supabase
 export async function initAuth() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -217,11 +242,12 @@ export function updateAdminNavLink() {
 
 // ---------- Helper to open login modal (used by admin toggle) ----------
 export function openAdminLoginModal() {
-    loginOverlay?.classList.add('active');
+    openLoginModal('admin');
 }
 
 export function closeAdminLoginModal() {
     loginOverlay?.classList.remove('active');
+    resetLoginModalLinks();
 }
 
 export function toggleAdminMode() {
