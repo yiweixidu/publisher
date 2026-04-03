@@ -50,7 +50,7 @@ export async function saveBooks(newBooks) {
     }
 
     console.log('Save successful');
-    await loadBooks();
+    try { await loadBooks(); } catch(e) { console.warn('Reload after saveBooks failed (non-fatal):', e.message); }
 }
 
 export async function deleteBook(bookId) {
@@ -102,7 +102,7 @@ export async function saveNews(newNews) {
     }
 
     console.log('Save news successful');
-    await loadNews();
+    try { await loadNews(); } catch(e) { console.warn('Reload after saveNews failed (non-fatal):', e.message); }
 }
 
 export async function deleteNews(newsId) {
