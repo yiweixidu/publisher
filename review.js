@@ -1,9 +1,29 @@
 // review.js
-import { reviews, insertReview, updateReview, saveReviews, loadReviews } from './data.js';
+import { reviews, insertReview, updateReview, loadReviews } from './data.js';
 import { langPack } from './i18n.js';
 import { supabase } from './supabaseClient.js';
 
 const modalReviews = document.getElementById('modalReviews');
+
+// Helper: get user's display name by userId (from profiles table)
+async function getUserDisplayName(userId) {
+    if (!userId) return 'User';
+    try {
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', userId)
+            .single();
+        if (profile?.display_name) return profile.display_name;
+        // fallback: get email prefix from auth
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user?.email) return userData.user.email.split('@')[0];
+        return 'User';
+    } catch (e) {
+        console.warn('getUserDisplayName error:', e);
+        return 'User';
+    }
+}
 
 function fallbackCopy(review, shareUrl) {
     const message = `【Review】${review.username} reviewed this book:\n“${review.text}”\nView full review: ${shareUrl}`;
@@ -17,6 +37,7 @@ function fallbackCopy(review, shareUrl) {
 function attachEventsToContainer(container, bookId, currentLang, currentUser) {
     if (!container) return;
 
+    // Share button (circle icon)
     container.querySelectorAll('.wechat-share-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -40,6 +61,7 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
         });
     });
 
+    // Submit comment (reply)
     container.querySelectorAll('.wechat-comment-submit').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
@@ -50,9 +72,11 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
             if (!text) return;
             const review = reviews.find(r => r.id === reviewId);
             if (review) {
+                // Get current user's display name for the comment
+                const commenterName = await getUserDisplayName(currentUser.id);
                 review.comments.push({
                     user_id: currentUser.id,
-                    username: currentUser.email.split('@')[0],
+                    username: commenterName,
                     text: text,
                     timestamp: new Date().toISOString()
                 });
@@ -66,17 +90,19 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
         });
     });
 
+    // Submit a new review (post)
     const submitReview = container.querySelector('.review-submit');
     if (submitReview && currentUser) {
         submitReview.addEventListener('click', async () => {
             const textarea = container.querySelector('.review-textarea');
             const text = textarea?.value.trim();
             if (!text) return;
+            const displayName = await getUserDisplayName(currentUser.id);
             const newReview = {
-                id: 'rev_' + Date.now() + Math.random().toString(36).substr(2,6),
+                id: 'rev_' + Date.now() + Math.random().toString(36).substr(2, 6),
                 book_id: bookId,
                 user_id: currentUser.id,
-                username: currentUser.email.split('@')[0],
+                username: displayName,   // store display name, not email prefix
                 text: text,
                 timestamp: new Date().toISOString(),
                 likes: [],
@@ -101,54 +127,70 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
 
     bookReviews.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    bookReviews.forEach(r => {
+    for (const r of bookReviews) {
         if (!r.comments) r.comments = [];
 
         const date = new Date(r.timestamp).toLocaleDateString(
             currentLang === 'fr' ? 'fr-CA' : 'en-CA',
             { year: 'numeric', month: '2-digit', day: '2-digit' }
         );
-        const userInitial = (r.username && r.username.length > 0) ? r.username.charAt(0).toUpperCase() : '?';
+        // If this review is by the current user, use currentUser's display name (already updated)
+        let displayUsername = r.username;
+        if (currentUser && r.user_id === currentUser.id) {
+            // Prefer current user's display name from metadata (might be newer)
+            const currentDisplayName = currentUser.user_metadata?.display_name || 
+                                       currentUser.email.split('@')[0];
+            displayUsername = currentDisplayName;
+        }
+        const userInitial = (displayUsername && displayUsername.length > 0) ? displayUsername.charAt(0).toUpperCase() : '?';
 
         html += `
             <div class="wechat-review-item" data-review-id="${r.id}">
-                <div class="wechat-review-header">
-                    <div class="review-user-avatar">
-                        <span class="review-avatar-circle">${userInitial}</span>
-                        <span class="wechat-review-user">${r.username}</span>
+                <div class="wechat-review-content-area">
+                    <div class="wechat-review-header">
+                        <div class="review-user-avatar">
+                            <span class="review-avatar-circle">${userInitial}</span>
+                            <span class="wechat-review-user">${escapeHtml(displayUsername)}</span>
+                        </div>
+                        <span class="wechat-review-date">${date}</span>
                     </div>
-                    <span class="wechat-review-date">${date}</span>
-                </div>
-                <div class="wechat-review-content">${r.text}</div>
-                <div class="wechat-review-footer">
-                    <button class="wechat-share-btn" data-review-id="${r.id}">${langPack[currentLang].share || 'share to wechat'}</button>
-                </div>
-                <div class="wechat-comment-section" id="comments-${r.id}">
+                    <div class="wechat-review-content">${escapeHtml(r.text)}</div>
+                    <div class="wechat-comment-section" id="comments-${r.id}">
         `;
 
-        r.comments.forEach(c => {
+        // Display existing comments
+        for (const c of r.comments) {
             const commentDate = new Date(c.timestamp).toLocaleDateString(
                 currentLang === 'fr' ? 'fr-CA' : 'en-CA',
                 { month: '2-digit', day: '2-digit' }
             );
-            const commentInitial = (c.username && c.username.length > 0) ? c.username.charAt(0).toUpperCase() : '?';
+            let commentUsername = c.username;
+            if (currentUser && c.user_id === currentUser.id) {
+                const currentDisplayName = currentUser.user_metadata?.display_name || 
+                                           currentUser.email.split('@')[0];
+                commentUsername = currentDisplayName;
+            }
+            const commentInitial = (commentUsername && commentUsername.length > 0) ? commentUsername.charAt(0).toUpperCase() : '?';
             html += `
                 <div class="wechat-comment-item">
                     <div class="comment-user-avatar">
                         <span class="comment-avatar-circle">${commentInitial}</span>
-                        <span class="wechat-comment-user">${c.username}</span>
+                        <span class="wechat-comment-user">${escapeHtml(commentUsername)}</span>
                     </div>
-                    <span class="wechat-comment-text">${c.text}</span>
+                    <span class="wechat-comment-text">${escapeHtml(c.text)}</span>
                     <span class="wechat-comment-date">${commentDate}</span>
                 </div>
             `;
-        });
+        }
 
+        // Comment input form
         if (currentUser) {
             html += `
                 <div class="wechat-comment-form">
                     <input type="text" class="wechat-comment-input" placeholder="${langPack[currentLang].writeReviewPlaceholder}" data-review-id="${r.id}">
-                    <button class="wechat-comment-submit" data-review-id="${r.id}">${langPack[currentLang].submitReview}</button>
+                    <button class="wechat-comment-submit circle-icon" data-review-id="${r.id}" title="Post comment">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
                 </div>
             `;
         } else {
@@ -156,20 +198,34 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
         }
 
         html += `</div></div>`;
-    });
 
+        // Right side buttons (share)
+        html += `
+            <div class="wechat-review-footer">
+                <button class="wechat-share-btn circle-icon" data-review-id="${r.id}" title="Share to WeChat">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+            </div>
+        </div>`;
+    }
+
+    // Form to write a new review (only for logged-in users)
     if (currentUser) {
-        const currentUserInitial = currentUser.email ? currentUser.email.charAt(0).toUpperCase() : '?';
+        const currentDisplayName = currentUser.user_metadata?.display_name || 
+                                   currentUser.email.split('@')[0];
+        const currentUserInitial = currentDisplayName.charAt(0).toUpperCase();
         html += `
             <div class="review-form wechat-review-form">
                 <div class="review-form-header">
                     <div class="review-user-avatar">
                         <span class="review-avatar-circle">${currentUserInitial}</span>
-                        <span class="review-form-username">${currentUser.email.split('@')[0]}</span>
+                        <span class="review-form-username">${escapeHtml(currentDisplayName)}</span>
                     </div>
                 </div>
                 <textarea class="review-textarea" placeholder="${langPack[currentLang].writeReviewPlaceholder}"></textarea>
-                <button class="review-submit wechat-submit">${langPack[currentLang].submitReview}</button>
+                <button class="review-submit wechat-submit circle-icon" title="Post review">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
         `;
     }
@@ -178,8 +234,21 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
     return html;
 }
 
+// Simple XSS escape helper
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+        return c;
+    });
+}
+
 export async function renderReviews(bookId, currentLang, currentUser) {
-    await loadReviews(); // ensure latest
+    await loadReviews();
     if (!modalReviews) return;
     const bookReviews = reviews.filter(r => r.book_id === bookId);
     modalReviews.innerHTML = generateReviewsHTML(bookReviews, currentLang, currentUser);
@@ -196,12 +265,10 @@ export async function renderDetailReviews(bookId, currentLang, currentUser) {
 }
 
 export function checkHashForReview() {
-    // hash handling remains the same; relies on reviews array
     if (window.location.hash.startsWith('#review-')) {
         const reviewId = window.location.hash.substring(8);
         const review = reviews.find(r => r.id === reviewId);
         if (review) {
-            // need books array – it's imported from data.js, but we must ensure it's loaded
             import('./data.js').then(({ books }) => {
                 const book = books.find(b => b.id === review.book_id);
                 if (book) {

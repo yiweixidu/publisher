@@ -62,12 +62,16 @@ export async function updateUserUI() {
             return;
         }
         // Get display name from profiles or use email
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('display_name')
-            .eq('id', currentUser.id)
-            .single();
-        const displayName = profile?.display_name || currentUser.email.split('@')[0];
+        let displayName = currentUser.email.split('@')[0];
+        try {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('display_name')
+                .eq('id', currentUser.id)
+                .single();
+            if (profile?.display_name) displayName = profile.display_name;
+            else if (currentUser.user_metadata?.display_name) displayName = currentUser.user_metadata.display_name;
+        } catch(_) {}
         const initial = displayName.charAt(0).toUpperCase();
         userSection.innerHTML = `
             <button class="user-avatar-btn" id="userNameBtn" title="${displayName} — My Account">
@@ -75,11 +79,8 @@ export async function updateUserUI() {
             </button>
             <button class="logout-btn" id="logoutBtn">Logout</button>
         `;
-        // Logout button: clear session and go to homepage
         document.getElementById('logoutBtn')?.addEventListener('click', () => {
-            logout().then(() => {
-                window.location.href = '/';
-            });
+            logout().then(() => { window.location.href = '/'; });
         });
         document.getElementById('userNameBtn')?.addEventListener('click', () => {
             window.dispatchEvent(new CustomEvent('openAccountDashboard'));
