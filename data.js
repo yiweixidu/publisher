@@ -1,198 +1,170 @@
-// review.js
-import { reviews, insertReview, updateReview, saveReviews, loadReviews } from './data.js';
-import { langPack } from './i18n.js';
+// data.js
 import { supabase } from './supabaseClient.js';
+import { currentAccessToken } from './auth.js';
 
-const modalReviews = document.getElementById('modalReviews');
+// Exported arrays (initially empty, filled by load functions)
+export let books = [];
+export let newsItems = [];
+export let reviews = [];
 
-function fallbackCopy(review, shareUrl) {
-    const message = `【Review】${review.username} reviewed this book:\n“${review.text}”\nView full review: ${shareUrl}`;
-    navigator.clipboard.writeText(message).then(() => {
-        alert('Review copied. You can paste and send it to friends.');
-    }).catch(() => {
-        alert('Copy failed. Please manually copy the link: ' + shareUrl);
-    });
+// ---------- Books ----------
+export async function loadBooks() {
+    console.log('loadBooks called');
+    const { data, error } = await supabase.from('books').select('*');
+    if (error) throw error;
+    books = data;
+    console.log('Books loaded:', books.length);
+    return books;
 }
 
-function attachEventsToContainer(container, bookId, currentLang, currentUser) {
-    if (!container) return;
+export async function saveBooks(newBooks) {
+    console.log('saveBooks called with', newBooks.length, 'books');
 
-    container.querySelectorAll('.wechat-share-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const reviewId = btn.dataset.reviewId;
-            const review = reviews.find(r => r.id === reviewId);
-            if (!review) return;
-
-            const shareTitle = `review by ${review.username}`;
-            const shareText = review.text.substring(0, 100) + (review.text.length > 100 ? '…' : '');
-            const shareUrl = window.location.href.split('#')[0] + '#review-' + reviewId;
-
-            if (navigator.share) {
-                navigator.share({
-                    title: shareTitle,
-                    text: shareText,
-                    url: shareUrl,
-                }).catch(() => fallbackCopy(review, shareUrl));
-            } else {
-                fallbackCopy(review, shareUrl);
-            }
-        });
-    });
-
-    container.querySelectorAll('.wechat-comment-submit').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (!currentUser) return;
-            const reviewId = btn.dataset.reviewId;
-            const input = container.querySelector(`.wechat-comment-input[data-review-id="${reviewId}"]`);
-            const text = input?.value.trim();
-            if (!text) return;
-            const review = reviews.find(r => r.id === reviewId);
-            if (review) {
-                review.comments.push({
-                    user_id: currentUser.id,
-                    username: currentUser.email.split('@')[0],
-                    text: text,
-                    timestamp: new Date().toISOString()
-                });
-                await updateReview(review);
-                if (container === modalReviews) {
-                    renderReviews(bookId, currentLang, currentUser);
-                } else {
-                    renderDetailReviews(bookId, currentLang, currentUser);
-                }
-            }
-        });
-    });
-
-    const submitReview = container.querySelector('.review-submit');
-    if (submitReview && currentUser) {
-        submitReview.addEventListener('click', async () => {
-            const textarea = container.querySelector('.review-textarea');
-            const text = textarea?.value.trim();
-            if (!text) return;
-            const newReview = {
-                id: 'rev_' + Date.now() + Math.random().toString(36).substr(2,6),
-                book_id: bookId,
-                user_id: currentUser.id,
-                username: currentUser.email.split('@')[0],
-                text: text,
-                timestamp: new Date().toISOString(),
-                likes: [],
-                comments: []
-            };
-            await insertReview(newReview);
-            if (container === modalReviews) {
-                renderReviews(bookId, currentLang, currentUser);
-            } else {
-                renderDetailReviews(bookId, currentLang, currentUser);
-            }
-        });
+    if (!currentAccessToken) {
+        console.error('No access token available. Please log in.');
+        throw new Error('Not authenticated. Please log in.');
     }
+    console.log('Using stored token, length:', currentAccessToken.length);
+
+    const cleanedBooks = newBooks.map(book => {
+        const { created_at, interior_previews, description_fr, author_bio_fr, ...clean } = book;
+        return clean; 
+    });
+
+    const SUPABASE_URL = 'https://asjiiftlxyihlayydfju.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_W9OZS-Qu8r_N6PQ7dpZ-wA_1FDD8XO6';
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/books`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${currentAccessToken}`,
+            'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(cleanedBooks)
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Supabase error ${response.status}: ${errorText}`);
+    }
+
+    console.log('Save successful');
+    await loadBooks();
 }
 
-function generateReviewsHTML(bookReviews, currentLang, currentUser) {
-    let html = '<div class="wechat-review-list">';
+export async function deleteBook(bookId) {
+    const { error } = await supabase.from('books').delete().eq('id', bookId);
+    if (error) throw error;
+    books = books.filter(b => b.id !== bookId);
+}
 
-    if (bookReviews.length === 0) {
-        html += `<p class="no-reviews">${langPack[currentLang].noReviews}</p>`;
+// ---------- News ----------
+export async function loadNews() {
+    console.log('loadNews called');
+    const { data, error } = await supabase.from('news').select('*');
+    if (error) throw error;
+    newsItems = data;
+    console.log('News loaded:', newsItems.length);
+    return newsItems;
+}
+
+export async function saveNews(newNews) {
+    console.log('saveNews called with', newNews.length, 'news items');
+    console.log('currentAccessToken:', currentAccessToken ? 'exists' : 'null');
+
+    if (!currentAccessToken) {
+        console.error('No access token available. Please log in.');
+        throw new Error('Not authenticated. Please log in.');
     }
 
-    bookReviews.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const cleanedNews = newNews.map(item => {
+        const { created_at, ...clean } = item;
+        return clean;
+    });
 
-    bookReviews.forEach(r => {
-        if (!r.comments) r.comments = [];
+    const SUPABASE_URL = 'https://asjiiftlxyihlayydfju.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_W9OZS-Qu8r_N6PQ7dpZ-wA_1FDD8XO6';
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/news`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${currentAccessToken}`,
+            'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(cleanedNews)
+    });
 
-        const date = new Date(r.timestamp).toLocaleDateString(
-            currentLang === 'fr' ? 'fr-CA' : 'en-CA',
-            { year: 'numeric', month: '2-digit', day: '2-digit' }
-        );
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Supabase error ${response.status}: ${errorText}`);
+    }
 
-        html += `
-            <div class="wechat-review-item" data-review-id="${r.id}">
-                <div class="wechat-review-header">
-                    <span class="wechat-review-user">${r.username}</span>
-                    <span class="wechat-review-date">${date}</span>
-                </div>
-                <div class="wechat-review-content">${r.text}</div>
-                <div class="wechat-review-footer">
-                    <button class="wechat-share-btn" data-review-id="${r.id}">${langPack[currentLang].share || 'share to wechat'}</button>
-                </div>
-                <div class="wechat-comment-section" id="comments-${r.id}">
-        `;
+    console.log('Save news successful');
+    await loadNews();
+}
 
-        r.comments.forEach(c => {
-            const commentDate = new Date(c.timestamp).toLocaleDateString(
-                currentLang === 'fr' ? 'fr-CA' : 'en-CA',
-                { month: '2-digit', day: '2-digit' }
-            );
-            html += `
-                <div class="wechat-comment-item">
-                    <span class="wechat-comment-user">${c.username}</span>
-                    <span class="wechat-comment-text">${c.text}</span>
-                    <span class="wechat-comment-date">${commentDate}</span>
-                </div>
-            `;
-        });
+export async function deleteNews(newsId) {
+    const { error } = await supabase.from('news').delete().eq('id', newsId);
+    if (error) throw error;
+    newsItems = newsItems.filter(n => n.id !== newsId);
+}
 
-        if (currentUser) {
-            html += `
-                <div class="wechat-comment-form">
-                    <input type="text" class="wechat-comment-input" placeholder="${langPack[currentLang].writeReviewPlaceholder}" data-review-id="${r.id}">
-                    <button class="wechat-comment-submit" data-review-id="${r.id}">${langPack[currentLang].submitReview}</button>
-                </div>
-            `;
+// ---------- Reviews ----------
+export async function loadReviews() {
+    const { data, error } = await supabase.from('reviews').select('*');
+    if (error) throw error;
+    reviews = data;
+    return reviews;
+}
+
+export async function insertReview(review) {
+    // Insert a brand-new review row — respects RLS INSERT policy
+    const { error } = await supabase.from('reviews').insert([review]);
+    if (error) throw error;
+    reviews = [...reviews, review];
+}
+
+export async function updateReview(review) {
+    // Update an existing review row (e.g. add a comment) — respects RLS UPDATE policy
+    const { error } = await supabase
+        .from('reviews')
+        .update({ comments: review.comments, likes: review.likes })
+        .eq('id', review.id);
+    if (error) throw error;
+    const idx = reviews.findIndex(r => r.id === review.id);
+    if (idx >= 0) reviews[idx] = review;
+}
+
+/** @deprecated use insertReview / updateReview instead */
+export async function saveReviews(newReviews) {
+    // Legacy: split into inserts vs updates to avoid RLS issues
+    const existingIds = new Set(reviews.map(r => r.id));
+    for (const rev of newReviews) {
+        if (existingIds.has(rev.id)) {
+            await updateReview(rev);
         } else {
-            html += `<p class="login-prompt">${langPack[currentLang].loginPrompt}</p>`;
-        }
-
-        html += `</div></div>`;
-    });
-
-    if (currentUser) {
-        html += `
-            <div class="review-form wechat-review-form">
-                <textarea class="review-textarea" placeholder="${langPack[currentLang].writeReviewPlaceholder}"></textarea>
-                <button class="review-submit wechat-submit">${langPack[currentLang].submitReview}</button>
-            </div>
-        `;
-    }
-
-    html += '</div>';
-    return html;
-}
-
-export async function renderReviews(bookId, currentLang, currentUser) {
-    await loadReviews(); // ensure latest
-    if (!modalReviews) return;
-    const bookReviews = reviews.filter(r => r.book_id === bookId);
-    modalReviews.innerHTML = generateReviewsHTML(bookReviews, currentLang, currentUser);
-    attachEventsToContainer(modalReviews, bookId, currentLang, currentUser);
-}
-
-export async function renderDetailReviews(bookId, currentLang, currentUser) {
-    await loadReviews();
-    const detailReviews = document.getElementById('detailReviews');
-    if (!detailReviews) return;
-    const bookReviews = reviews.filter(r => r.book_id === bookId);
-    detailReviews.innerHTML = generateReviewsHTML(bookReviews, currentLang, currentUser);
-    attachEventsToContainer(detailReviews, bookId, currentLang, currentUser);
-}
-
-export function checkHashForReview() {
-    // hash handling remains the same; relies on reviews array
-    if (window.location.hash.startsWith('#review-')) {
-        const reviewId = window.location.hash.substring(8);
-        const review = reviews.find(r => r.id === reviewId);
-        if (review) {
-            // need books array – it's imported from data.js, but we must ensure it's loaded
-            import('./data.js').then(({ books }) => {
-                const book = books.find(b => b.id === review.book_id);
-                if (book) {
-                    window.dispatchEvent(new CustomEvent('hashReview', { detail: { book, reviewId } }));
-                }
-            });
+            await insertReview(rev);
         }
     }
+}
+
+// ---------- Orders ----------
+export async function saveOrder(order) {
+    try {
+        const { error } = await supabase.from('orders').insert([order]);
+        if (error) console.warn('Order save warning (table may not exist yet):', error.message);
+    } catch (err) {
+        console.warn('saveOrder failed:', err);
+    }
+}
+export async function getUserRole(userId) {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+    if (error) return 'user';
+    return data?.role || 'user';
 }
