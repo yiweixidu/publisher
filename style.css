@@ -1564,3 +1564,41 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     display: flex;
     gap: 0.3rem;
 }
+
+/* 统一所有用户名样式：书评、评论、新书评表单 */
+.wechat-review-user,
+.wechat-comment-user,
+.review-form-username {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1e1e1e;
+    line-height: 1.4;
+}
+
+/* 日期样式保持较小，与用户名区分 */
+.wechat-review-date {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #888;
+}
+
+/* 确保评论日期也保持一致 */
+.wechat-comment-date {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #999;
+}
+
+/* 新书评表单中的头像圆圈和用户名之间的间距 */
+.review-form-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+.review-user-avatar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
