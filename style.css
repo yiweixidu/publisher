@@ -1516,3 +1516,51 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     gap: 0.5rem;
     justify-content: flex-end;
 }
+
+/* ========== 新增：review头部日期与用户名同行，右侧小图标 ========== */
+.review-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.review-header-actions {
+    display: flex;
+    gap: 0.3rem;
+}
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    font-size: 0.85rem;
+    padding: 0.3rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.icon-btn:hover {
+    color: #ff0000;
+    background: #fff0f0;
+}
+
+/* 确保评论区域右对齐，宽度与review内容一致 */
+.wechat-comment-section {
+    width: 100%;
+    margin-top: 0.75rem;
+}
+.wechat-comment-form {
+    width: 100%;
+}
+.comment-submit-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.4rem;
+}
+.comment-actions-right {
+    margin-left: auto;
+    display: flex;
+    gap: 0.3rem;
+}
