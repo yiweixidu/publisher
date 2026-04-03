@@ -250,7 +250,11 @@ export function openBookFormModal(book = null) {
         formPrice.value = book.price || '';
         formPriceHardcover.value = book.price_hardcover || '';
         if (formAcerSeries) {
-            const series = (book.categories||[]).find(c => c.startsWith('Acer '));
+            let series = (book.categories || []).find(c => c.startsWith('Acer ') || c === "Children's Art");
+            // 映射旧分类到新下拉选项
+            if (series === 'Acer Literature') series = 'Acer Series';
+            if (series === 'Acer Poems') series = 'Acer Poetry';
+            if (series === 'Acer Children') series = "Children's Art";
             formAcerSeries.value = series || '';
         }
         formStockStatus.value = book.stock_status || 'In Stock';
