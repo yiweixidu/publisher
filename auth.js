@@ -117,6 +117,8 @@ export async function logout() {
     updateAdminSwitch();
     updateUserUI();
     window.dispatchEvent(new CustomEvent('userLogout'));
+    // Reload page to reset all admin UI and state
+    location.reload();
 }
 
 export async function signup(email, password, displayName) {
@@ -252,7 +254,7 @@ export function closeAdminLoginModal() {
 
 export function toggleAdminMode() {
     if (adminMode) {
-        logout(); // 关闭 admin 模式：登出用户
+        logout(); // 关闭 admin 模式：登出用户，logout 内会刷新页面
     } else {
         // 开启 admin 模式：先确保登出（如果已登录），再弹出登录框
         if (currentUser) {
