@@ -110,8 +110,11 @@ export async function signup(email, password, displayName) {
 
 
 export async function resetPassword(email) {
+    // Always redirect to the live site, not window.location.origin,
+    // because Supabase must match an allowed URL in the dashboard.
+    const siteUrl = 'https://acerbooks.ca/';
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/'
+        redirectTo: siteUrl
     });
     if (error) throw error;
 }
@@ -123,7 +126,7 @@ export async function initAuth() {
         currentAccessToken = session.access_token;
         const role = await getUserRole(currentUser.id);
         isAdminUser = (role === 'admin');
-        adminMode = false; // 刷新后始终关闭 admin 模式
+        adminMode = isAdminUser; // restore admin mode on refresh if user is admin
         updateAdminSwitch();
         updateUserUI();
     } else {
@@ -146,6 +149,16 @@ export async function initAuth() {
             updateAdminSwitch();
             updateUserUI();
             window.dispatchEvent(new CustomEvent('userLogin'));
+        } else if (event === 'PASSWORD_RECOVERY') {
+            // User clicked the reset-password link in their email and landed back on the site.
+            // Store the session so updateUser() will work, then open the set-password modal.
+            currentUser = session.user;
+            currentAccessToken = session.access_token;
+            updateUserUI();
+            // Small delay to let the page finish initialising before showing the modal
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('openPasswordRecovery'));
+            }, 400);
         } else if (event === 'SIGNED_OUT') {
             currentUser = null;
             currentAccessToken = null;

@@ -56,11 +56,26 @@ let adminSortBy = 'title';
 // ── Toast helper ────────────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
     const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+    const color = type === 'success' ? '#4caf50' : '#ff0000';
     const el = document.createElement('div');
     el.className = `acer-toast toast-${type}`;
-    el.innerHTML = `<i class="fas ${icon}"></i><span>${msg}</span>`;
+    // Inline styles as fallback so toast is visible even before new CSS is deployed
+    el.style.cssText = `
+        position:fixed; bottom:2rem; right:2rem; z-index:99999;
+        background:#1e1e1e; color:#fff; padding:0.85rem 1.5rem;
+        border-radius:10px; font-size:0.9rem; font-weight:500;
+        box-shadow:0 8px 24px rgba(0,0,0,0.3);
+        display:flex; align-items:center; gap:0.6rem;
+        transition:opacity 0.4s, transform 0.4s;
+        opacity:1; transform:translateY(0);
+    `;
+    el.innerHTML = `<i class="fas ${icon}" style="color:${color};font-size:1rem;"></i><span>${msg}</span>`;
     document.body.appendChild(el);
-    setTimeout(() => { el.classList.add('toast-hide'); setTimeout(() => el.remove(), 450); }, 2500);
+    setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(1rem)';
+        setTimeout(() => el.remove(), 450);
+    }, 2800);
 }
 
 // Helper: upload file to Supabase Storage and return public URL
