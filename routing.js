@@ -61,6 +61,8 @@ export async function handleRoute() {
         mainContent.style.display = 'block';
         await Promise.all([renderBooks(), renderNews()]);
         resetMetaTags();
+        const { updateUserUI } = await import('./auth.js');
+        await updateUserUI();
 
     } else if (path === 'books') {
         booksPage.style.display = 'block';

@@ -15,6 +15,7 @@ async function getUserDisplayName(userId) {
             .eq('id', userId)
             .single();
         if (profile?.display_name) return profile.display_name;
+        // fallback: get email prefix from auth
         const { data: userData } = await supabase.auth.getUser();
         if (userData?.user?.email) return userData.user.email.split('@')[0];
         return 'User';
@@ -60,7 +61,7 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
         });
     });
 
-    // Submit comment (reply) – now the button is moved to right side
+    // Submit comment (reply) – button placed in right column
     container.querySelectorAll('.wechat-comment-submit').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
@@ -79,11 +80,15 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
                     timestamp: new Date().toISOString()
                 });
                 await updateReview(review);
+                // Force reload reviews from DB and re-render
+                await loadReviews();
                 if (container === modalReviews) {
-                    renderReviews(bookId, currentLang, currentUser);
+                    await renderReviews(bookId, currentLang, currentUser);
                 } else {
-                    renderDetailReviews(bookId, currentLang, currentUser);
+                    await renderDetailReviews(bookId, currentLang, currentUser);
                 }
+                // Clear input after submission
+                if (input) input.value = '';
             }
         });
     });
@@ -107,11 +112,15 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
                 comments: []
             };
             await insertReview(newReview);
+            // Force reload reviews from DB and re-render
+            await loadReviews();
             if (container === modalReviews) {
-                renderReviews(bookId, currentLang, currentUser);
+                await renderReviews(bookId, currentLang, currentUser);
             } else {
-                renderDetailReviews(bookId, currentLang, currentUser);
+                await renderDetailReviews(bookId, currentLang, currentUser);
             }
+            // Clear textarea
+            if (textarea) textarea.value = '';
         });
     }
 }
@@ -179,7 +188,7 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
             `;
         }
 
-        // Comment input form: text input + submit button (button below, right-aligned)
+        // Comment input form
         if (currentUser) {
             html += `
                 <div class="wechat-comment-form">
@@ -195,7 +204,7 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
 
         html += `</div></div>`;
 
-        // Right side: only share button
+        // Right side: share button only (comment button moved to below input)
         html += `
             <div class="wechat-review-footer">
                 <button class="wechat-share-btn circle-icon" data-review-id="${r.id}" title="Share to WeChat">
@@ -205,7 +214,7 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
         </div>`;
     }
 
-    // Form to write a new review (Post review button is a regular red-outline button)
+    // Form to write a new review
     if (currentUser) {
         const currentDisplayName = currentUser.user_metadata?.display_name || 
                                    currentUser.email.split('@')[0];
@@ -230,6 +239,7 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
     return html;
 }
 
+// Simple XSS escape helper
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, function(m) {
@@ -243,7 +253,7 @@ function escapeHtml(str) {
 }
 
 export async function renderReviews(bookId, currentLang, currentUser) {
-    await loadReviews();
+    await loadReviews();  // ensure fresh data
     if (!modalReviews) return;
     const bookReviews = reviews.filter(r => r.book_id === bookId);
     modalReviews.innerHTML = generateReviewsHTML(bookReviews, currentLang, currentUser);
@@ -251,7 +261,7 @@ export async function renderReviews(bookId, currentLang, currentUser) {
 }
 
 export async function renderDetailReviews(bookId, currentLang, currentUser) {
-    await loadReviews();
+    await loadReviews();  // ensure fresh data
     const detailReviews = document.getElementById('detailReviews');
     if (!detailReviews) return;
     const bookReviews = reviews.filter(r => r.book_id === bookId);

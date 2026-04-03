@@ -181,3 +181,44 @@ function _renderAddresses() {
 }
 
 function _set(id, fn) { const el = document.getElementById(id); if (el) fn(el); }
+
+export async function updateDisplayName(displayName) {
+    if (!currentUser) throw new Error('Not authenticated');
+    const { error: authErr } = await supabase.auth.updateUser({ data: { display_name: displayName } });
+    if (authErr) throw authErr;
+    const { error: profileErr } = await supabase.from('profiles')
+        .upsert({ id: currentUser.id, display_name: displayName }, { onConflict: 'id' });
+    if (profileErr) console.warn('profiles upsert:', profileErr.message);
+    
+    // 更新导航栏头像
+    const circle = document.querySelector('.user-avatar-circle');
+    if (circle) circle.textContent = displayName.charAt(0).toUpperCase();
+    const btn = document.getElementById('userNameBtn');
+    if (btn) btn.title = displayName + ' — My Account';
+    
+    // 更新弹窗头部
+    const headerName = document.getElementById('accHeaderName');
+    if (headerName) headerName.textContent = displayName;
+    const avatarInitial = document.getElementById('accAvatarInitial');
+    if (avatarInitial) avatarInitial.textContent = displayName.charAt(0).toUpperCase();
+    
+    // 重新渲染当前可见的 review 区域
+    const detailPage = document.getElementById('bookDetailPage');
+    const modalOverlay = document.getElementById('bookModal');
+    const currentLang = (await import('./i18n.js')).currentLang;
+    if (detailPage && detailPage.style.display === 'block' && window.currentModalBook) {
+        const { renderDetailReviews } = await import('./review.js');
+        await renderDetailReviews(window.currentModalBook.id, currentLang, currentUser);
+    }
+    if (modalOverlay && modalOverlay.classList.contains('active') && window.currentModalBook) {
+        const { renderReviews } = await import('./review.js');
+        await renderReviews(window.currentModalBook.id, currentLang, currentUser);
+    }
+    
+    try { 
+        const { updateUserUI } = await import('./auth.js');
+        await updateUserUI(); 
+        const newCircle = document.querySelector('.user-avatar-circle');
+        if (newCircle) newCircle.textContent = displayName.charAt(0).toUpperCase();
+    } catch(_) {}
+}
