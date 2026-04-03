@@ -1114,12 +1114,18 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 #formPrice,
 #formPriceHardcover {
     height: 38px !important;
+    min-height: unset !important;
+    max-height: 38px !important;
+    flex: none !important;
     padding: 0 0.9rem !important;
     font-size: 0.9rem;
     line-height: 1;
+    box-sizing: border-box;
 }
 .form-group.half {
     margin-bottom: 0.6rem !important;
+    align-self: flex-start !important;
+    width: calc(50% - 0.5rem);
 }
 
 /* ── Issue 6: Toast notification ── */

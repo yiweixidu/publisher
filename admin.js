@@ -261,19 +261,26 @@ export function openBookFormModal(book = null) {
 
 export function initQuillEditors() {
     if (!document.querySelector('#descriptionEditor')) return;
-    descriptionQuill = new Quill('#descriptionEditor', {
-        theme: 'snow',
-        modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
-    });
-    bioQuill = new Quill('#bioEditor', {
-        theme: 'snow',
-        modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
-    });
+
+    // Quill may fail if CDN didn't load — wrap so the submit listener always registers
+    try {
+        descriptionQuill = new Quill('#descriptionEditor', {
+            theme: 'snow',
+            modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
+        });
+        bioQuill = new Quill('#bioEditor', {
+            theme: 'snow',
+            modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
+        });
+    } catch (e) {
+        console.warn('Quill failed to initialise — rich-text editing disabled:', e);
+    }
 
     bookForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        document.getElementById('formDescription').value = descriptionQuill.root.innerHTML;
-        document.getElementById('formAuthorBio').value = bioQuill.root.innerHTML;
+        // Only read from Quill if it loaded successfully
+        if (descriptionQuill) document.getElementById('formDescription').value = descriptionQuill.root.innerHTML;
+        if (bioQuill)         document.getElementById('formAuthorBio').value  = bioQuill.root.innerHTML;
         saveBookFromForm();
     });
 }

@@ -301,17 +301,6 @@
         </div>
     </div>
 
-    <!-- Admin Login Modal -->
-    <div id="adminLoginOverlay" class="login-overlay">
-        <div class="login-modal">
-            <span class="login-close" id="adminLoginClose"><i class="fas fa-times"></i></span>
-            <h2 class="login-title">Admin Login</h2>
-            <input type="password" id="adminPassword" class="login-input" placeholder="Password">
-            <input type="text" id="adminTOTP" class="login-input" placeholder="2FA Code">
-            <button id="adminLoginBtn" class="login-btn">Login</button>
-            <div id="adminLoginError" class="login-error"></div>
-        </div>
-    </div>
 
     <!-- Shopping Cart Modal -->
     <div id="cartModal" class="modal-overlay">
@@ -842,14 +831,13 @@
             <button id="sendResetBtn" class="login-btn">Send Reset Link</button>
             <div id="resetMsg" class="acc-msg" style="text-align:center;margin-top:.8rem;min-height:1.2em;"></div>
             <p style="text-align:center;margin-top:1.2rem;">
-                <a href="#" id="backToLoginFromReset" style="font-size:.85rem;color:#b00;">← Back to Login</a>
+                <a href="#" id="backToLoginFromReset" style="font-size:.85rem;color:#ff0000;">← Back to Login</a>
             </p>
         </div>
     </div>
 
     <!-- Scripts -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/otpauth@9.1.2/dist/otpauth.umd.min.js"></script>
     <script type="module" src="main.js"></script>
 </body>
 </html>
