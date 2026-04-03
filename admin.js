@@ -8,7 +8,7 @@ import { navigateTo } from './routing.js';
 import { supabase } from './supabaseClient.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './constants.js';
 
-// DOM elements (same as before)
+// DOM elements
 const adminBooksPage = document.getElementById('adminBooksPage');
 const adminBooksList = document.getElementById('adminBooksList');
 const searchInput = document.getElementById('searchBooks');
@@ -24,7 +24,7 @@ const formIsbn = document.getElementById('formIsbn');
 const formPublisher = document.getElementById('formPublisher');
 const formPubDate = document.getElementById('formPubDate');
 const formPages = document.getElementById('formPages');
-const formLanguage = document.getElementById('formLanguage');
+// formLanguage removed, replaced by checkboxes
 const formPrice = document.getElementById('formPrice');
 const formPriceHardcover = document.getElementById('formPriceHardcover');
 const formAcerSeries = document.getElementById('formAcerSeries');
@@ -59,7 +59,6 @@ function showToast(msg, type = 'success') {
     const color = type === 'success' ? '#4caf50' : '#ff0000';
     const el = document.createElement('div');
     el.className = `acer-toast toast-${type}`;
-    // Inline styles as fallback so toast is visible even before new CSS is deployed
     el.style.cssText = `
         position:fixed; bottom:2rem; right:2rem; z-index:99999;
         background:#1e1e1e; color:#fff; padding:0.85rem 1.5rem;
@@ -213,11 +212,24 @@ export function setAdminSortBy(sortBy) {
     renderAdminBookList();
 }
 
+// Helper: get language checkboxes
+function getLangCheckboxes() {
+    return document.querySelectorAll('input[name="langChoice"]');
+}
+
 // ---------- Book Form Modal ----------
 export function openBookFormModal(book = null) {
+    // Remove any leftover success message from previous save
+    const oldMsg = document.getElementById('bookSaveSuccessMsg');
+    if (oldMsg) oldMsg.remove();
+
     bookForm.reset();
     coverPreview.style.backgroundImage = '';
     interiorPreviewsContainer.innerHTML = '';
+
+    // Reset language checkboxes
+    const langCheckboxes = getLangCheckboxes();
+    langCheckboxes.forEach(cb => cb.checked = false);
 
     if (book) {
         bookIdField.value = book.id || '';
@@ -228,7 +240,13 @@ export function openBookFormModal(book = null) {
         formPublisher.value = book.publisher || '';
         formPubDate.value = book.pub_date || '';
         formPages.value = book.pages || '';
-        formLanguage.value = book.language || '';
+        // Set language checkboxes based on book.language (comma-separated)
+        if (book.language) {
+            const selectedLangs = book.language.split(',').map(s => s.trim());
+            langCheckboxes.forEach(cb => {
+                if (selectedLangs.includes(cb.value)) cb.checked = true;
+            });
+        }
         formPrice.value = book.price || '';
         formPriceHardcover.value = book.price_hardcover || '';
         if (formAcerSeries) {
@@ -262,7 +280,6 @@ export function openBookFormModal(book = null) {
 export function initQuillEditors() {
     if (!document.querySelector('#descriptionEditor')) return;
 
-    // Quill may fail if CDN didn't load — wrap so the submit listener always registers
     try {
         descriptionQuill = new Quill('#descriptionEditor', {
             theme: 'snow',
@@ -278,7 +295,6 @@ export function initQuillEditors() {
 
     bookForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        // Only read from Quill if it loaded successfully
         if (descriptionQuill) document.getElementById('formDescription').value = descriptionQuill.root.innerHTML;
         if (bioQuill)         document.getElementById('formAuthorBio').value  = bioQuill.root.innerHTML;
         saveBookFromForm();
@@ -295,7 +311,13 @@ async function saveBookFromForm() {
 
     console.log('saveBookFromForm called');
 
-    // 收集表单数据（保持不变）
+    // Collect language from checkboxes
+    const langCheckboxes = getLangCheckboxes();
+    const selectedLanguages = Array.from(langCheckboxes)
+        .filter(cb => cb.checked)
+        .map(cb => cb.value)
+        .join(', ');
+
     const bookData = {
         id: bookIdField.value || undefined,
         title: formTitle.value.trim(),
@@ -303,21 +325,15 @@ async function saveBookFromForm() {
         author: formAuthor.value.trim(),
         author_fr: formAuthor.value.trim() || null,
         categories: (() => {
-            // 1. 用户手动输入的分类（逗号分隔）
             let base = formCategories.value.split(',').map(s=>s.trim()).filter(Boolean);
-            // 2. 用户选择的系列（下拉框）
             const selectedSeries = formAcerSeries?.value;
-            
             if (selectedSeries) {
-                // 定义所有可能的系列名称（新旧系列）
                 const seriesKeywords = [
                     'Acer Literature', 'Acer Series', 'Acer Novels', 
                     'Acer Essays', 'Acer Poetry', 'Acer Poems', 
                     'Acer Children', "Children's Art"
                 ];
-                // 从手动输入的分类中移除所有旧的系列
                 base = base.filter(cat => !seriesKeywords.includes(cat));
-                // 将新选择的系列添加到开头（确保它作为主要系列）
                 base.unshift(selectedSeries);
             }
             return base;
@@ -326,7 +342,7 @@ async function saveBookFromForm() {
         publisher: formPublisher.value.trim(),
         pub_date: formPubDate.value.trim(),
         pages: parseInt(formPages.value) || null,
-        language: formLanguage.value.trim(),
+        language: selectedLanguages,
         price: parseFloat(formPrice.value).toFixed(2),
         price_hardcover: formPriceHardcover.value.trim() !== '' ? parseFloat(formPriceHardcover.value) : null,
         stock_status: formStockStatus.value,
@@ -338,7 +354,7 @@ async function saveBookFromForm() {
         interior_previews: []
     };
 
-    // 1. 处理封面上传
+    // 1. Handle cover upload
     if (formCover.files.length > 0) {
         try {
             bookData.cover = await uploadFile(formCover.files[0], 'book-covers', 'covers');
@@ -354,7 +370,7 @@ async function saveBookFromForm() {
         if (existing && existing.cover) bookData.cover = existing.cover;
     }
 
-    // 2. 处理内页预览上传
+    // 2. Handle interior previews
     if (formInterior.files.length > 0) {
         const urls = [];
         for (const file of formInterior.files) {
@@ -375,12 +391,12 @@ async function saveBookFromForm() {
         if (existing && existing.interior_previews) bookData.interior_previews = existing.interior_previews;
     }
 
-    // 3. 为新书生成 ID
+    // 3. Generate ID for new book
     if (!bookData.id) {
         bookData.id = 'b' + Date.now() + Math.random().toString(36).substr(2, 6);
     }
 
-    // 4. 直接保存到 Supabase
+    // 4. Save to Supabase
     if (!currentAccessToken) {
         showToast('Not authenticated. Please log in again.', 'error');
         isSavingBook = false;
@@ -414,13 +430,11 @@ async function saveBookFromForm() {
         return;
     }
 
-    // 5. 保存成功 —— 在 Save Book 按钮上方显示成功提示（英文）
+    // 5. Success: show message above Save button
     if (saveOk) {
-        // 移除已有的提示（如果有）
         const oldMsg = document.getElementById('bookSaveSuccessMsg');
         if (oldMsg) oldMsg.remove();
 
-        // 找到按钮容器（form-actions）
         const formActions = bookFormModal.querySelector('.form-actions');
         if (formActions) {
             const msgDiv = document.createElement('div');
@@ -437,23 +451,16 @@ async function saveBookFromForm() {
                 font-weight: 500;
             `;
             msgDiv.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.5rem;"></i> Book saved! The book list has been updated automatically.';
-            // 插入到 form-actions 之前（即按钮上方）
             formActions.parentNode.insertBefore(msgDiv, formActions);
         } else {
-            // 兜底：显示 toast
             showToast('Book saved! List updated automatically', 'success');
         }
 
-        // 恢复按钮状态
         isSavingBook = false;
         if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
-
-        // 注意：不再自动关闭模态框，让用户手动关闭（点击 X 或外部）
-        // 但为了体验，可以保留一段较长时间后自动移除提示？不需要，提示会一直存在直到用户关闭模态框。
-        // 用户关闭模态框时，提示会随 DOM 一起消失（因为模态框内容会被重置）。
     }
 
-    // 6. 后台刷新列表（不阻塞用户，失败也不影响提示）
+    // 6. Refresh lists in background
     try {
         await renderAdminBookList();
         if (document.getElementById('mainContent').style.display === 'block') await renderBooks();
@@ -515,12 +522,11 @@ export function attachNewsEvents() {
             title: { en: titleEn, fr: titleFr },
             summary: { en: summaryEn, fr: summaryFr },
             image: imageUrl,
-            status: 'draft'          // default status
+            status: 'draft'
         };
         const updatedNews = [...newsItems, newItem];
         await saveNews(updatedNews);
         clearInputs();
-        // refresh views
         if (document.getElementById('mainContent').style.display === 'block') renderNews();
         if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
     });
@@ -568,7 +574,6 @@ export async function renderAdminNewsList() {
     `).join('');
     document.getElementById('adminNewsList').innerHTML = html;
 
-    // Toggle status
     document.querySelectorAll('.toggle-status').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = btn.dataset.id;
@@ -579,7 +584,6 @@ export async function renderAdminNewsList() {
                 item.status = newStatus;
                 await saveNews(newsItems);
                 await renderAdminNewsList();
-                // refresh frontend
                 if (document.getElementById('mainContent').style.display === 'block') renderNews();
                 if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
             }
