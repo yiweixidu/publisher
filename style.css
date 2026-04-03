@@ -1027,3 +1027,124 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     .admin-news-row { grid-template-columns: 1fr; gap: 0.4rem; }
     .anr-right { justify-content: flex-start; }
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   PATCH BATCH 2 — 8-issue fixes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Issue 1: Account modal close (X) button — top-right ── */
+.account-modal-content {
+    position: relative !important;
+}
+.acc-modal-close {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    z-index: 10;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+    font-size: 0.95rem;
+    transition: background 0.15s, color 0.15s;
+}
+.acc-modal-close:hover {
+    background: rgba(255,255,255,0.3);
+    color: #fff;
+}
+
+/* ── Issue 4: Add News / Add New Book — ghost style (gray, hover red) ── */
+#addNewsAdminBtn,
+#addNewBookBtn {
+    background: transparent !important;
+    border: none !important;
+    color: #aaa !important;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.55rem 1.2rem;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+    box-shadow: none !important;
+}
+#addNewsAdminBtn:hover,
+#addNewBookBtn:hover {
+    background: #e00 !important;
+    color: #fff !important;
+}
+
+/* ── Issue 5: Admin book row action buttons — better spacing ── */
+.admin-book-row .actions {
+    display: flex;
+    gap: 0 !important;
+    align-items: center;
+}
+.admin-book-row .actions button {
+    padding: 0.35rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #666 !important;
+    border: 1px solid transparent !important;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+.admin-book-row .actions button:hover {
+    color: #b00 !important;
+    background: #fff0f0;
+    border-color: #f5c6c6 !important;
+}
+.admin-book-row .actions button + button {
+    margin-left: 0.25rem;
+}
+.admin-book-row .actions .delete-book {
+    color: #ccc !important;
+}
+.admin-book-row .actions .delete-book:hover {
+    color: #b00 !important;
+    background: #fff0f0;
+}
+
+/* ── Issue 7: Price inputs — reduce height ── */
+#formPrice,
+#formPriceHardcover {
+    height: 38px !important;
+    padding: 0 0.9rem !important;
+    font-size: 0.9rem;
+    line-height: 1;
+}
+.form-group.half {
+    margin-bottom: 0.6rem !important;
+}
+
+/* ── Issue 6: Toast notification ── */
+.acer-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #1e1e1e;
+    color: #fff;
+    padding: 0.85rem 1.5rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    transform: translateY(0);
+    opacity: 1;
+    transition: opacity 0.4s, transform 0.4s;
+}
+.acer-toast.toast-success i { color: #4caf50; }
+.acer-toast.toast-error   i { color: #e00; }
+.acer-toast.toast-hide {
+    opacity: 0;
+    transform: translateY(1rem);
+}

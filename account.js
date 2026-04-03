@@ -1,5 +1,6 @@
 // account.js — User Account Dashboard
 import { currentUser } from './auth.js';
+import { updateUserUI } from './auth.js';
 import { supabase }     from './supabaseClient.js';
 
 export function getWishlist() { return JSON.parse(localStorage.getItem('acerWishlist') || '[]'); }
@@ -59,6 +60,8 @@ export async function updateDisplayName(displayName) {
     if (circle) circle.textContent = displayName.charAt(0).toUpperCase();
     const btn = document.getElementById('userNameBtn');
     if (btn) btn.title = displayName + ' — My Account';
+    // Re-render entire navbar user section so initial stays in sync
+    try { await updateUserUI(); } catch(_) {}
 }
 
 export async function updateUserPassword(newPassword) {

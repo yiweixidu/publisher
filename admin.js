@@ -53,6 +53,16 @@ let newsContentEditorEn, newsContentEditorFr;
 let adminSearchTerm = '';
 let adminSortBy = 'title';
 
+// ── Toast helper ────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+    const el = document.createElement('div');
+    el.className = `acer-toast toast-${type}`;
+    el.innerHTML = `<i class="fas ${icon}"></i><span>${msg}</span>`;
+    document.body.appendChild(el);
+    setTimeout(() => { el.classList.add('toast-hide'); setTimeout(() => el.remove(), 450); }, 2500);
+}
+
 // Helper: upload file to Supabase Storage and return public URL
 async function uploadFile(file, bucket, pathPrefix) {
     console.log(`uploadFile: bucket=${bucket}, pathPrefix=${pathPrefix}, file=${file.name}, size=${file.size}`);
@@ -131,9 +141,9 @@ export async function renderAdminBookList() {
             <div>$${parseFloat(book.price).toFixed(2)}${book.price_hardcover ? `<span class="admin-hc-tag"> / HC $${parseFloat(book.price_hardcover).toFixed(2)}</span>` : ''}</div>
             <div>${book.stock_status || 'In Stock'}</div>
             <div class="actions">
-                <button class="edit-book" data-id="${book.id}" data-i18n="editBook">Edit</button>
-                <button class="duplicate-book" data-id="${book.id}" data-i18n="duplicate">Duplicate</button>
-                <button class="delete-book" data-id="${book.id}" data-i18n="title="Delete"><i class="fas fa-trash-alt"></i></button>
+                <button class="edit-book" data-id="${book.id}"><i class="fas fa-pen"></i> Edit</button>
+                <button class="duplicate-book" data-id="${book.id}"><i class="fas fa-copy"></i> Duplicate</button>
+                <button class="delete-book" data-id="${book.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
             </div>
         </div>
         `;
@@ -169,10 +179,10 @@ export async function renderAdminBookList() {
                 await renderAdminBookList();
                 if (document.getElementById('mainContent').style.display === 'block') renderBooks();
                 if (document.getElementById('booksPage').style.display === 'block') renderAllBooks();
-                alert('删除成功');
+                showToast('Deleted successfully');
             } catch (err) {
                 console.error('Delete error:', err);
-                alert('删除失败：' + err.message);
+                showToast('Delete failed: ' + err.message, 'error');
             }
         });
     });
@@ -291,7 +301,7 @@ async function saveBookFromForm() {
             bookData.cover = await uploadFile(file, 'book-covers', 'covers');
         } catch (err) {
             console.error('Cover upload failed', err);
-            alert('封面上传失败，请重试');
+            showToast('Cover upload failed, please retry', 'error');
             return;
         }
     } else {
@@ -308,7 +318,7 @@ async function saveBookFromForm() {
                 urls.push(url);
             } catch (err) {
                 console.error('Interior upload failed', err);
-                alert('内页图片上传失败，请重试');
+                showToast('Interior image upload failed, please retry', 'error');
                 return;
             }
         }
@@ -335,10 +345,10 @@ async function saveBookFromForm() {
         await renderAdminBookList();
         if (document.getElementById('mainContent').style.display === 'block') renderBooks();
         if (document.getElementById('booksPage').style.display === 'block') renderAllBooks();
-        alert('书籍保存成功！');
+        showToast('Book saved successfully!');
     } catch (err) {
         console.error('Error saving book:', err);
-        alert('保存失败，请检查控制台错误：' + (err.message || err));
+        showToast('Save failed: ' + (err.message || err), 'error');
     }
 }
 
@@ -481,10 +491,10 @@ export async function renderAdminNewsList() {
                 await renderAdminNewsList();
                 if (document.getElementById('mainContent').style.display === 'block') renderNews();
                 if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
-                alert('删除成功');
+                showToast('Deleted successfully');
             } catch (err) {
                 console.error('Delete error:', err);
-                alert('删除失败：' + err.message);
+                showToast('Delete failed: ' + err.message, 'error');
             }
         });
     });
@@ -589,7 +599,7 @@ async function saveNewsFromForm() {
             console.log('Image uploaded, URL:', imageUrl);
         } catch (err) {
             console.error('Image upload failed', err);
-            alert('图片上传失败：' + err.message);
+            showToast('Image upload failed: ' + err.message, 'error');
             return;
         }
     } else if (id) {
@@ -640,10 +650,10 @@ async function saveNewsFromForm() {
         await renderAdminNewsList();
         if (document.getElementById('mainContent').style.display === 'block') renderNews();
         if (document.getElementById('newsListPage').style.display === 'block') renderAllNews();
-        alert('新闻保存成功！');
+        showToast('News saved successfully!');
     } catch (err) {
         console.error('Error saving news:', err);
-        alert('保存失败：' + err.message);
+        showToast('Save failed: ' + err.message, 'error');
     }
 }
 

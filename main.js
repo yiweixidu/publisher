@@ -863,9 +863,18 @@ async function init() {
     if (redirect) {
         sessionStorage.removeItem('redirect');
         history.replaceState(null, '', redirect);
-        handleRoute();
+        await handleRoute();
         updateAdminToggleVisibility();
     }
 }
 
 init();
+
+// Fix 3: When browser restores page from bfcache (back-forward cache),
+// re-initialise auth so the logout button and user state are fresh.
+window.addEventListener('pageshow', (e) => {
+    if (e.persisted) {
+        // Page was restored from bfcache — re-sync auth state without full reload
+        import('./auth.js').then(({ initAuth }) => initAuth());
+    }
+});
