@@ -285,7 +285,7 @@ export function initQuillEditors() {
     });
 }
 
-let isSavingBook = false; // 防止重复提交
+let isSavingBook = false;
 
 async function saveBookFromForm() {
     if (isSavingBook) return;
@@ -363,39 +363,74 @@ async function saveBookFromForm() {
         bookData.id = 'b' + Date.now() + Math.random().toString(36).substr(2, 6);
     }
 
-    // 4. Save to Supabase
+    // 4. 直接向 Supabase POST，不经过 saveBooks()
+    //    （saveBooks 内部会调用 loadBooks，若 loadBooks 404 会导致 catch 吃掉成功结果）
+    if (!currentAccessToken) {
+        showToast('Not authenticated. Please log in again.', 'error');
+        return;
+    }
+    const { created_at, interior_previews, description_fr, author_bio_fr, ...cleanBook } = bookData;
+    let saveOk = false;
     try {
-        await saveBooks([bookData]);
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/books`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${currentAccessToken}`,
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify([cleanBook])
+        });
+        if (!resp.ok) {
+            const errText = await resp.text();
+            throw new Error(`Supabase ${resp.status}: ${errText}`);
+        }
+        saveOk = true;
         console.log('Book saved successfully');
     } catch (err) {
-        console.error('Error saving book:', err);
+        console.error('Save error:', err);
         showToast('Save failed: ' + (err.message || err), 'error');
         isSavingBook = false;
         if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
         return;
     }
-    isSavingBook = false;
-    if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
 
-    // 5. 成功：在弹窗顶部显示内联提示（不依赖滚动位置，始终可见）
-    bookFormModal.querySelector('.book-save-msg')?.remove();
-    const msgEl = document.createElement('div');
-    msgEl.className = 'book-save-msg';
-    msgEl.style.cssText = 'margin:0 0 1.2rem 0;padding:0.65rem 1rem;background:#f0fff4;border:1px solid #4caf50;border-radius:6px;font-size:0.82rem;color:#2e7d32;text-align:center;font-weight:500;';
-    msgEl.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.4rem;"></i>'
-        + 'Book saved! Please <strong>refresh the page</strong> to see the new listing.';
-    const modalTitle = bookFormModal.querySelector('#formModalTitle');
-    if (modalTitle) modalTitle.insertAdjacentElement('afterend', msgEl);
-    else bookFormModal.querySelector('.modal-content')?.prepend(msgEl);
-    // 滚动到顶部确保提示可见
-    const mc = bookFormModal.querySelector('.modal-content');
-    if (mc) mc.scrollTop = 0;
+    // 5. 保存成功——在弹窗顶部插入提示（滚动到顶，始终可见）
+    if (saveOk) {
+        bookFormModal.querySelector('.book-save-msg')?.remove();
+        const msgEl = document.createElement('div');
+        msgEl.className = 'book-save-msg';
+        msgEl.style.cssText = [
+            'margin:0 0 1.2rem 0',
+            'padding:0.65rem 1rem',
+            'background:#f0fff4',
+            'border:1px solid #4caf50',
+            'border-radius:6px',
+            'font-size:0.84rem',
+            'color:#2e7d32',
+            'text-align:center',
+            'font-weight:500'
+        ].join(';');
+        msgEl.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.4rem;"></i>'
+            + '新书加载成功！请 <strong>刷新页面</strong> 以查看最新书目。';
+        const modalTitle = bookFormModal.querySelector('#formModalTitle');
+        if (modalTitle) {
+            modalTitle.insertAdjacentElement('afterend', msgEl);
+        } else {
+            bookFormModal.querySelector('.modal-content')?.prepend(msgEl);
+        }
+        const mc = bookFormModal.querySelector('.modal-content');
+        if (mc) mc.scrollTop = 0;
 
-    // 3 秒后关闭弹窗
-    setTimeout(() => {
-        bookFormModal.classList.remove('active');
-        msgEl?.remove();
-    }, 3000);
+        isSavingBook = false;
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
+        // 3 秒后自动关闭弹窗
+        setTimeout(() => {
+            bookFormModal.classList.remove('active');
+            msgEl?.remove();
+        }, 3000);
+    }
 
     // 6. 后台刷新列表（失败不影响用户）
     try { await renderAdminBookList(); } catch(e) { console.warn('List refresh (non-fatal):', e.message); }
