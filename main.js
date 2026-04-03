@@ -846,6 +846,27 @@ window.addEventListener('openAccountDashboard', () => {
     import('./account.js').then(({ openAccountDashboard }) => openAccountDashboard());
 });
 
+// Triggered after user clicks the password-reset email link
+window.addEventListener('openPasswordRecovery', () => {
+    import('./account.js').then(({ openAccountDashboard, switchAccTab }) => {
+        openAccountDashboard().then(() => {
+            switchAccTab('profile');
+            // Scroll to / highlight the Change Password section
+            const pwSection = document.getElementById('profileNewPw');
+            if (pwSection) {
+                pwSection.focus();
+                pwSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            // Show a contextual message
+            const msgEl = document.getElementById('profileMsg');
+            if (msgEl) {
+                msgEl.textContent = 'Please enter your new password below.';
+                msgEl.className = 'acc-msg success';
+            }
+        });
+    });
+});
+
 // ---------- Initialization ----------
 async function init() {
     loadCart();
