@@ -1161,7 +1161,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     font-weight: 600;
 }
 .book-list-row:hover {
-    background: #f5f5f5 !important;   /* 浅灰背景，不是深色 */
+    background: #d0d0d0 !important;   /* 浅灰背景，不是深色 */
 }
 .book-list-row:hover .book-list-title {
     color: #333 !important;           /* hover 时书名保持深灰 */
