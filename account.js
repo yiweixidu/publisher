@@ -55,13 +55,29 @@ export async function updateDisplayName(displayName) {
     const { error: profileErr } = await supabase.from('profiles')
         .upsert({ id: currentUser.id, display_name: displayName }, { onConflict: 'id' });
     if (profileErr) console.warn('profiles upsert:', profileErr.message);
-    // Update navbar avatar live
+    
+    // Update navbar avatar circle directly (without re-rendering whole userSection)
     const circle = document.querySelector('.user-avatar-circle');
     if (circle) circle.textContent = displayName.charAt(0).toUpperCase();
     const btn = document.getElementById('userNameBtn');
     if (btn) btn.title = displayName + ' — My Account';
-    // Re-render entire navbar user section so initial stays in sync
-    try { await updateUserUI(); } catch(_) {}
+    
+    // Also update the profile header in the modal
+    const headerName = document.getElementById('accHeaderName');
+    if (headerName) headerName.textContent = displayName;
+    const avatarInitial = document.getElementById('accAvatarInitial');
+    if (avatarInitial) avatarInitial.textContent = displayName.charAt(0).toUpperCase();
+    
+    // Force re-render of user UI to keep consistency (but avoid overwriting the circle)
+    // Instead of calling updateUserUI (which would recreate the whole userSection),
+    // we just update the necessary parts.
+    try { 
+        const { updateUserUI } = await import('./auth.js');
+        await updateUserUI(); 
+        // After updateUserUI, the circle might be replaced, so re-set it
+        const newCircle = document.querySelector('.user-avatar-circle');
+        if (newCircle) newCircle.textContent = displayName.charAt(0).toUpperCase();
+    } catch(_) {}
 }
 
 export async function updateUserPassword(newPassword) {
