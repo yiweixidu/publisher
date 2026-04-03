@@ -1357,3 +1357,52 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
         width: auto;
     }
 }
+
+.language-checkboxes {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.3rem;
+}
+.language-checkboxes label {
+    font-weight: normal;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+/* 确保在表单行内对齐 */
+.form-group.half {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 书籍详情页整体下移，露出返回按钮 */
+.detail-container {
+    padding-top: 3.5rem;
+}
+@media (max-width: 768px) {
+    .detail-container {
+        padding-top: 2rem;
+    }
+}
+
+/* 评论输入框与书评输入框字体一致 */
+.wechat-comment-input,
+.review-textarea {
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* 统一提交按钮与输入框的间距 */
+.review-submit-wrapper,
+.comment-submit-wrapper {
+    margin-top: 0.8rem;
+}
+
+/* 确保评论输入框宽度和书评输入框一致 */
+.wechat-comment-input {
+    width: 100% !important;
+    box-sizing: border-box;
+}
