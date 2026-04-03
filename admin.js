@@ -292,7 +292,10 @@ async function saveBookFromForm() {
     isSavingBook = true;
     const saveBtn = document.getElementById('saveBookBtn');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.style.opacity = '0.6'; }
+
     console.log('saveBookFromForm called');
+
+    // 收集表单数据（保持不变）
     const bookData = {
         id: bookIdField.value || undefined,
         title: formTitle.value.trim(),
@@ -311,9 +314,7 @@ async function saveBookFromForm() {
         pages: parseInt(formPages.value) || null,
         language: formLanguage.value.trim(),
         price: parseFloat(formPrice.value).toFixed(2),
-        price_hardcover: formPriceHardcover.value.trim() !== ''
-            ? parseFloat(formPriceHardcover.value)
-            : null,
+        price_hardcover: formPriceHardcover.value.trim() !== '' ? parseFloat(formPriceHardcover.value) : null,
         stock_status: formStockStatus.value,
         description: document.getElementById('formDescription').value,
         description_fr: document.getElementById('formDescription').value || null,
@@ -323,14 +324,15 @@ async function saveBookFromForm() {
         interior_previews: []
     };
 
-    // 1. Handle cover image upload
+    // 1. 处理封面上传
     if (formCover.files.length > 0) {
-        const file = formCover.files[0];
         try {
-            bookData.cover = await uploadFile(file, 'book-covers', 'covers');
+            bookData.cover = await uploadFile(formCover.files[0], 'book-covers', 'covers');
         } catch (err) {
             console.error('Cover upload failed', err);
             showToast('Cover image upload failed, please try again', 'error');
+            isSavingBook = false;
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
             return;
         }
     } else {
@@ -338,17 +340,18 @@ async function saveBookFromForm() {
         if (existing && existing.cover) bookData.cover = existing.cover;
     }
 
-    // 2. Handle interior preview images upload
+    // 2. 处理内页预览上传
     if (formInterior.files.length > 0) {
-        const files = Array.from(formInterior.files);
         const urls = [];
-        for (const file of files) {
+        for (const file of formInterior.files) {
             try {
                 const url = await uploadFile(file, 'book-covers', 'interior');
                 urls.push(url);
             } catch (err) {
                 console.error('Interior upload failed', err);
                 showToast('Interior image upload failed, please try again', 'error');
+                isSavingBook = false;
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
                 return;
             }
         }
@@ -358,15 +361,16 @@ async function saveBookFromForm() {
         if (existing && existing.interior_previews) bookData.interior_previews = existing.interior_previews;
     }
 
-    // 3. Generate ID for new book
+    // 3. 为新书生成 ID
     if (!bookData.id) {
         bookData.id = 'b' + Date.now() + Math.random().toString(36).substr(2, 6);
     }
 
-    // 4. 直接向 Supabase POST，不经过 saveBooks()
-    //    （saveBooks 内部会调用 loadBooks，若 loadBooks 404 会导致 catch 吃掉成功结果）
+    // 4. 直接保存到 Supabase
     if (!currentAccessToken) {
         showToast('Not authenticated. Please log in again.', 'error');
+        isSavingBook = false;
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
         return;
     }
     const { created_at, interior_previews, description_fr, author_bio_fr, ...cleanBook } = bookData;
@@ -396,46 +400,53 @@ async function saveBookFromForm() {
         return;
     }
 
-    // 5. 保存成功——在弹窗顶部插入提示（滚动到顶，始终可见）
+    // 5. 保存成功 —— 在 Save Book 按钮上方显示成功提示（英文）
     if (saveOk) {
-        bookFormModal.querySelector('.book-save-msg')?.remove();
-        const msgEl = document.createElement('div');
-        msgEl.className = 'book-save-msg';
-        msgEl.style.cssText = [
-            'margin:0 0 1.2rem 0',
-            'padding:0.65rem 1rem',
-            'background:#f0fff4',
-            'border:1px solid #4caf50',
-            'border-radius:6px',
-            'font-size:0.84rem',
-            'color:#2e7d32',
-            'text-align:center',
-            'font-weight:500'
-        ].join(';');
-        msgEl.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.4rem;"></i>'
-            + '新书加载成功！请 <strong>刷新页面</strong> 以查看最新书目。';
-        const modalTitle = bookFormModal.querySelector('#formModalTitle');
-        if (modalTitle) {
-            modalTitle.insertAdjacentElement('afterend', msgEl);
-        } else {
-            bookFormModal.querySelector('.modal-content')?.prepend(msgEl);
-        }
-        const mc = bookFormModal.querySelector('.modal-content');
-        if (mc) mc.scrollTop = 0;
+        // 移除已有的提示（如果有）
+        const oldMsg = document.getElementById('bookSaveSuccessMsg');
+        if (oldMsg) oldMsg.remove();
 
+        // 找到按钮容器（form-actions）
+        const formActions = bookFormModal.querySelector('.form-actions');
+        if (formActions) {
+            const msgDiv = document.createElement('div');
+            msgDiv.id = 'bookSaveSuccessMsg';
+            msgDiv.style.cssText = `
+                margin: 0 0 1rem 0;
+                padding: 0.65rem 1rem;
+                background: #e8f5e9;
+                border: 1px solid #4caf50;
+                border-radius: 6px;
+                font-size: 0.85rem;
+                color: #2e7d32;
+                text-align: center;
+                font-weight: 500;
+            `;
+            msgDiv.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.5rem;"></i> Book saved! The book list has been updated automatically.';
+            // 插入到 form-actions 之前（即按钮上方）
+            formActions.parentNode.insertBefore(msgDiv, formActions);
+        } else {
+            // 兜底：显示 toast
+            showToast('Book saved! List updated automatically', 'success');
+        }
+
+        // 恢复按钮状态
         isSavingBook = false;
         if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
-        // 3 秒后自动关闭弹窗
-        setTimeout(() => {
-            bookFormModal.classList.remove('active');
-            msgEl?.remove();
-        }, 3000);
+
+        // 注意：不再自动关闭模态框，让用户手动关闭（点击 X 或外部）
+        // 但为了体验，可以保留一段较长时间后自动移除提示？不需要，提示会一直存在直到用户关闭模态框。
+        // 用户关闭模态框时，提示会随 DOM 一起消失（因为模态框内容会被重置）。
     }
 
-    // 6. 后台刷新列表（失败不影响用户）
-    try { await renderAdminBookList(); } catch(e) { console.warn('List refresh (non-fatal):', e.message); }
-    try { if (document.getElementById('mainContent').style.display === 'block') await renderBooks(); } catch(e) {}
-    try { if (document.getElementById('booksPage').style.display === 'block') await renderAllBooks(); } catch(e) {}
+    // 6. 后台刷新列表（不阻塞用户，失败也不影响提示）
+    try {
+        await renderAdminBookList();
+        if (document.getElementById('mainContent').style.display === 'block') await renderBooks();
+        if (document.getElementById('booksPage').style.display === 'block') await renderAllBooks();
+    } catch(e) {
+        console.warn('Background refresh failed (non-critical):', e.message);
+    }
 }
 
 function readFileAsDataURL(file) {
