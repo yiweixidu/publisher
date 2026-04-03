@@ -111,12 +111,6 @@
                         <i class="fas fa-search"></i>
                         <input type="text" id="booksSearchInput" class="books-search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Search by title or author…">
                     </div>
-                    <div class="books-view-toggle">
-                        <button id="booksGridViewBtn" class="view-btn active" title="Grid view"><i class="fas fa-th"></i></button>
-                        <button id="booksListViewBtn" class="view-btn" title="List view"><i class="fas fa-list"></i></button>
-                    </div>
-                </div>
-                <div class="books-filter-controls">
                     <select id="booksLangFilter" class="books-filter-select">
                         <option value="" data-i18n="filterAllLanguages">All Languages</option>
                         <option value="English">English</option>
@@ -134,8 +128,10 @@
                         <option value="Acer Poetry">Acer Poetry</option>
                         <option value="Children's Art">Children's Art</option>
                     </select>
-                    <button id="booksFilterApply" class="btn-sm" data-i18n="filterApply">Apply</button>
-                    <button id="booksFilterReset" class="btn-sm-ghost" data-i18n="filterReset">Reset</button>
+                    <div class="books-view-toggle">
+                        <button id="booksGridViewBtn" class="view-btn active" title="Grid view"><i class="fas fa-th"></i></button>
+                        <button id="booksListViewBtn" class="view-btn" title="List view"><i class="fas fa-list"></i></button>
+                    </div>
                 </div>
             </div>
 
