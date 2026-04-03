@@ -1322,3 +1322,29 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .wechat-review-content-area {
     flex: 1;
 }
+
+/* Pages + Language 四栏等宽布局 */
+.pages-language-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    align-items: center;
+}
+.pages-input input,
+.lang-checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-weight: normal;
+}
+.lang-checkbox-group {
+    white-space: nowrap;
+}
+/* 响应式：小屏幕时自动换行 */
+@media (max-width: 768px) {
+    .pages-language-row {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
