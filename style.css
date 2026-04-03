@@ -1239,3 +1239,86 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .wechat-review-content-area {
     flex: 1;
 }
+
+/* ── 白底红字红边按钮（用于 Post review 和 Post comment）── */
+.btn-post {
+    background: #fff !important;
+    border: 1.5px solid #ff0000 !important;
+    color: #ff0000 !important;
+    padding: 0.5rem 1.2rem !important;
+    border-radius: 30px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+}
+.btn-post:hover {
+    background: #ff0000 !important;
+    color: #fff !important;
+}
+
+/* 评论输入框宽度占满内容区 */
+.wechat-comment-input {
+    width: 100% !important;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
+
+/* 评论表单容器（输入框独立一行） */
+.wechat-comment-form {
+    margin-top: 0.8rem;
+}
+
+/* 右侧按钮列：垂直排列，间距一致 */
+.wechat-review-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: flex-end;
+}
+
+/* 圆形分享按钮保持原样，但确保尺寸合适 */
+.circle-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    border: none;
+    color: #555;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+.circle-icon:hover {
+    background: #ff0000;
+    color: white;
+}
+
+/* 新书评表单的提交按钮包装，右对齐 */
+.review-submit-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.8rem;
+}
+
+/* 确保书评内容区域与右侧按钮有足够间距 */
+.wechat-review-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.2rem;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem 0;
+}
+.wechat-review-content-area {
+    flex: 1;
+}

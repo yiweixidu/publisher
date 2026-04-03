@@ -303,9 +303,23 @@ async function saveBookFromForm() {
         author: formAuthor.value.trim(),
         author_fr: formAuthor.value.trim() || null,
         categories: (() => {
-            const base = formCategories.value.split(',').map(s=>s.trim()).filter(Boolean);
-            const series = formAcerSeries?.value;
-            if (series && !base.includes(series)) base.unshift(series);
+            // 1. 用户手动输入的分类（逗号分隔）
+            let base = formCategories.value.split(',').map(s=>s.trim()).filter(Boolean);
+            // 2. 用户选择的系列（下拉框）
+            const selectedSeries = formAcerSeries?.value;
+            
+            if (selectedSeries) {
+                // 定义所有可能的系列名称（新旧系列）
+                const seriesKeywords = [
+                    'Acer Literature', 'Acer Series', 'Acer Novels', 
+                    'Acer Essays', 'Acer Poetry', 'Acer Poems', 
+                    'Acer Children', "Children's Art"
+                ];
+                // 从手动输入的分类中移除所有旧的系列
+                base = base.filter(cat => !seriesKeywords.includes(cat));
+                // 将新选择的系列添加到开头（确保它作为主要系列）
+                base.unshift(selectedSeries);
+            }
             return base;
         })(),
         isbn: formIsbn.value.trim(),
