@@ -108,11 +108,15 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
             currentLang === 'fr' ? 'fr-CA' : 'en-CA',
             { year: 'numeric', month: '2-digit', day: '2-digit' }
         );
+        const userInitial = (r.username && r.username.length > 0) ? r.username.charAt(0).toUpperCase() : '?';
 
         html += `
             <div class="wechat-review-item" data-review-id="${r.id}">
                 <div class="wechat-review-header">
-                    <span class="wechat-review-user">${r.username}</span>
+                    <div class="review-user-avatar">
+                        <span class="review-avatar-circle">${userInitial}</span>
+                        <span class="wechat-review-user">${r.username}</span>
+                    </div>
                     <span class="wechat-review-date">${date}</span>
                 </div>
                 <div class="wechat-review-content">${r.text}</div>
@@ -127,9 +131,13 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
                 currentLang === 'fr' ? 'fr-CA' : 'en-CA',
                 { month: '2-digit', day: '2-digit' }
             );
+            const commentInitial = (c.username && c.username.length > 0) ? c.username.charAt(0).toUpperCase() : '?';
             html += `
                 <div class="wechat-comment-item">
-                    <span class="wechat-comment-user">${c.username}</span>
+                    <div class="comment-user-avatar">
+                        <span class="comment-avatar-circle">${commentInitial}</span>
+                        <span class="wechat-comment-user">${c.username}</span>
+                    </div>
                     <span class="wechat-comment-text">${c.text}</span>
                     <span class="wechat-comment-date">${commentDate}</span>
                 </div>
@@ -151,8 +159,15 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
     });
 
     if (currentUser) {
+        const currentUserInitial = currentUser.email ? currentUser.email.charAt(0).toUpperCase() : '?';
         html += `
             <div class="review-form wechat-review-form">
+                <div class="review-form-header">
+                    <div class="review-user-avatar">
+                        <span class="review-avatar-circle">${currentUserInitial}</span>
+                        <span class="review-form-username">${currentUser.email.split('@')[0]}</span>
+                    </div>
+                </div>
                 <textarea class="review-textarea" placeholder="${langPack[currentLang].writeReviewPlaceholder}"></textarea>
                 <button class="review-submit wechat-submit">${langPack[currentLang].submitReview}</button>
             </div>
