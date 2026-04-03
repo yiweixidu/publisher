@@ -541,7 +541,13 @@
             <!-- Row 4：Pages, Language -->
             <div class="form-row">
                 <input type="number" id="formPages" placeholder="Pages" min="1" data-i18n-placeholder="pagesPlaceholder">
-                <input type="text" id="formLanguage" placeholder="Language" data-i18n-placeholder="languagePlaceholder">
+                <div class="form-group">
+                    <label>Language (select all that apply)</label>
+                    <div class="language-checkboxes">
+                        <label><input type="checkbox" name="langChoice" value="English"> English</label>
+                        <label><input type="checkbox" name="langChoice" value="français"> français</label>
+                    <label><input type="checkbox" name="langChoice" value="中文"> 中文</label>
+                </div>
             </div>
             <!-- Row 5: Paperback Price + Hardcover Price -->
             <div class="form-row">
