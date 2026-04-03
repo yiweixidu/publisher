@@ -1155,24 +1155,19 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     transform: translateY(1rem);
 }
 
-/* ── 修复：列表视图书名颜色过浅 + hover 背景过深（倒置）── */
+/* ── 列表视图书名深灰色 + hover 浅灰背景 ── */
 .book-list-title {
-    color: #1e1e1e !important;      /* 正常状态深色（黑灰） */
-}
-.book-list-row:hover {
-    background: #fafafa !important; /* hover 背景极浅灰色，而不是深色 */
-}
-.book-list-row:hover .book-list-title {
-    color: #1e1e1e !important;      /* hover 时书名保持深色，不反转 */
-}
-
-/* 卡片视图书名（若原本不够深，加强） */
-.book-title {
-    color: #1e1e1e !important;
+    color: #333 !important;           /* 深灰色 */
     font-weight: 600;
 }
+.book-list-row:hover {
+    background: #f5f5f5 !important;   /* 浅灰背景，不是深色 */
+}
+.book-list-row:hover .book-list-title {
+    color: #333 !important;           /* hover 时书名保持深灰 */
+}
 
-/* ── 修复：分页组件改为白底红字 + 灰色箭头 ── */
+/* ── 分页组件：白底红字 + 灰色箭头 ── */
 .books-pagination .page-btn {
     background: #fff !important;
     border: 1px solid #ddd !important;
@@ -1197,7 +1192,6 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     cursor: default;
     opacity: 0.7;
 }
-/* 分页省略号（…）样式 */
 .books-pagination .page-ellipsis {
     color: #aaa !important;
 }
