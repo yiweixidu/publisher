@@ -75,7 +75,12 @@ export async function updateUserUI() {
             </button>
             <button class="logout-btn" id="logoutBtn">Logout</button>
         `;
-        document.getElementById('logoutBtn')?.addEventListener('click', logout);
+        // Logout button: clear session and go to homepage
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            logout().then(() => {
+                window.location.href = '/';
+            });
+        });
         document.getElementById('userNameBtn')?.addEventListener('click', () => {
             window.dispatchEvent(new CustomEvent('openAccountDashboard'));
         });
@@ -98,11 +103,11 @@ export async function login(email, password) {
     currentAccessToken = data.session.access_token;
     const role = await getUserRole(currentUser.id);
     isAdminUser = (role === 'admin');
-    adminMode = isAdminUser; // 管理员登录后直接开启 admin 模式
+    adminMode = isAdminUser;
     updateAdminSwitch();
     updateUserUI();
     loginOverlay?.classList.remove('active');
-    resetLoginModalLinks(); // ensure links are restored for next time
+    resetLoginModalLinks();
     window.dispatchEvent(new CustomEvent('userLogin'));
     return true;
 }
@@ -117,8 +122,7 @@ export async function logout() {
     updateAdminSwitch();
     updateUserUI();
     window.dispatchEvent(new CustomEvent('userLogout'));
-    // Reload page to reset all admin UI and state
-    location.reload();
+    // Note: no automatic redirect here – caller decides
 }
 
 export async function signup(email, password, displayName) {
@@ -136,8 +140,6 @@ export async function signup(email, password, displayName) {
 }
 
 export async function resetPassword(email) {
-    // Always redirect to the live site, not window.location.origin,
-    // because Supabase must match an allowed URL in the dashboard.
     const siteUrl = 'https://acerbooks.ca/';
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: siteUrl
@@ -153,7 +155,7 @@ export async function initAuth() {
         currentAccessToken = session.access_token;
         const role = await getUserRole(currentUser.id);
         isAdminUser = (role === 'admin');
-        adminMode = isAdminUser; // restore admin mode on refresh if user is admin
+        adminMode = isAdminUser;
         updateAdminSwitch();
         updateUserUI();
     } else {
@@ -164,7 +166,6 @@ export async function initAuth() {
         updateUserUI();
     }
 
-    // Listen for auth changes
     if (authListener) authListener.unsubscribe();
     authListener = supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN') {
@@ -172,17 +173,13 @@ export async function initAuth() {
             currentAccessToken = session.access_token;
             const role = await getUserRole(currentUser.id);
             isAdminUser = (role === 'admin');
-            // 注意：不修改 adminMode，保留当前值（由 login 或刷新后的 false 决定）
             updateAdminSwitch();
             updateUserUI();
             window.dispatchEvent(new CustomEvent('userLogin'));
         } else if (event === 'PASSWORD_RECOVERY') {
-            // User clicked the reset-password link in their email and landed back on the site.
-            // Store the session so updateUser() will work, then open the set-password modal.
             currentUser = session.user;
             currentAccessToken = session.access_token;
             updateUserUI();
-            // Small delay to let the page finish initialising before showing the modal
             setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('openPasswordRecovery'));
             }, 400);
@@ -254,17 +251,24 @@ export function closeAdminLoginModal() {
 
 export function toggleAdminMode() {
     if (adminMode) {
-        logout(); // 关闭 admin 模式：登出用户，logout 内会刷新页面
+        // Turn OFF admin mode: logout and go to homepage
+        logout().then(() => {
+            window.location.href = '/';
+        });
     } else {
-        // 开启 admin 模式：先确保登出（如果已登录），再弹出登录框
+        // Turn ON admin mode: if a user is logged in, logout first (without redirect),
+        // then show the admin login modal.
         if (currentUser) {
-            logout();
+            logout().then(() => {
+                openAdminLoginModal();
+            });
+        } else {
+            openAdminLoginModal();
         }
-        openAdminLoginModal();
     }
 }
 
-// ---------- Inactivity timer (optional) – keep as is ----------
+// ---------- Inactivity timer ----------
 let adminInactivityTimer = null;
 let inactivityEventsBound = false;
 
@@ -285,8 +289,10 @@ function resetAdminInactivityTimer() {
     if (adminMode) {
         adminInactivityTimer = setTimeout(() => {
             if (adminMode) {
-                logout();
-                alert(langPack[currentLang].adminSessionExpired);
+                logout().then(() => {
+                    alert(langPack[currentLang].adminSessionExpired);
+                    window.location.href = '/';
+                });
             }
         }, 300000); // 5 minutes
     }
