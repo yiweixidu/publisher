@@ -1,5 +1,5 @@
 // review.js
-import { reviews, saveReviews, loadReviews } from './data.js';
+import { reviews, insertReview, updateReview, saveReviews, loadReviews } from './data.js';
 import { langPack } from './i18n.js';
 import { supabase } from './supabaseClient.js';
 
@@ -52,11 +52,11 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
             if (review) {
                 review.comments.push({
                     user_id: currentUser.id,
-                    username: currentUser.email.split('@')[0], // fallback
+                    username: currentUser.email.split('@')[0],
                     text: text,
                     timestamp: new Date().toISOString()
                 });
-                await saveReviews(reviews);
+                await updateReview(review);
                 if (container === modalReviews) {
                     renderReviews(bookId, currentLang, currentUser);
                 } else {
@@ -76,14 +76,13 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
                 id: 'rev_' + Date.now() + Math.random().toString(36).substr(2,6),
                 book_id: bookId,
                 user_id: currentUser.id,
-                username: currentUser.email.split('@')[0], // fallback
+                username: currentUser.email.split('@')[0],
                 text: text,
                 timestamp: new Date().toISOString(),
                 likes: [],
                 comments: []
             };
-            const updatedReviews = [...reviews, newReview];
-            await saveReviews(updatedReviews);
+            await insertReview(newReview);
             if (container === modalReviews) {
                 renderReviews(bookId, currentLang, currentUser);
             } else {
