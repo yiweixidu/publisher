@@ -1602,3 +1602,97 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     align-items: center;
     gap: 0.5rem;
 }
+
+/* 未登录时的登录提示按钮增加上边距 */
+.login-prompt-btn {
+    margin-top: 1rem;
+    display: inline-block;
+}
+
+/* ========== 结账页面修复 ========== */
+
+/* 降低输入框高度 */
+.checkout-input {
+    padding: 0.5rem 0.8rem !important;
+    height: 38px !important;
+    line-height: 1.3 !important;
+}
+select.checkout-input {
+    height: 38px !important;
+}
+#expiry, #cvv {
+    height: 38px !important;
+}
+
+/* 步骤圆圈颜色 */
+.co-step-dot span {
+    background: #fff !important;
+    border: 2px solid #ff0000 !important;
+    color: #ff0000 !important;
+}
+.co-step-dot.active span {
+    background: #ff0000 !important;
+    border-color: #ff0000 !important;
+    color: #fff !important;
+}
+.co-step-dot.completed span {
+    background: #ff0000 !important;
+    border-color: #ff0000 !important;
+    color: #fff !important;
+}
+.co-step-dot.active small {
+    color: #ff0000 !important;
+    font-weight: 600;
+}
+.co-step-dot.completed small {
+    color: #ff0000 !important;
+}
+.co-step-dot small {
+    color: #888 !important;
+}
+
+/* Delivery 选项浅灰色背景 */
+.shipping-option {
+    background: #f5f5f5 !important;
+    border: 1.5px solid #e0e0e0 !important;
+}
+.shipping-option:has(input:checked) {
+    border-color: #ff0000 !important;
+    background: #fff0f0 !important;
+}
+
+/* Card / PayPal 标签色 */
+.pay-tab[data-method="card"] {
+    background: #ffffff !important;
+    border-color: #ddd !important;
+    color: #555 !important;
+}
+.pay-tab[data-method="card"].active {
+    background: #ff0000 !important;
+    border-color: #ff0000 !important;
+    color: #fff !important;
+}
+.pay-tab[data-method="paypal"] {
+    background: #ffffff !important;
+    border-color: #ddd !important;
+    color: #555 !important;
+}
+.pay-tab[data-method="paypal"].active {
+    background: #0070ba !important;
+    border-color: #0070ba !important;
+    color: #fff !important;
+}
+
+/* 复现信息深灰色字体 */
+.review-section p {
+    color: #333 !important;
+}
+.review-item {
+    color: #333 !important;
+}
+.review-item span {
+    color: #333 !important;
+}
+.review-totals .total-row strong {
+    color: #ff0000 !important;
+}
