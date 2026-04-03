@@ -285,7 +285,13 @@ export function initQuillEditors() {
     });
 }
 
+let isSavingBook = false; // 防止重复提交
+
 async function saveBookFromForm() {
+    if (isSavingBook) return;
+    isSavingBook = true;
+    const saveBtn = document.getElementById('saveBookBtn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.style.opacity = '0.6'; }
     console.log('saveBookFromForm called');
     const bookData = {
         id: bookIdField.value || undefined,
@@ -317,13 +323,14 @@ async function saveBookFromForm() {
         interior_previews: []
     };
 
+    // 1. Handle cover image upload
     if (formCover.files.length > 0) {
         const file = formCover.files[0];
         try {
             bookData.cover = await uploadFile(file, 'book-covers', 'covers');
         } catch (err) {
             console.error('Cover upload failed', err);
-            showToast('Cover upload failed, please retry', 'error');
+            showToast('Cover image upload failed, please try again', 'error');
             return;
         }
     } else {
@@ -331,6 +338,7 @@ async function saveBookFromForm() {
         if (existing && existing.cover) bookData.cover = existing.cover;
     }
 
+    // 2. Handle interior preview images upload
     if (formInterior.files.length > 0) {
         const files = Array.from(formInterior.files);
         const urls = [];
@@ -340,7 +348,7 @@ async function saveBookFromForm() {
                 urls.push(url);
             } catch (err) {
                 console.error('Interior upload failed', err);
-                showToast('Interior image upload failed, please retry', 'error');
+                showToast('Interior image upload failed, please try again', 'error');
                 return;
             }
         }
@@ -350,68 +358,49 @@ async function saveBookFromForm() {
         if (existing && existing.interior_previews) bookData.interior_previews = existing.interior_previews;
     }
 
-    // ── Step 1: save only — isolated from all reload logic ──────────────────
-    let saveError = null;
-    try {
-        let updatedBooks;
-        if (bookData.id) {
-            updatedBooks = [bookData];
-        } else {
-            bookData.id = 'b' + Date.now() + Math.random().toString(36).substr(2, 6);
-            updatedBooks = [bookData];
-        }
-        console.log('Saving book:', bookData);
-        await saveBooks(updatedBooks);
-        console.log('Book saved');
-    } catch (err) {
-        saveError = err;
+    // 3. Generate ID for new book
+    if (!bookData.id) {
+        bookData.id = 'b' + Date.now() + Math.random().toString(36).substr(2, 6);
     }
 
-    if (saveError) {
-        console.error('Error saving book:', saveError);
-        showToast('Save failed: ' + (saveError.message || saveError), 'error');
+    // 4. Save to Supabase
+    try {
+        await saveBooks([bookData]);
+        console.log('Book saved successfully');
+    } catch (err) {
+        console.error('Error saving book:', err);
+        showToast('Save failed: ' + (err.message || err), 'error');
+        isSavingBook = false;
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
         return;
     }
+    isSavingBook = false;
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
 
-    // ── Step 2: save confirmed — show success message immediately ─────────
-    let msgEl = bookFormModal.querySelector('.book-save-msg');
-    if (!msgEl) {
-        msgEl = document.createElement('p');
-        msgEl.className = 'book-save-msg';
-        msgEl.style.cssText = [
-            'margin-bottom:1rem',
-            'padding:0.6rem 1rem',
-            'background:#f0fff4',
-            'border:1px solid #4caf50',
-            'border-radius:6px',
-            'font-size:0.82rem',
-            'color:#2e7d32',
-            'text-align:center',
-            'font-weight:500'
-        ].join(';');
-        // Insert ABOVE the Save/Cancel buttons so it is always visible
-        const formActions = bookFormModal.querySelector('.form-actions');
-        if (formActions) {
-            formActions.insertAdjacentElement('beforebegin', msgEl);
-        } else {
-            bookFormModal.querySelector('.modal-content')?.appendChild(msgEl);
-        }
-    }
+    // 5. 成功：在弹窗顶部显示内联提示（不依赖滚动位置，始终可见）
+    bookFormModal.querySelector('.book-save-msg')?.remove();
+    const msgEl = document.createElement('div');
+    msgEl.className = 'book-save-msg';
+    msgEl.style.cssText = 'margin:0 0 1.2rem 0;padding:0.65rem 1rem;background:#f0fff4;border:1px solid #4caf50;border-radius:6px;font-size:0.82rem;color:#2e7d32;text-align:center;font-weight:500;';
     msgEl.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.4rem;"></i>'
         + 'Book saved! Please <strong>refresh the page</strong> to see the new listing.';
-    // Scroll the message into view
-    msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const modalTitle = bookFormModal.querySelector('#formModalTitle');
+    if (modalTitle) modalTitle.insertAdjacentElement('afterend', msgEl);
+    else bookFormModal.querySelector('.modal-content')?.prepend(msgEl);
+    // 滚动到顶部确保提示可见
+    const mc = bookFormModal.querySelector('.modal-content');
+    if (mc) mc.scrollTop = 0;
 
-    // ── Step 3: close modal after 2.5 s ───────────────────────────────────
+    // 3 秒后关闭弹窗
     setTimeout(() => {
         bookFormModal.classList.remove('active');
-        if (msgEl && msgEl.parentNode) msgEl.remove();
-    }, 2500);
+        msgEl?.remove();
+    }, 3000);
 
-    // ── Step 4: refresh lists in background (non-fatal) ───────────────────
+    // 6. 后台刷新列表（失败不影响用户）
     try { await renderAdminBookList(); } catch(e) { console.warn('List refresh (non-fatal):', e.message); }
-    try { if (document.getElementById('mainContent').style.display === 'block') renderBooks(); } catch(e) {}
-    try { if (document.getElementById('booksPage').style.display === 'block') renderAllBooks(); } catch(e) {}
+    try { if (document.getElementById('mainContent').style.display === 'block') await renderBooks(); } catch(e) {}
+    try { if (document.getElementById('booksPage').style.display === 'block') await renderAllBooks(); } catch(e) {}
 }
 
 function readFileAsDataURL(file) {
