@@ -1406,3 +1406,113 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     width: 100% !important;
     box-sizing: border-box;
 }
+
+/* 让语言复选框所在容器占满整行，并保持水平排列 */
+.full-width {
+    width: 100%;
+    flex: 0 0 100%;
+}
+
+/* 确保语言复选框在一行内整齐排列（自动换行） */
+.language-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    align-items: center;
+    margin-top: 0.3rem;
+}
+
+/* 让新闻弹窗中的 Summary 文本域更高，并保持宽度一致 */
+#newsSummaryEnInput,
+#newsSummaryFrInput {
+    width: 100%;
+    min-height: 150px;      /* 保证足够高度 */
+    resize: vertical;       /* 用户仍然可以手动拉高 */
+}
+
+/* 可选：让新闻弹窗中的 Content 编辑器也稍微增加下边距，视觉更统一 */
+#newsForm .ql-container {
+    min-height: 200px;
+}
+
+/* 修复详情页返回按钮位置 */
+.detail-container {
+    position: relative;
+    padding-top: 1rem;   /* 增加顶部空间，避免按钮紧贴 */
+}
+.detail-back-btn {
+    position: static;     /* 取消绝对定位 */
+    float: right;
+    margin-bottom: 1rem;
+}
+@media (max-width: 600px) {
+    .detail-back-btn {
+        float: none;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+}
+
+/* 评论输入框与书评输入框等长 */
+.wechat-comment-input {
+    width: 100%;
+    min-height: 80px;      /* 与 review-textarea 高度一致 */
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+/* 评论表单：按钮右对齐 */
+.wechat-comment-form {
+    margin-top: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.comment-submit-wrapper {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* 评论/书评的操作按钮组 */
+.review-actions-right {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-left: auto;
+}
+.edit-review-btn, .delete-review-btn,
+.edit-comment-btn, .delete-comment-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.edit-review-btn:hover, .delete-review-btn:hover,
+.edit-comment-btn:hover, .delete-comment-btn:hover {
+    color: #ff0000;
+    background: #fff0f0;
+}
+/* 编辑状态 */
+.edit-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.5rem;
+    border: 1px solid #ff0000;
+    border-radius: 8px;
+    font-family: inherit;
+    margin-bottom: 0.5rem;
+}
+.edit-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
