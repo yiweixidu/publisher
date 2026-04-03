@@ -6,7 +6,7 @@ h1,h2,h3,h4 { font-family:'Lora',serif; font-weight:500; letter-spacing:-0.02em;
 .accent-red { color:#ff0000; }
 .bg-red { background:#ff0000; }
 .btn-red { background:#ff0000; color:white; border:none; padding:0.5rem 1.5rem; font-weight:500; border-radius:2px; cursor:pointer; }
-.btn-red:hover { background:#cc0000; }
+.btn-red:hover { background:#ff0000; }
 .btn-outline-red { background:transparent; border:1px solid #ff0000; color:#ff0000; padding:0.5rem 1.5rem; border-radius:2px; cursor:pointer; }
 .btn-outline-red:hover { background:#ff0000; color:white; }
 .navbar { display:flex; justify-content:space-between; align-items:center; padding:1.5rem 0; border-bottom:1px solid #eaeaea; }
@@ -90,7 +90,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .modal-availability { font-size:0.9rem; color:#5a5a5a; background:#f5f5f5; padding:0.5rem 1rem; border-radius:40px; margin-bottom:1.5rem; display:inline-block; }
 .modal-actions { display:flex; gap:1rem; margin-bottom:2rem; flex-wrap:wrap; }
 .btn-primary { background:#ff0000; color:white; border:none; padding:0.7rem 2rem; font-weight:600; border-radius:40px; cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem; }
-.btn-primary:hover { background:#cc0000; }
+.btn-primary:hover { background:#ff0000; }
 .btn-secondary { background:transparent; border:1px solid #ff0000; color:#ff0000; padding:0.7rem 2rem; font-weight:600; border-radius:40px; cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem; }
 .btn-secondary:hover { background:#ff0000; color:white; }
 .modal-tabs { display:flex; border-bottom:1px solid #eaeaea; margin-bottom:1rem; gap:0.2rem; flex-wrap:wrap; }
@@ -139,7 +139,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .login-title { font-size:1.8rem; font-family:'Lora',serif; margin-bottom:1.5rem; }
 .login-input { width:100%; padding:0.8rem; margin-bottom:1rem; border:1px solid #ddd; border-radius:40px; font-size:1rem; }
 .login-btn { width:100%; background:#ff0000; color:white; border:none; padding:0.8rem; border-radius:40px; font-weight:600; cursor:pointer; }
-.login-btn:hover { background:#cc0000; }
+.login-btn:hover { background:#ff0000; }
 .login-error { color:#ff0000; font-size:0.9rem; margin-top:0.5rem; text-align:center; }
 .user-info { display:flex; align-items:center; gap:1rem; }
 .user-name { font-weight:500; color:#2d2d2d; }
@@ -344,7 +344,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     letter-spacing: 0.08em;
     transition: color 0.2s;
 }
-.footer-lang.active { color: #e00; font-weight: 600; }
+.footer-lang.active { color: #ff0000; font-weight: 600; }
 .footer-lang:hover  { color: #fff; }
 .footer-lang-sep    { color: #444; font-size: 0.72rem; }
 
@@ -368,8 +368,8 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     transition: background 0.18s, border-color 0.18s, color 0.18s;
     white-space: nowrap;
 }
-.cat-tab:hover         { border-color: #e00; color: #fff; }
-.cat-tab.active        { background: #e00; border-color: #e00; color: #fff; font-weight: 600; }
+.cat-tab:hover         { border-color: #ff0000; color: #fff; }
+.cat-tab.active        { background: #ff0000; border-color: #ff0000; color: #fff; font-weight: 600; }
 
 /* ── Books page — filter bar ────────────────────────────────────────────── */
 .books-filter-bar {
@@ -386,22 +386,22 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .books-search-wrap { flex: 1; min-width: 200px; position: relative; display: flex; align-items: center; }
 .books-search-wrap .fa-search { position: absolute; left: 0.85rem; color: #666; font-size: 0.85rem; pointer-events: none; }
 .books-search-input { width: 100%; padding: 0.55rem 0.9rem 0.55rem 2.2rem; background: #111; border: 1px solid #333; border-radius: 8px; color: #eee; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
-.books-search-input:focus { border-color: #e00; }
+.books-search-input:focus { border-color: #ff0000; }
 .books-view-toggle { display: flex; gap: 0.4rem; }
 .view-btn { background: #111; border: 1px solid #333; border-radius: 7px; color: #888; width: 34px; height: 34px; cursor: pointer; transition: background 0.2s, color 0.2s; display: flex; align-items: center; justify-content: center; }
-.view-btn.active, .view-btn:hover { background: #e00; border-color: #e00; color: #fff; }
+.view-btn.active, .view-btn:hover { background: #ff0000; border-color: #ff0000; color: #fff; }
 .books-filter-controls { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .books-filter-select { background: #111; border: 1px solid #333; border-radius: 8px; color: #ccc; padding: 0.45rem 0.7rem; font-size: 0.85rem; cursor: pointer; outline: none; transition: border-color 0.2s; }
-.books-filter-select:focus { border-color: #e00; }
+.books-filter-select:focus { border-color: #ff0000; }
 .books-price-range { display: flex; align-items: center; gap: 0.35rem; }
 .price-sep { color: #555; font-size: 0.9rem; }
 .books-price-input { width: 70px; background: #111; border: 1px solid #333; border-radius: 8px; color: #ccc; padding: 0.45rem 0.55rem; font-size: 0.85rem; outline: none; }
-.books-price-input:focus { border-color: #e00; }
+.books-price-input:focus { border-color: #ff0000; }
 .books-price-input::-webkit-inner-spin-button { display: none; }
-.btn-sm { padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 7px; border: 1.5px solid #e00; background: #e00; color: #fff; cursor: pointer; white-space: nowrap; }
+.btn-sm { padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 7px; border: 1.5px solid #ff0000; background: #ff0000; color: #fff; cursor: pointer; white-space: nowrap; }
 .btn-sm:hover { opacity: 0.85; }
 .btn-sm-ghost { padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 7px; border: 1.5px solid #444; background: transparent; color: #aaa; cursor: pointer; white-space: nowrap; }
-.btn-sm-ghost:hover { border-color: #e00; color: #e00; }
+.btn-sm-ghost:hover { border-color: #ff0000; color: #ff0000; }
 .books-result-count { font-size: 0.82rem; color: #666; margin: 0 0 0.75rem; }
 
 /* ── List view ──────────────────────────────────────────────────────────── */
@@ -413,32 +413,32 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .book-list-title  { font-size: 0.95rem; font-weight: 600; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .book-list-author { font-size: 0.82rem; color: #888; margin-top: 0.2rem; }
 .book-list-meta   { font-size: 0.75rem; color: #555; margin-top: 0.15rem; }
-.book-list-price  { font-size: 0.9rem; font-weight: 700; color: #e00; flex-shrink: 0; }
+.book-list-price  { font-size: 0.9rem; font-weight: 700; color: #ff0000; flex-shrink: 0; }
 
 /* ── Pagination ──────────────────────────────────────────────────────────── */
 .books-pagination { display: flex; justify-content: center; align-items: center; gap: 0.4rem; margin-top: 2rem; flex-wrap: wrap; }
 .page-btn { background: #111; border: 1px solid #2e2e2e; border-radius: 7px; color: #aaa; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.88rem; transition: background 0.15s, border-color 0.15s, color 0.15s; }
-.page-btn:hover:not([disabled]) { background: #e00; border-color: #e00; color: #fff; }
-.page-btn.active  { background: #e00; border-color: #e00; color: #fff; font-weight: 700; }
+.page-btn:hover:not([disabled]) { background: #ff0000; border-color: #ff0000; color: #fff; }
+.page-btn.active  { background: #ff0000; border-color: #ff0000; color: #fff; font-weight: 700; }
 .page-btn[disabled] { opacity: 0.3; cursor: default; }
 .page-ellipsis  { color: #555; font-size: 0.9rem; padding: 0 0.2rem; }
 
 /* ── Hardcover / Paperback format toggle on book cards ──────────────────── */
 .book-price-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; }
-.book-price { font-size: 0.9rem; font-weight: 700; color: #e00; }
+.book-price { font-size: 0.9rem; font-weight: 700; color: #ff0000; }
 .fmt-toggle { display: flex; align-items: center; gap: 0.25rem; }
 .fmt-btn { font-size: 0.65rem; font-weight: 600; color: #666; cursor: pointer; padding: 0.1rem 0.3rem; border-radius: 3px; border: 1px solid #333; transition: background 0.15s, color 0.15s, border-color 0.15s; user-select: none; }
-.fmt-btn.active { background: #e00; border-color: #e00; color: #fff; }
+.fmt-btn.active { background: #ff0000; border-color: #ff0000; color: #fff; }
 .fmt-sep { color: #444; font-size: 0.65rem; }
 
 /* ── Format selector (modal + detail page) ──────────────────────────────── */
 .format-selector { display: flex; gap: 0.5rem; margin: 0.6rem 0 0.4rem; }
 .format-btn { padding: 0.35rem 0.9rem; border-radius: 6px; border: 1.5px solid #333; background: transparent; color: #aaa; font-size: 0.82rem; cursor: pointer; transition: background 0.2s, border-color 0.2s, color 0.2s; }
-.format-btn.active { background: #111; border-color: #e00; color: #fff; }
-.format-btn:hover  { border-color: #e00; color: #fff; }
+.format-btn.active { background: #111; border-color: #ff0000; color: #fff; }
+.format-btn:hover  { border-color: #ff0000; color: #fff; }
 
 /* ── Cart format badge ──────────────────────────────────────────────────── */
-.cart-fmt-badge { font-size: 0.65rem; font-weight: 700; background: #e00; color: #fff; padding: 0.05rem 0.35rem; border-radius: 3px; vertical-align: middle; margin-left: 0.3rem; }
+.cart-fmt-badge { font-size: 0.65rem; font-weight: 700; background: #ff0000; color: #fff; padding: 0.05rem 0.35rem; border-radius: 3px; vertical-align: middle; margin-left: 0.3rem; }
 
 /* ── Mobile swipe carousel (homepage) ───────────────────────────────────── */
 @media (max-width: 640px) {
@@ -494,9 +494,9 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     transition: background 0.25s, border-color 0.25s, color 0.25s;
 }
 .co-step-dot small { font-size: 0.65rem; color: #555; white-space: nowrap; }
-.co-step-dot.active span   { background: #e00; border-color: #e00; color: #fff; }
-.co-step-dot.completed span{ background: #2d2d2d; border-color: #e00; color: #e00; }
-.co-step-dot.active small   { color: #e00; font-weight: 600; }
+.co-step-dot.active span   { background: #ff0000; border-color: #ff0000; color: #fff; }
+.co-step-dot.completed span{ background: #2d2d2d; border-color: #ff0000; color: #ff0000; }
+.co-step-dot.active small   { color: #ff0000; font-weight: 600; }
 .co-line { flex: 1; height: 2px; background: #2a2a2a; min-width: 24px; max-width: 60px; transition: background 0.25s; }
 
 /* Panels */
@@ -505,7 +505,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 
 /* Nav buttons */
 .co-nav { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
-.co-error { color: #e00; font-size: 0.82rem; margin-top: 0.5rem; min-height: 1em; }
+.co-error { color: #ff0000; font-size: 0.82rem; margin-top: 0.5rem; min-height: 1em; }
 
 /* Shipping options */
 .shipping-options { display: flex; flex-direction: column; gap: 0.75rem; margin: 1rem 0; }
@@ -515,17 +515,17 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     border-radius: 10px; padding: 0.85rem 1rem;
     cursor: pointer; transition: border-color 0.2s, background 0.2s;
 }
-.shipping-option:has(input:checked) { border-color: #e00; background: #160000; }
-.shipping-option input[type="radio"] { accent-color: #e00; width: 16px; height: 16px; flex-shrink: 0; }
+.shipping-option:has(input:checked) { border-color: #ff0000; background: #160000; }
+.shipping-option input[type="radio"] { accent-color: #ff0000; width: 16px; height: 16px; flex-shrink: 0; }
 .so-body { flex: 1; }
 .so-name { font-size: 0.9rem; font-weight: 600; color: #eee; }
 .so-desc { font-size: 0.78rem; color: #777; margin-top: 0.2rem; }
-.so-price { font-size: 0.9rem; font-weight: 700; color: #e00; flex-shrink: 0; }
+.so-price { font-size: 0.9rem; font-weight: 700; color: #ff0000; flex-shrink: 0; }
 
 /* Payment method tabs */
 .payment-method-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
 .pay-tab { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; border-radius: 8px; border: 1.5px solid #2a2a2a; background: #111; color: #888; font-size: 0.85rem; cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s; }
-.pay-tab.active { border-color: #e00; color: #fff; background: #1a0000; }
+.pay-tab.active { border-color: #ff0000; color: #fff; background: #1a0000; }
 
 .pay-panel.hidden { display: none; }
 
@@ -535,7 +535,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     padding: 0.75rem 1rem; margin-bottom: 1rem;
     font-size: 0.8rem; color: #666; line-height: 1.5;
 }
-.gateway-notice i { color: #e00; flex-shrink: 0; margin-top: 0.1rem; }
+.gateway-notice i { color: #ff0000; flex-shrink: 0; margin-top: 0.1rem; }
 .gateway-notice code { background: #1e1e1e; padding: 0.1rem 0.3rem; border-radius: 3px; color: #aaa; font-size: 0.75rem; }
 
 .paypal-notice { }
@@ -592,7 +592,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     color: #1a1a1a !important;
 }
 .books-search-input::placeholder { color: #aaa !important; }
-.books-search-input:focus         { border-color: #e00 !important; background: #fff !important; }
+.books-search-input:focus         { border-color: #ff0000 !important; background: #fff !important; }
 .books-search-wrap .fa-search     { color: #aaa !important; }
 
 /* ── Dropdowns ── */
@@ -601,7 +601,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     border: 1px solid #ddd !important;
     color: #333 !important;
 }
-.books-filter-select:focus { border-color: #e00 !important; }
+.books-filter-select:focus { border-color: #ff0000 !important; }
 
 /* ── Price inputs ── */
 .books-price-input {
@@ -609,7 +609,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     border: 1px solid #ddd !important;
     color: #333 !important;
 }
-.books-price-input:focus  { border-color: #e00 !important; }
+.books-price-input:focus  { border-color: #ff0000 !important; }
 .price-sep                { color: #bbb !important; }
 
 /* ── Reset button ── */
@@ -618,7 +618,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     color: #666 !important;
     background: #fff !important;
 }
-.btn-sm-ghost:hover { border-color: #e00 !important; color: #e00 !important; }
+.btn-sm-ghost:hover { border-color: #ff0000 !important; color: #ff0000 !important; }
 
 /* ── View-toggle ── */
 .view-btn {
@@ -627,7 +627,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     color: #999 !important;
 }
 .view-btn.active,
-.view-btn:hover { background: #e00 !important; border-color: #e00 !important; color: #fff !important; }
+.view-btn:hover { background: #ff0000 !important; border-color: #ff0000 !important; color: #fff !important; }
 
 /* ── Result count text ── */
 .books-result-count { color: #999 !important; }
@@ -640,8 +640,8 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     border-color: #e0e0e0 !important;
     color: #666 !important;
 }
-.cat-tab:hover  { border-color: #e00 !important; color: #e00 !important; background: #fff5f5 !important; }
-.cat-tab.active { background: #e00 !important; border-color: #e00 !important; color: #fff !important; }
+.cat-tab:hover  { border-color: #ff0000 !important; color: #ff0000 !important; background: #fff5f5 !important; }
+.cat-tab.active { background: #ff0000 !important; border-color: #ff0000 !important; color: #fff !important; }
 /* ══════════════════════════════════════════════════════════════════════
    NEW FEATURES — HC badge, category dropdown, filter bar, nav, admin
    ══════════════════════════════════════════════════════════════════════ */
@@ -665,14 +665,14 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     letter-spacing: 0.12em;
     padding: 0.18rem 0.55rem;
     border-radius: 4px;
-    border: 1.5px solid #b00;
-    color: #b00;
+    border: 1.5px solid #ff0000;
+    color: #ff0000;
     background: transparent;
     user-select: none;
     cursor: default;
     transition: background 0.18s, color 0.18s;
 }
-.hc-badge--active { background: #b00; color: #fff; }
+.hc-badge--active { background: #ff0000; color: #fff; }
 
 /* ── Paperback / Hardcover format selector ── */
 .format-selector {
@@ -690,21 +690,21 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     cursor: pointer;
     transition: border-color 0.18s, color 0.18s, background 0.18s;
 }
-.format-btn.active { border-color: #b00; color: #b00; background: #fff5f5; font-weight: 600; }
-.format-btn:hover:not(.active) { border-color: #b00; color: #b00; }
+.format-btn.active { border-color: #ff0000; color: #ff0000; background: #fff5f5; font-weight: 600; }
+.format-btn:hover:not(.active) { border-color: #ff0000; color: #ff0000; }
 
 /* ── PB | HC toggle on book cards ── */
 .book-price-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; }
-.book-price { font-size: 0.9rem; font-weight: 700; color: #c00; }
+.book-price { font-size: 0.9rem; font-weight: 700; color: #ff0000; }
 .fmt-toggle { display: flex; align-items: center; gap: 0.2rem; }
 .fmt-btn { font-size: 0.62rem; font-weight: 700; color: #aaa; cursor: pointer;
            padding: 0.08rem 0.3rem; border-radius: 3px; border: 1px solid #ddd;
            transition: all 0.15s; user-select: none; }
-.fmt-btn.active { background: #c00; border-color: #c00; color: #fff; }
+.fmt-btn.active { background: #ff0000; border-color: #ff0000; color: #fff; }
 .fmt-sep { color: #ccc; font-size: 0.65rem; }
 
 /* ── Cart format badge ── */
-.cart-fmt-badge { font-size: 0.62rem; font-weight: 700; background: #c00; color: #fff;
+.cart-fmt-badge { font-size: 0.62rem; font-weight: 700; background: #ff0000; color: #fff;
                   padding: 0.05rem 0.35rem; border-radius: 3px; margin-left: 0.3rem; }
 
 /* ── Admin form helpers ── */
@@ -713,7 +713,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .form-group.half { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .form-group.half input,
 .form-group.half select { width: 100%; }
-.admin-hc-tag { font-size: 0.75rem; color: #b00; font-weight: 500; }
+.admin-hc-tag { font-size: 0.75rem; color: #ff0000; font-weight: 500; }
 
 /* ── Acer Series dropdown in filter bar ── */
 #booksCatFilter { min-width: 130px; }
@@ -722,17 +722,17 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .books-filter-bar { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .books-search-input { background: #f7f7f7; border: 1px solid #ddd; color: #111; }
 .books-search-input::placeholder { color: #bbb; }
-.books-search-input:focus { border-color: #c00; background: #fff; outline: none; }
+.books-search-input:focus { border-color: #ff0000; background: #fff; outline: none; }
 .books-search-wrap .fa-search { color: #bbb; }
 .books-filter-select { background: #f7f7f7; border: 1px solid #ddd; color: #333; }
-.books-filter-select:focus { border-color: #c00; outline: none; }
+.books-filter-select:focus { border-color: #ff0000; outline: none; }
 .books-price-input { background: #f7f7f7; border: 1px solid #ddd; color: #333; }
-.books-price-input:focus { border-color: #c00; outline: none; }
+.books-price-input:focus { border-color: #ff0000; outline: none; }
 .price-sep { color: #ccc; }
 .btn-sm-ghost { border-color: #ddd; color: #666; background: #fff; }
-.btn-sm-ghost:hover { border-color: #c00; color: #c00; }
+.btn-sm-ghost:hover { border-color: #ff0000; color: #ff0000; }
 .view-btn { background: #f7f7f7; border-color: #ddd; color: #aaa; }
-.view-btn.active, .view-btn:hover { background: #c00; border-color: #c00; color: #fff; }
+.view-btn.active, .view-btn:hover { background: #ff0000; border-color: #ff0000; color: #fff; }
 .books-result-count { color: #999; font-size: 0.82rem; margin: 0 0 0.75rem; }
 
 /* ── Mobile swipe on homepage grid ── */
@@ -754,7 +754,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 /* ── Footer language switch ── */
 .footer-lang-switch { display: flex; align-items: center; justify-content: center; gap: 0.4rem; margin: 0.5rem 0; }
 .footer-lang { font-size: 0.72rem; color: #888; text-decoration: none; letter-spacing: 0.08em; transition: color 0.2s; }
-.footer-lang.active { color: #c00; font-weight: 600; }
+.footer-lang.active { color: #ff0000; font-weight: 600; }
 .footer-lang:hover  { color: #333; }
 .footer-lang-sep    { color: #ccc; font-size: 0.72rem; }
 /* ═══════════════════════════════════════════════════════════════════
@@ -779,10 +779,10 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     padding: 0.2rem;
     transition: color 0.15s;
 }
-.pw-toggle:hover { color: #b00; }
+.pw-toggle:hover { color: #ff0000; }
 .forgot-pw-link {
     display: block; text-align: right;
-    font-size: 0.78rem; color: #b00;
+    font-size: 0.78rem; color: #ff0000;
     text-decoration: none;
     margin: 0.1rem 0 0.9rem;
 }
@@ -799,7 +799,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .user-avatar-circle {
     width: 34px; height: 34px;
     border-radius: 50%;
-    background: #b00;
+    background: #ff0000;
     color: #fff;
     font-size: 0.85rem; font-weight: 700;
     display: inline-flex; align-items: center; justify-content: center;
@@ -820,7 +820,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 #addNewsAdminBtn:hover {
-    background-color: #cc0000;
+    background-color: #ff0000;
     transform: translateY(-1px);
     box-shadow: 0 4px 14px rgba(180,0,0,0.25);
 }
@@ -849,8 +849,8 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     color: #555; transition: all 0.15s;
     white-space: nowrap;
 }
-.anr-btn:hover { border-color: #b00; color: #b00; background: #fff5f5; }
-.anr-btn--danger:hover { border-color: #b00; color: #b00; background: #fff0f0; }
+.anr-btn:hover { border-color: #ff0000; color: #ff0000; background: #fff5f5; }
+.anr-btn--danger:hover { border-color: #ff0000; color: #ff0000; background: #fff0f0; }
 .status-badge {
     font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
     text-transform: uppercase; padding: 0.18rem 0.55rem;
@@ -903,7 +903,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .acc-avatar {
     width: 60px; height: 60px;
     border-radius: 50%;
-    background: #b00;
+    background: #ff0000;
     border: 3px solid rgba(255,255,255,0.3);
     display: flex; align-items: center; justify-content: center;
     font-size: 1.5rem; font-weight: 700; color: #fff;
@@ -964,12 +964,12 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     font-size: 0.88rem; font-family: inherit;
     transition: border-color 0.15s; box-sizing: border-box; background: #fff;
 }
-.acc-input:focus { outline: none; border-color: #b00; }
+.acc-input:focus { outline: none; border-color: #ff0000; }
 .acc-input[readonly] { background: #f7f7f7; color: #aaa; cursor: not-allowed; }
 .acc-action-btn { padding: 0.6rem 1.4rem !important; }
 .acc-msg { font-size: 0.84rem; margin-top: 0.7rem; min-height: 1.2em; }
 .acc-msg.success { color: #2d862d; }
-.acc-msg.error   { color: #b00; }
+.acc-msg.error   { color: #ff0000; }
 .acc-empty { color: #aaa; font-size: 0.88rem; text-align: center; padding: 2.5rem 1rem; line-height: 1.6; }
 .acc-loading { color: #bbb; text-align: center; padding: 2rem 0; }
 
@@ -993,7 +993,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .wishlist-info  { flex: 1; min-width: 0; }
 .wishlist-title { font-weight: 600; font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wishlist-author{ font-size: 0.78rem; color: #888; margin-top: 0.15rem; }
-.wishlist-price { font-size: 0.88rem; font-weight: 700; color: #b00; margin-top: 0.25rem; }
+.wishlist-price { font-size: 0.88rem; font-weight: 700; color: #ff0000; margin-top: 0.25rem; }
 
 /* Addresses */
 .address-card { display: flex; align-items: flex-start; gap: 0.8rem; border: 1.5px solid #ebebeb; border-radius: 10px; padding: 0.95rem 1.15rem; margin-bottom: 0.75rem; }
@@ -1006,12 +1006,12 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 
 /* Icon buttons */
 .btn-icon { background: none; border: none; cursor: pointer; color: #ccc; padding: 0.3rem 0.4rem; border-radius: 6px; transition: color 0.15s, background 0.15s; font-size: 0.88rem; flex-shrink: 0; }
-.btn-icon:hover { color: #b00; background: #fff0f0; }
-.wishlisted i { color: #b00 !important; }
+.btn-icon:hover { color: #ff0000; background: #fff0f0; }
+.wishlisted i { color: #ff0000 !important; }
 
 /* Save address checkbox */
 .save-address-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: #666; margin: 0.8rem 0 0.4rem; cursor: pointer; }
-.save-address-label input[type="checkbox"] { accent-color: #b00; }
+.save-address-label input[type="checkbox"] { accent-color: #ff0000; }
 
 /* Responsive */
 @media (max-width: 600px) {
@@ -1095,7 +1095,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     white-space: nowrap;
 }
 .admin-book-row .actions button:hover {
-    color: #b00 !important;
+    color: #ff0000 !important;
     background: #fff0f0;
     border-color: #f5c6c6 !important;
 }
@@ -1106,7 +1106,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     color: #ccc !important;
 }
 .admin-book-row .actions .delete-book:hover {
-    color: #b00 !important;
+    color: #ff0000 !important;
     background: #fff0f0;
 }
 
@@ -1143,7 +1143,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     transition: opacity 0.4s, transform 0.4s;
 }
 .acer-toast.toast-success i { color: #4caf50; }
-.acer-toast.toast-error   i { color: #e00; }
+.acer-toast.toast-error   i { color: #ff0000; }
 .acer-toast.toast-hide {
     opacity: 0;
     transform: translateY(1rem);
