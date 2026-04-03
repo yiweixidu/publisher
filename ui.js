@@ -7,6 +7,21 @@ import { renderReviews, renderDetailReviews } from './review.js';
 import { navigateTo, toSlug } from './routing.js';
 import { renderCartModal } from './cart.js';
 
+// 分类名称映射：数据库存储名 → 前端显示名
+const categoryDisplayMap = {
+    'Acer Literature': 'Acer Series',
+    'Acer Children': "Children's Art",
+    'Acer Poems': 'Acer Poetry'
+};
+// 反向映射：前端筛选名 → 数据库存储名（用于匹配旧数据）
+const categoryFilterMap = {
+    'Acer Series': ['Acer Literature', 'Acer Series'],
+    "Children's Art": ['Acer Children', "Children's Art"],
+    'Acer Poetry': ['Acer Poems', 'Acer Poetry'],
+    'Acer Novels': ['Acer Novels'],
+    'Acer Essays': ['Acer Essays']
+};
+
 // DOM elements
 const grid = document.getElementById('bookGrid');
 const newsGrid = document.getElementById('newsGrid');
@@ -275,9 +290,13 @@ function pushBooksToURL() {
 
 function applyBooksFilters(allBooks) {
     let list = [...allBooks];
-    // Category: exact match against DB value ("Acer Novels", "Acer Poems", etc.)
+    // Category: support mapping for old categories
     if (booksActiveCategory !== 'all') {
-        list = list.filter(b => (b.categories||[]).includes(booksActiveCategory));
+        const targetCats = categoryFilterMap[booksActiveCategory] || [booksActiveCategory];
+        list = list.filter(b => {
+            const bookCats = b.categories || [];
+            return targetCats.some(tc => bookCats.includes(tc));
+        });
     }
     const { search, lang, author, priceMin, priceMax, sort } = booksActiveFilters;
     if (search) {
@@ -651,9 +670,11 @@ function updateBookLanguage(book, elements) {
         if (authorBioEl) authorBioEl.innerHTML = book.author_bio_fr || book.author_bio || authorBioFallback;
         if (categoriesEl) {
             if (book.categories_fr && book.categories_fr.length) {
-                categoriesEl.innerHTML = book.categories_fr.map(cat => `<span class="category-tag">${cat}</span>`).join('');
+                const displayCats = book.categories_fr.map(cat => categoryDisplayMap[cat] || cat);
+                categoriesEl.innerHTML = displayCats.map(cat => `<span class="category-tag">${cat}</span>`).join('');
             } else if (book.categories && book.categories.length) {
-                categoriesEl.innerHTML = book.categories.map(cat => `<span class="category-tag">${cat}</span>`).join('');
+                const displayCats = book.categories.map(cat => categoryDisplayMap[cat] || cat);
+                categoriesEl.innerHTML = displayCats.map(cat => `<span class="category-tag">${cat}</span>`).join('');
             } else {
                 categoriesEl.innerHTML = '<span class="category-tag">Général</span>';
             }
@@ -664,7 +685,8 @@ function updateBookLanguage(book, elements) {
         if (authorBioEl) authorBioEl.innerHTML = book.author_bio || authorBioFallback;
         if (categoriesEl) {
             if (book.categories && book.categories.length) {
-                categoriesEl.innerHTML = book.categories.map(cat => `<span class="category-tag">${cat}</span>`).join('');
+                const displayCats = book.categories.map(cat => categoryDisplayMap[cat] || cat);
+                categoriesEl.innerHTML = displayCats.map(cat => `<span class="category-tag">${cat}</span>`).join('');
             } else {
                 categoriesEl.innerHTML = '<span class="category-tag">General</span>';
             }

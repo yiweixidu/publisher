@@ -251,14 +251,31 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     .admin-toggle { justify-content: center; margin-left: 0; }
 }
 
-/* Book detail page*/
+/* Book detail page */
 .page-header { display: flex; justify-content: space-between; align-items: center; margin: 2rem 0; }
 .page-header h2 { font-size: 2rem; font-family: 'Lora', serif; }
 .book-detail-page { min-height: 100vh; background: #fff; padding: 2rem; }
-.detail-container { max-width: 1200px; margin: 0 auto;}
-.detail-back-btn { background: none; border: none; color: #ff0000; font-size: 1rem; cursor: pointer; margin-bottom: 2rem; display: inline-flex; align-items: center; gap: 0.5rem;}
-.detail-back-btn:hover { text-decoration: underline;}
-.detail-content { display: flex; gap: 3rem; flex-wrap: wrap;}
+.detail-container { max-width: 1200px; margin: 0 auto; position: relative; }
+.detail-back-btn {
+    background: transparent;
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    padding: 0.5rem 1.5rem;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+.detail-back-btn:hover {
+    background: #ff0000;
+    color: white;
+}
+.detail-content { display: flex; gap: 3rem; flex-wrap: wrap; margin-top: 3rem; }
 .detail-left { flex: 1 1 300px;}
 .detail-cover { width: 100%; aspect-ratio: 2/3; background-size: cover; background-position: center; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.2);}
 .detail-right { flex: 2 1 500px; }
@@ -417,11 +434,11 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 
 /* ── Pagination ──────────────────────────────────────────────────────────── */
 .books-pagination { display: flex; justify-content: center; align-items: center; gap: 0.4rem; margin-top: 2rem; flex-wrap: wrap; }
-.page-btn { background: #111; border: 1px solid #2e2e2e; border-radius: 7px; color: #aaa; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.88rem; transition: background 0.15s, border-color 0.15s, color 0.15s; }
-.page-btn:hover:not([disabled]) { background: #ff0000; border-color: #ff0000; color: #fff; }
-.page-btn.active  { background: #ff0000; border-color: #ff0000; color: #fff; font-weight: 700; }
-.page-btn[disabled] { opacity: 0.3; cursor: default; }
-.page-ellipsis  { color: #555; font-size: 0.9rem; padding: 0 0.2rem; }
+.page-btn { background: #fff !important; border: 1px solid #ddd !important; color: #999 !important; transition: all 0.2s ease; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.88rem; border-radius: 7px; }
+.page-btn:hover:not([disabled]) { border-color: #ff0000 !important; color: #ff0000 !important; background: #fff !important; }
+.page-btn.active  { background: #fff !important; border-color: #ff0000 !important; color: #ff0000 !important; font-weight: 700; }
+.page-btn[disabled] { background: #f5f5f5 !important; border-color: #eaeaea !important; color: #ccc !important; cursor: default; opacity: 0.7; }
+.page-ellipsis  { color: #aaa !important; }
 
 /* ── Hardcover / Paperback format toggle on book cards ──────────────────── */
 .book-price-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; }
@@ -450,7 +467,6 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
         -webkit-overflow-scrolling: touch;
         gap: 1rem;
         padding: 0.25rem 0.5rem 1rem;
-        /* hide scrollbar */
         scrollbar-width: none;
     }
     .home-grid::-webkit-scrollbar { display: none; }
@@ -642,6 +658,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 }
 .cat-tab:hover  { border-color: #ff0000 !important; color: #ff0000 !important; background: #fff5f5 !important; }
 .cat-tab.active { background: #ff0000 !important; border-color: #ff0000 !important; color: #fff !important; }
+
 /* ══════════════════════════════════════════════════════════════════════
    NEW FEATURES — HC badge, category dropdown, filter bar, nav, admin
    ══════════════════════════════════════════════════════════════════════ */
@@ -757,6 +774,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .footer-lang.active { color: #ff0000; font-weight: 600; }
 .footer-lang:hover  { color: #333; }
 .footer-lang-sep    { color: #ccc; font-size: 0.72rem; }
+
 /* ═══════════════════════════════════════════════════════════════════
    Password field wrapper & toggle
    ═══════════════════════════════════════════════════════════════════ */
@@ -874,14 +892,28 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     box-shadow: 0 20px 60px rgba(0,0,0,0.18);
 }
 .acc-modal-close {
-    position: absolute; top: 1rem; right: 1rem;
-    background: rgba(255,255,255,0.15); border: none;
-    color: #fff; width: 30px; height: 30px;
-    border-radius: 50%; cursor: pointer; z-index: 10;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.9rem; transition: background 0.15s;
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    z-index: 10;
+    background: rgba(0,0,0,0.08);
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #333;
+    font-size: 0.95rem;
+    transition: background 0.15s, color 0.15s;
 }
-.acc-modal-close:hover { background: rgba(255,255,255,0.3); }
+.acc-modal-close:hover {
+    background: #ff0000;
+    color: #fff;
+    border-color: #ff0000;
+}
 
 /* Sidebar */
 .acc-sidebar {
@@ -1027,56 +1059,10 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     .admin-news-row { grid-template-columns: 1fr; gap: 0.4rem; }
     .anr-right { justify-content: flex-start; }
 }
+
 /* ═══════════════════════════════════════════════════════════════════════════
-   PATCH BATCH 2 — 8-issue fixes
+   PATCH BATCH 2 — 8-issue fixes (continued)
    ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Issue 1: Account modal close (X) button — top-right ── */
-.account-modal-content {
-    position: relative !important;
-}
-.acc-modal-close {
-    position: absolute;
-    top: 0.85rem;
-    right: 0.85rem;
-    z-index: 10;
-    background: rgba(255,255,255,0.15);
-    border: none;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #fff;
-    font-size: 0.95rem;
-    transition: background 0.15s, color 0.15s;
-}
-.acc-modal-close:hover {
-    background: rgba(255,255,255,0.3);
-    color: #fff;
-}
-
-/* ── Issue 4: Add News / Add New Book — ghost style (gray, hover red) ── */
-#addNewsAdminBtn,
-#addNewBookBtn {
-    background: transparent !important;
-    border: none !important;
-    color: #aaa !important;
-    font-size: 0.9rem;
-    font-weight: 500;
-    padding: 0.55rem 1.2rem;
-    border-radius: 40px;
-    cursor: pointer;
-    transition: background 0.18s, color 0.18s;
-    box-shadow: none !important;
-}
-#addNewsAdminBtn:hover,
-#addNewBookBtn:hover {
-    background: #ff0000 !important;
-    color: #fff !important;
-}
 
 /* ── Issue 5: Admin book row action buttons — better spacing ── */
 .admin-book-row .actions {
@@ -1157,46 +1143,17 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 
 /* ── 列表视图书名深灰色 + hover 浅灰背景 ── */
 .book-list-title {
-    color: #333 !important;           /* 深灰色 */
+    color: #333 !important;
     font-weight: 600;
 }
 .book-list-row:hover {
-    background: #d0d0d0 !important;   /* 浅灰背景，不是深色 */
+    background: #d0d0d0 !important;
 }
 .book-list-row:hover .book-list-title {
-    color: #333 !important;           /* hover 时书名保持深灰 */
+    color: #333 !important;
 }
 
-/* ── 分页组件：白底红字 + 灰色箭头 ── */
-.books-pagination .page-btn {
-    background: #fff !important;
-    border: 1px solid #ddd !important;
-    color: #999 !important;
-    transition: all 0.2s ease;
-}
-.books-pagination .page-btn:hover:not([disabled]) {
-    border-color: #ff0000 !important;
-    color: #ff0000 !important;
-    background: #fff !important;
-}
-.books-pagination .page-btn.active {
-    background: #fff !important;
-    border-color: #ff0000 !important;
-    color: #ff0000 !important;
-    font-weight: 700;
-}
-.books-pagination .page-btn[disabled] {
-    background: #f5f5f5 !important;
-    border-color: #eaeaea !important;
-    color: #ccc !important;
-    cursor: default;
-    opacity: 0.7;
-}
-.books-pagination .page-ellipsis {
-    color: #aaa !important;
-}
-
-/* Review user avatar circles */
+/* ── Review user avatar circles (existing) ── */
 .review-user-avatar, .comment-user-avatar {
     display: inline-flex;
     align-items: center;
@@ -1245,4 +1202,40 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .review-form-username {
     font-size: 0.85rem;
     font-weight: 500;
+}
+
+/* ── Circular icon buttons for share & post review ── */
+.circle-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    border: none;
+    color: #555;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+.circle-icon:hover {
+    background: #ff0000;
+    color: white;
+}
+.wechat-review-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.wechat-review-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem 0;
+}
+.wechat-review-content-area {
+    flex: 1;
 }
