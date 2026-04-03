@@ -86,8 +86,10 @@ export async function updateUserPassword(newPassword) {
 }
 
 export async function openAccountDashboard() {
+    console.log('openAccountDashboard called, currentUser:', currentUser);
     if (!currentUser) return;
     const overlay = document.getElementById('accountModal');
+    console.log('overlay element:', overlay);
     if (!overlay) return;
 
     let displayName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
@@ -106,7 +108,6 @@ export async function openAccountDashboard() {
     ['profileNewPw','profileConfirmPw'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
 
     overlay.classList.add('active');
-    switchAccTab('profile');
 }
 
 export function closeAccountDashboard() { document.getElementById('accountModal')?.classList.remove('active'); }

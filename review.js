@@ -38,7 +38,7 @@ function fallbackCopy(review, shareUrl) {
 async function attachEventsToContainer(container, bookId, currentLang, currentUser) {
     if (!container) return;
 
-    // 分享按钮
+    // 分享按钮 (现在位于头部右侧)
     container.querySelectorAll('.wechat-share-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -171,7 +171,7 @@ async function attachEventsToContainer(container, bookId, currentLang, currentUs
         });
     });
 
-    // 编辑评论（类似书评编辑）
+    // 编辑评论
     container.querySelectorAll('.edit-comment-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
@@ -273,11 +273,24 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
             <div class="wechat-review-item" data-review-id="${r.id}">
                 <div class="wechat-review-content-area">
                     <div class="wechat-review-header">
-                        <div class="review-user-avatar">
+                        <div class="review-user-info">
                             <span class="review-avatar-circle">${userInitial}</span>
                             <span class="wechat-review-user">${escapeHtml(displayUsername)}</span>
+                            <span class="wechat-review-date">${date}</span>
                         </div>
-                        <span class="wechat-review-date">${date}</span>
+                        <div class="review-header-actions">
+                            <button class="wechat-share-btn icon-btn" data-review-id="${r.id}" title="Share">
+                                <i class="fas fa-share-alt"></i>
+                            </button>
+                            ${isOwnReview ? `
+                                <button class="edit-review-btn icon-btn" data-review-id="${r.id}" title="Edit review">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="delete-review-btn icon-btn" data-review-id="${r.id}" title="Delete review">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            ` : ''}
+                        </div>
                     </div>
                     <div class="wechat-review-content" id="review-text-${r.id}">${escapeHtml(r.text)}</div>
                     <div class="wechat-comment-section" id="comments-${r.id}">
@@ -305,9 +318,9 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
                     <span class="wechat-comment-text" id="comment-text-${c.timestamp}">${escapeHtml(c.text)}</span>
                     <span class="wechat-comment-date">${commentDate}</span>
                     ${isOwnComment ? `
-                        <div class="comment-actions-right" style="margin-left: auto; display: flex; gap: 0.3rem;">
-                            <button class="edit-comment-btn" data-review-id="${r.id}" data-comment-ts="${c.timestamp}"><i class="fas fa-edit"></i></button>
-                            <button class="delete-comment-btn" data-review-id="${r.id}" data-comment-ts="${c.timestamp}"><i class="fas fa-trash-alt"></i></button>
+                        <div class="comment-actions-right">
+                            <button class="edit-comment-btn icon-btn" data-review-id="${r.id}" data-comment-ts="${c.timestamp}"><i class="fas fa-edit"></i></button>
+                            <button class="delete-comment-btn icon-btn" data-review-id="${r.id}" data-comment-ts="${c.timestamp}"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     ` : ''}
                 </div>
@@ -329,23 +342,7 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
         }
 
         html += `</div></div>`; // 关闭 comment-section 和 content-area
-
-        // 右侧操作栏（分享 + 编辑/删除书评）
-        html += `
-            <div class="wechat-review-footer">
-                <button class="wechat-share-btn circle-icon" data-review-id="${r.id}" title="Share to WeChat">
-                    <i class="fas fa-share-alt"></i>
-                </button>
-                ${isOwnReview ? `
-                    <button class="edit-review-btn circle-icon" data-review-id="${r.id}" title="Edit review">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="delete-review-btn circle-icon" data-review-id="${r.id}" title="Delete review">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                ` : ''}
-            </div>
-        </div>`;
+        html += `</div>`; // 关闭 wechat-review-item
     }
 
     // 新书评表单
