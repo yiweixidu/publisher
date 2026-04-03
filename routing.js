@@ -115,12 +115,27 @@ export async function handleRoute() {
         resetMetaTags();
 
     } else if (path === 'admin/books') {
-        if (!adminMode) { navigateTo('/'); return; }
+        if (!adminMode) {
+            // Not in admin mode — silently rewrite URL to home without pushing a history entry
+            history.replaceState(null, '', BASE_PATH);
+            mainContent.style.display = 'block';
+            await Promise.all([renderBooks(), renderNews()]);
+            resetMetaTags();
+            window.dispatchEvent(new CustomEvent('routeChanged'));
+            return;
+        }
         showAdminBooksPage();
         document.title = 'Manage Books | Acer Books';
 
     } else if (path === 'admin/news') {
-        if (!adminMode) { navigateTo('/'); return; }
+        if (!adminMode) {
+            history.replaceState(null, '', BASE_PATH);
+            mainContent.style.display = 'block';
+            await Promise.all([renderBooks(), renderNews()]);
+            resetMetaTags();
+            window.dispatchEvent(new CustomEvent('routeChanged'));
+            return;
+        }
         showAdminNewsPage();
         document.title = 'Manage News | Acer Books';
 
