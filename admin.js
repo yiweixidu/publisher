@@ -350,6 +350,8 @@ async function saveBookFromForm() {
         if (existing && existing.interior_previews) bookData.interior_previews = existing.interior_previews;
     }
 
+    // ── Step 1: save only — isolated from all reload logic ──────────────────
+    let saveError = null;
     try {
         let updatedBooks;
         if (bookData.id) {
@@ -358,36 +360,58 @@ async function saveBookFromForm() {
             bookData.id = 'b' + Date.now() + Math.random().toString(36).substr(2, 6);
             updatedBooks = [bookData];
         }
-
         console.log('Saving book:', bookData);
         await saveBooks(updatedBooks);
         console.log('Book saved');
-
-        await renderAdminBookList();
-        if (document.getElementById('mainContent').style.display === 'block') renderBooks();
-        if (document.getElementById('booksPage').style.display === 'block') renderAllBooks();
-
-        // Show inline success message inside the modal
-        let msgEl = bookFormModal.querySelector('.book-save-msg');
-        if (!msgEl) {
-            msgEl = document.createElement('p');
-            msgEl.className = 'book-save-msg';
-            msgEl.style.cssText = 'margin-top:0.9rem;padding:0.55rem 1rem;background:#f0fff4;border:1px solid #4caf50;border-radius:6px;font-size:0.8rem;color:#2e7d32;text-align:center;';
-            const formActions = bookFormModal.querySelector('.form-actions');
-            if (formActions) formActions.insertAdjacentElement('afterend', msgEl);
-            else bookFormModal.querySelector('.modal-content')?.appendChild(msgEl);
-        }
-        msgEl.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.35rem;"></i>Book saved successfully! Please <strong>refresh the page</strong> to see the newly added book in the listing.';
-
-        // Close modal after 2.5 s
-        setTimeout(() => {
-            bookFormModal.classList.remove('active');
-            msgEl?.remove();
-        }, 2500);
     } catch (err) {
-        console.error('Error saving book:', err);
-        showToast('Save failed: ' + (err.message || err), 'error');
+        saveError = err;
     }
+
+    if (saveError) {
+        console.error('Error saving book:', saveError);
+        showToast('Save failed: ' + (saveError.message || saveError), 'error');
+        return;
+    }
+
+    // ── Step 2: save confirmed — show success message immediately ─────────
+    let msgEl = bookFormModal.querySelector('.book-save-msg');
+    if (!msgEl) {
+        msgEl = document.createElement('p');
+        msgEl.className = 'book-save-msg';
+        msgEl.style.cssText = [
+            'margin-bottom:1rem',
+            'padding:0.6rem 1rem',
+            'background:#f0fff4',
+            'border:1px solid #4caf50',
+            'border-radius:6px',
+            'font-size:0.82rem',
+            'color:#2e7d32',
+            'text-align:center',
+            'font-weight:500'
+        ].join(';');
+        // Insert ABOVE the Save/Cancel buttons so it is always visible
+        const formActions = bookFormModal.querySelector('.form-actions');
+        if (formActions) {
+            formActions.insertAdjacentElement('beforebegin', msgEl);
+        } else {
+            bookFormModal.querySelector('.modal-content')?.appendChild(msgEl);
+        }
+    }
+    msgEl.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.4rem;"></i>'
+        + 'Book saved! Please <strong>refresh the page</strong> to see the new listing.';
+    // Scroll the message into view
+    msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // ── Step 3: close modal after 2.5 s ───────────────────────────────────
+    setTimeout(() => {
+        bookFormModal.classList.remove('active');
+        if (msgEl && msgEl.parentNode) msgEl.remove();
+    }, 2500);
+
+    // ── Step 4: refresh lists in background (non-fatal) ───────────────────
+    try { await renderAdminBookList(); } catch(e) { console.warn('List refresh (non-fatal):', e.message); }
+    try { if (document.getElementById('mainContent').style.display === 'block') renderBooks(); } catch(e) {}
+    try { if (document.getElementById('booksPage').style.display === 'block') renderAllBooks(); } catch(e) {}
 }
 
 function readFileAsDataURL(file) {
