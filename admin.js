@@ -356,11 +356,27 @@ async function saveBookFromForm() {
         await saveBooks(updatedBooks);
         console.log('Book saved');
 
-        bookFormModal.classList.remove('active');
         await renderAdminBookList();
         if (document.getElementById('mainContent').style.display === 'block') renderBooks();
         if (document.getElementById('booksPage').style.display === 'block') renderAllBooks();
-        showToast('Book saved successfully!');
+
+        // Show inline success message inside the modal
+        let msgEl = bookFormModal.querySelector('.book-save-msg');
+        if (!msgEl) {
+            msgEl = document.createElement('p');
+            msgEl.className = 'book-save-msg';
+            msgEl.style.cssText = 'margin-top:0.9rem;padding:0.55rem 1rem;background:#f0fff4;border:1px solid #4caf50;border-radius:6px;font-size:0.8rem;color:#2e7d32;text-align:center;';
+            const formActions = bookFormModal.querySelector('.form-actions');
+            if (formActions) formActions.insertAdjacentElement('afterend', msgEl);
+            else bookFormModal.querySelector('.modal-content')?.appendChild(msgEl);
+        }
+        msgEl.innerHTML = '<i class="fas fa-check-circle" style="margin-right:0.35rem;"></i>Book saved successfully! Please <strong>refresh the page</strong> to see the newly added book in the listing.';
+
+        // Close modal after 2.5 s
+        setTimeout(() => {
+            bookFormModal.classList.remove('active');
+            msgEl?.remove();
+        }, 2500);
     } catch (err) {
         console.error('Error saving book:', err);
         showToast('Save failed: ' + (err.message || err), 'error');
