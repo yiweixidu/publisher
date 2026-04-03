@@ -870,6 +870,15 @@ window.addEventListener('openPasswordRecovery', () => {
     });
 });
 
+// 全局委托：点击头像打开 Account Dashboard
+document.body.addEventListener('click', (e) => {
+    const avatarBtn = e.target.closest('.user-avatar-btn');
+    if (avatarBtn && avatarBtn.id === 'userNameBtn') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('openAccountDashboard'));
+    }
+});
+
 // ---------- Initialization ----------
 async function init() {
     loadCart();
