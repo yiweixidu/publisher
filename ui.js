@@ -7,21 +7,6 @@ import { renderReviews, renderDetailReviews } from './review.js';
 import { navigateTo, toSlug } from './routing.js';
 import { renderCartModal } from './cart.js';
 
-// 分类名称映射：数据库存储名 → 前端显示名
-const categoryDisplayMap = {
-    'Acer Literature': 'Acer Series',
-    'Acer Children': "Children's Art",
-    'Acer Poems': 'Acer Poetry'
-};
-// 反向映射：前端筛选名 → 数据库存储名（用于匹配旧数据）
-const categoryFilterMap = {
-    'Acer Series': ['Acer Literature', 'Acer Series'],
-    "Children's Art": ['Acer Children', "Children's Art"],
-    'Acer Poetry': ['Acer Poems', 'Acer Poetry'],
-    'Acer Novels': ['Acer Novels'],
-    'Acer Essays': ['Acer Essays']
-};
-
 // DOM elements
 const grid = document.getElementById('bookGrid');
 const newsGrid = document.getElementById('newsGrid');
@@ -107,24 +92,21 @@ document.addEventListener('DOMContentLoaded', initModalTabs);
 // Contributor: Ana-Laurya Fay
 // Date: 2026-03-29
 // ============================================
-// Listens for the custom 'languageChanged' event fired by setLanguage() in i18n.js
-// Re-renders all visible dynamic content in the selected language
-// Fulfills checklist item: "Ensure dynamic content (books, news) switches language"
 
 function handleLanguageChange(event) {
-    const lang = event.detail; // extract selected language from event
-    translateUI(lang); // update all static UI text
-    renderNews(); // re-render news section
-    renderBooks(); // added by Ana-Laurya Fay — re-renders homepage book grid
-    if (modalOverlay?.classList.contains('active')) updateModalLanguage(); // update open book modal if active
-    if (cartModal?.classList.contains('active')) renderCartModal(); // update open cart if active
-    if (newsListPage && newsListPage.style.display === 'block') renderAllNews(); // update news list page if visible
-    if (newsDetailPage && newsDetailPage.style.display === 'block' && currentNewsItem) renderNewsDetail(currentNewsItem); // update news detail page if visible
-    if (detailPage && detailPage.style.display === 'block' && currentModalBook) { // update book detail page if visible
-        updateDetailLanguage(currentModalBook); // update book detail text in selected language
-        renderDetailReviews(currentModalBook.id, lang, currentUser); // update reviews in selected language
+    const lang = event.detail;
+    translateUI(lang);
+    renderNews();
+    renderBooks();
+    if (modalOverlay?.classList.contains('active')) updateModalLanguage();
+    if (cartModal?.classList.contains('active')) renderCartModal();
+    if (newsListPage && newsListPage.style.display === 'block') renderAllNews();
+    if (newsDetailPage && newsDetailPage.style.display === 'block' && currentNewsItem) renderNewsDetail(currentNewsItem);
+    if (detailPage && detailPage.style.display === 'block' && currentModalBook) {
+        updateDetailLanguage(currentModalBook);
+        renderDetailReviews(currentModalBook.id, lang, currentUser);
     }
-    if (booksPage && booksPage.style.display === 'block') renderAllBooks(); // update full books page if visible
+    if (booksPage && booksPage.style.display === 'block') renderAllBooks();
 }
 
 window.addEventListener('languageChanged', handleLanguageChange);
@@ -207,7 +189,6 @@ function attachBookDeleteEvents(container, renderCallback) {
 export async function renderBooks() {
     console.log('renderBooks called');
     try {
-        // Ensure books are loaded
         if (books.length === 0) {
             console.log('Loading books...');
             await loadBooks();
@@ -242,14 +223,13 @@ export async function renderBooks() {
             });
         });
         attachFormatToggleEvents(grid);
-        // attachBookDeleteEvents(grid, renderBooks);
     } catch (err) {
         console.error('Error rendering books:', err);
         if (grid) grid.innerHTML = '<p>Error loading books. Please refresh or try again later.</p>';
     }
 }
 
-// booksActiveCategory holds exact series name stored in DB: "Acer Novels" | "Acer Poems" | etc.
+// booksActiveCategory holds exact series name stored in DB
 let booksActiveCategory = 'all';
 
 // ── Books-page state ────────────────────────────────────────────────────────
@@ -290,13 +270,8 @@ function pushBooksToURL() {
 
 function applyBooksFilters(allBooks) {
     let list = [...allBooks];
-    // Category: support mapping for old categories
     if (booksActiveCategory !== 'all') {
-        const targetCats = categoryFilterMap[booksActiveCategory] || [booksActiveCategory];
-        list = list.filter(b => {
-            const bookCats = b.categories || [];
-            return targetCats.some(tc => bookCats.includes(tc));
-        });
+        list = list.filter(b => (b.categories || []).includes(booksActiveCategory));
     }
     const { search, lang, author, priceMin, priceMax, sort } = booksActiveFilters;
     if (search) {
@@ -367,24 +342,25 @@ function renderBooksPagePagination(total) {
 }
 
 function syncBooksFilterUI() {
-    const si=document.getElementById('booksSearchInput'), lf=document.getElementById('booksLangFilter'),
-          af=document.getElementById('booksAuthorFilter'), sf=document.getElementById('booksSortFilter'),
-          pMin=document.getElementById('booksPriceMin'), pMax=document.getElementById('booksPriceMax');
+    const si = document.getElementById('booksSearchInput');
+    const lf = document.getElementById('booksLangFilter');
+    const af = document.getElementById('booksAuthorFilter');
+    const catFilter = document.getElementById('booksCatFilter');
+    
     if (si) si.value = booksActiveFilters.search;
     if (lf) lf.value = booksActiveFilters.lang;
-    if (sf) sf.value = booksActiveFilters.sort;
-    if (pMin) pMin.value = booksActiveFilters.priceMin;
-    if (pMax) pMax.value = booksActiveFilters.priceMax;
+    if (catFilter) catFilter.value = booksActiveCategory;
+    
     if (af) {
         const authors = [...new Set(books.map(b=>(currentLang==='fr'?(b.author_fr||b.author):b.author)).filter(Boolean))].sort();
         af.innerHTML = `<option value="">${langPack[currentLang].filterAllAuthors||'All Authors'}</option>`;
         authors.forEach(a => { af.innerHTML += `<option value="${a}" ${a===booksActiveFilters.author?'selected':''}>${a}</option>`; });
     }
-    document.getElementById('booksGridViewBtn')?.classList.toggle('active', booksViewMode==='grid');
-    document.getElementById('booksListViewBtn')?.classList.toggle('active', booksViewMode==='list');
-    // Sync category dropdown
-    const catFilter = document.getElementById('booksCatFilter');
-    if (catFilter) catFilter.value = booksActiveCategory;
+    
+    const gridBtn = document.getElementById('booksGridViewBtn');
+    const listBtn = document.getElementById('booksListViewBtn');
+    if (gridBtn) gridBtn.classList.toggle('active', booksViewMode==='grid');
+    if (listBtn) listBtn.classList.toggle('active', booksViewMode==='list');
 }
 
 let booksEventsAttached = false;
@@ -392,34 +368,54 @@ let booksEventsAttached = false;
 function attachBooksEvents() {
     const applyBtn = document.getElementById('booksFilterApply');
     const resetBtn = document.getElementById('booksFilterReset');
-    document.getElementById('booksSearchInput')?.addEventListener('keydown', e => { if (e.key==='Enter') applyBtn?.click(); });
+    const searchInput = document.getElementById('booksSearchInput');
+    const langFilter = document.getElementById('booksLangFilter');
+    const authorFilter = document.getElementById('booksAuthorFilter');
+    const catFilter = document.getElementById('booksCatFilter');
+    const gridBtn = document.getElementById('booksGridViewBtn');
+    const listBtn = document.getElementById('booksListViewBtn');
+    
+    searchInput?.addEventListener('keydown', e => { if (e.key==='Enter') applyBtn?.click(); });
+    
     applyBtn?.addEventListener('click', () => {
         booksActiveFilters = {
-            search:   document.getElementById('booksSearchInput')?.value.trim()||'',
-            lang:     document.getElementById('booksLangFilter')?.value||'',
-            author:   document.getElementById('booksAuthorFilter')?.value||'',
-            priceMin: document.getElementById('booksPriceMin')?.value||'',
-            priceMax: document.getElementById('booksPriceMax')?.value||'',
-            sort:     document.getElementById('booksSortFilter')?.value||'title',
+            search:   searchInput?.value.trim() || '',
+            lang:     langFilter?.value || '',
+            author:   authorFilter?.value || '',
+            priceMin: '',   // removed from UI
+            priceMax: '',   // removed from UI
+            sort:     'title',
         };
-        booksCurrentPage = 1; pushBooksToURL(); renderAllBooks();
+        booksCurrentPage = 1;
+        pushBooksToURL();
+        renderAllBooks();
     });
+    
     resetBtn?.addEventListener('click', () => {
-        booksActiveFilters = {search:'',lang:'',author:'',priceMin:'',priceMax:'',sort:'title'};
-        booksCurrentPage = 1; pushBooksToURL(); renderAllBooks();
+        booksActiveFilters = { search:'', lang:'', author:'', priceMin:'', priceMax:'', sort:'title' };
+        booksActiveCategory = 'all';
+        if (catFilter) catFilter.value = 'all';
+        booksCurrentPage = 1;
+        pushBooksToURL();
+        renderAllBooks();
     });
-    document.getElementById('booksGridViewBtn')?.addEventListener('click', ()=>{ booksViewMode='grid'; pushBooksToURL(); renderAllBooks(); });
-    document.getElementById('booksListViewBtn')?.addEventListener('click', ()=>{ booksViewMode='list'; pushBooksToURL(); renderAllBooks(); });
-    // Category dropdown — fires immediately, no need to press Apply
-    document.getElementById('booksCatFilter')?.addEventListener('change', e => {
+    
+    gridBtn?.addEventListener('click', () => { booksViewMode='grid'; pushBooksToURL(); renderAllBooks(); });
+    listBtn?.addEventListener('click', () => { booksViewMode='list'; pushBooksToURL(); renderAllBooks(); });
+    
+    catFilter?.addEventListener('change', e => {
         booksActiveCategory = e.target.value;
-        booksCurrentPage = 1; pushBooksToURL(); renderAllBooks();
+        booksCurrentPage = 1;
+        pushBooksToURL();
+        renderAllBooks();
     });
 }
 
 export function resetBooksPageState() {
-    booksEventsAttached = false; booksCurrentPage = 1; booksActiveCategory = 'all';
-    booksActiveFilters = {search:'',lang:'',author:'',priceMin:'',priceMax:'',sort:'title'};
+    booksEventsAttached = false;
+    booksCurrentPage = 1;
+    booksActiveCategory = 'all';
+    booksActiveFilters = { search:'', lang:'', author:'', priceMin:'', priceMax:'', sort:'title' };
 }
 
 export async function renderAllBooks() {
@@ -469,6 +465,7 @@ export async function renderAllBooks() {
     }
 }
 
+// ---------- News functions (unchanged) ----------
 function generateNewsItemHTML(item, adminMode, currentLang) {
     const title = (item.title && typeof item.title === 'object') ? (item.title[currentLang] || item.title.en || '') : item.title || '';
     const summary = (item.summary && typeof item.summary === 'object') ? (item.summary[currentLang] || item.summary.en || '') : item.summary || '';
@@ -599,14 +596,13 @@ export function renderBookDetail(book) {
     document.getElementById('detailPages').innerText = book.pages || '170';
     updateDetailLanguage(book);
     renderDetailReviews(book.id, currentLang, currentUser);
-    // HC badge acts as the format toggle button
+    
     const detailHcBadge = document.getElementById('detailHcBadge');
     if (book.price_hardcover) {
         if (detailHcBadge) {
             detailHcBadge.style.display = '';
             detailHcBadge.style.cursor = 'pointer';
             detailHcBadge.classList.remove('hc-badge--active');
-            // Clone to drop any previously attached listener
             const freshDetail = detailHcBadge.cloneNode(true);
             detailHcBadge.parentNode.replaceChild(freshDetail, detailHcBadge);
             freshDetail.addEventListener('click', () => {
@@ -670,11 +666,9 @@ function updateBookLanguage(book, elements) {
         if (authorBioEl) authorBioEl.innerHTML = book.author_bio_fr || book.author_bio || authorBioFallback;
         if (categoriesEl) {
             if (book.categories_fr && book.categories_fr.length) {
-                const displayCats = book.categories_fr.map(cat => categoryDisplayMap[cat] || cat);
-                categoriesEl.innerHTML = displayCats.map(cat => `<span class="category-tag">${cat}</span>`).join('');
+                categoriesEl.innerHTML = book.categories_fr.map(cat => `<span class="category-tag">${cat}</span>`).join('');
             } else if (book.categories && book.categories.length) {
-                const displayCats = book.categories.map(cat => categoryDisplayMap[cat] || cat);
-                categoriesEl.innerHTML = displayCats.map(cat => `<span class="category-tag">${cat}</span>`).join('');
+                categoriesEl.innerHTML = book.categories.map(cat => `<span class="category-tag">${cat}</span>`).join('');
             } else {
                 categoriesEl.innerHTML = '<span class="category-tag">Général</span>';
             }
@@ -685,8 +679,7 @@ function updateBookLanguage(book, elements) {
         if (authorBioEl) authorBioEl.innerHTML = book.author_bio || authorBioFallback;
         if (categoriesEl) {
             if (book.categories && book.categories.length) {
-                const displayCats = book.categories.map(cat => categoryDisplayMap[cat] || cat);
-                categoriesEl.innerHTML = displayCats.map(cat => `<span class="category-tag">${cat}</span>`).join('');
+                categoriesEl.innerHTML = book.categories.map(cat => `<span class="category-tag">${cat}</span>`).join('');
             } else {
                 categoriesEl.innerHTML = '<span class="category-tag">General</span>';
             }
@@ -734,7 +727,7 @@ export function openModal(book) {
     }
     if (modalAddToCart) modalAddToCart.dataset.bookId = book.id;
     if (modalAddToWishList) modalAddToWishList.dataset.bookId = book.id;
-    // HC badge acts as the format toggle button
+    
     const modalHcBadge = document.getElementById('modalHcBadge');
     if (book.price_hardcover) {
         if (modalHcBadge) {

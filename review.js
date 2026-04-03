@@ -179,11 +179,14 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
             `;
         }
 
-        // Comment input form: text input only (button moved to right side)
+        // Comment input form: text input + submit button (button below, right-aligned)
         if (currentUser) {
             html += `
                 <div class="wechat-comment-form">
-                    <input type="text" class="wechat-comment-input" placeholder="${langPack[currentLang].writeReviewPlaceholder}" data-review-id="${r.id}">
+                    <input type="text" class="wechat-comment-input" placeholder="Write comment..." data-review-id="${r.id}">
+                    <div class="comment-submit-wrapper">
+                        <button class="wechat-comment-submit btn-post" data-review-id="${r.id}">Post comment</button>
+                    </div>
                 </div>
             `;
         } else {
@@ -192,13 +195,12 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
 
         html += `</div></div>`;
 
-        // Right side buttons: share + comment submit
+        // Right side: only share button
         html += `
             <div class="wechat-review-footer">
                 <button class="wechat-share-btn circle-icon" data-review-id="${r.id}" title="Share to WeChat">
                     <i class="fas fa-share-alt"></i>
                 </button>
-                ${currentUser ? `<button class="wechat-comment-submit btn-post" data-review-id="${r.id}" title="Post comment">Post comment</button>` : ''}
             </div>
         </div>`;
     }
@@ -216,7 +218,7 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
                         <span class="review-form-username">${escapeHtml(currentDisplayName)}</span>
                     </div>
                 </div>
-                <textarea class="review-textarea" placeholder="${langPack[currentLang].writeReviewPlaceholder}"></textarea>
+                <textarea class="review-textarea" placeholder="Write a review..."></textarea>
                 <div class="review-submit-wrapper">
                     <button class="review-submit btn-post">Post review</button>
                 </div>
