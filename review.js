@@ -15,7 +15,6 @@ async function getUserDisplayName(userId) {
             .eq('id', userId)
             .single();
         if (profile?.display_name) return profile.display_name;
-        // fallback: get email prefix from auth
         const { data: userData } = await supabase.auth.getUser();
         if (userData?.user?.email) return userData.user.email.split('@')[0];
         return 'User';
@@ -61,7 +60,7 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
         });
     });
 
-    // Submit comment (reply)
+    // Submit comment (reply) – now the button is moved to right side
     container.querySelectorAll('.wechat-comment-submit').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
@@ -72,7 +71,6 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
             if (!text) return;
             const review = reviews.find(r => r.id === reviewId);
             if (review) {
-                // Get current user's display name for the comment
                 const commenterName = await getUserDisplayName(currentUser.id);
                 review.comments.push({
                     user_id: currentUser.id,
@@ -102,7 +100,7 @@ function attachEventsToContainer(container, bookId, currentLang, currentUser) {
                 id: 'rev_' + Date.now() + Math.random().toString(36).substr(2, 6),
                 book_id: bookId,
                 user_id: currentUser.id,
-                username: displayName,   // store display name, not email prefix
+                username: displayName,
                 text: text,
                 timestamp: new Date().toISOString(),
                 likes: [],
@@ -134,10 +132,8 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
             currentLang === 'fr' ? 'fr-CA' : 'en-CA',
             { year: 'numeric', month: '2-digit', day: '2-digit' }
         );
-        // If this review is by the current user, use currentUser's display name (already updated)
         let displayUsername = r.username;
         if (currentUser && r.user_id === currentUser.id) {
-            // Prefer current user's display name from metadata (might be newer)
             const currentDisplayName = currentUser.user_metadata?.display_name || 
                                        currentUser.email.split('@')[0];
             displayUsername = currentDisplayName;
@@ -183,14 +179,11 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
             `;
         }
 
-        // Comment input form
+        // Comment input form: text input only (button moved to right side)
         if (currentUser) {
             html += `
                 <div class="wechat-comment-form">
                     <input type="text" class="wechat-comment-input" placeholder="${langPack[currentLang].writeReviewPlaceholder}" data-review-id="${r.id}">
-                    <button class="wechat-comment-submit circle-icon" data-review-id="${r.id}" title="Post comment">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
                 </div>
             `;
         } else {
@@ -199,17 +192,18 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
 
         html += `</div></div>`;
 
-        // Right side buttons (share)
+        // Right side buttons: share + comment submit
         html += `
             <div class="wechat-review-footer">
                 <button class="wechat-share-btn circle-icon" data-review-id="${r.id}" title="Share to WeChat">
                     <i class="fas fa-share-alt"></i>
                 </button>
+                ${currentUser ? `<button class="wechat-comment-submit btn-post" data-review-id="${r.id}" title="Post comment">Post comment</button>` : ''}
             </div>
         </div>`;
     }
 
-    // Form to write a new review (only for logged-in users)
+    // Form to write a new review (Post review button is a regular red-outline button)
     if (currentUser) {
         const currentDisplayName = currentUser.user_metadata?.display_name || 
                                    currentUser.email.split('@')[0];
@@ -223,9 +217,9 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
                     </div>
                 </div>
                 <textarea class="review-textarea" placeholder="${langPack[currentLang].writeReviewPlaceholder}"></textarea>
-                <button class="review-submit wechat-submit circle-icon" title="Post review">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
+                <div class="review-submit-wrapper">
+                    <button class="review-submit btn-post">Post review</button>
+                </div>
             </div>
         `;
     }
@@ -234,7 +228,6 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
     return html;
 }
 
-// Simple XSS escape helper
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, function(m) {
