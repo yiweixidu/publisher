@@ -2,7 +2,7 @@
 import { reviews, insertReview, updateReview, loadReviews } from './data.js';
 import { langPack } from './i18n.js';
 import { supabase } from './supabaseClient.js';
-import { currentUser } from './auth.js';
+import { currentUser, openLoginModal } from './auth.js';
 
 const modalReviews = document.getElementById('modalReviews');
 
@@ -243,6 +243,14 @@ async function attachEventsToContainer(container, bookId, currentLang, currentUs
             if (textarea) textarea.value = '';
         });
     }
+
+    // 未登录时的“Login to comment”按钮
+    container.querySelectorAll('.login-prompt-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openLoginModal('user');
+        });
+    });
 }
 
 function generateReviewsHTML(bookReviews, currentLang, currentUser) {
@@ -279,9 +287,9 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
                             <span class="wechat-review-date">${date}</span>
                         </div>
                         <div class="review-header-actions">
-                            <button class="wechat-share-btn icon-btn" data-review-id="${r.id}" title="Share">
+                            ${currentUser ? `<button class="wechat-share-btn icon-btn" data-review-id="${r.id}" title="Share">
                                 <i class="fas fa-share-alt"></i>
-                            </button>
+                            </button>` : ''}
                             ${isOwnReview ? `
                                 <button class="edit-review-btn icon-btn" data-review-id="${r.id}" title="Edit review">
                                     <i class="fas fa-edit"></i>
@@ -327,7 +335,7 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
             `;
         }
 
-        // 评论输入表单
+        // 评论输入表单（仅登录用户可见）
         if (currentUser) {
             html += `
                 <div class="wechat-comment-form">
@@ -338,14 +346,14 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
                 </div>
             `;
         } else {
-            html += `<p class="login-prompt">${langPack[currentLang].loginPrompt}</p>`;
+            html += `<button class="btn-outline-red login-prompt-btn">${langPack[currentLang].loginPrompt}</button>`;
         }
 
         html += `</div></div>`; // 关闭 comment-section 和 content-area
         html += `</div>`; // 关闭 wechat-review-item
     }
 
-    // 新书评表单
+    // 新书评表单（仅登录用户可见）
     if (currentUser) {
         const currentDisplayName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
         const currentUserInitial = currentDisplayName.charAt(0).toUpperCase();
