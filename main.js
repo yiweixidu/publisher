@@ -406,6 +406,21 @@ loginBtn?.addEventListener('click', doLogin);
     });
 });
 
+// After login: refresh admin nav + page content
+window.addEventListener('userLogin', async () => {
+    const { adminMode, updateAdminNavLink } = await import('./auth.js');
+    updateAdminNavLink();
+    updateAdminToggleVisibility();
+    if (adminMode) {
+        await handleRoute();
+    }
+});
+
+// After logout: refresh UI
+window.addEventListener('userLogout', async () => {
+    updateAdminToggleVisibility();
+});
+
 // Password toggles
 document.getElementById('loginPwToggle')?.addEventListener('click', () => {
     const inp = document.getElementById('loginPassword');
