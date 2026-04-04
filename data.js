@@ -1,6 +1,7 @@
 // data.js
 import { supabase } from './supabaseClient.js';
 import { currentAccessToken } from './auth.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './constants.js';
 
 // Exported arrays (initially empty, filled by load functions)
 export let books = [];
@@ -31,8 +32,6 @@ export async function saveBooks(newBooks) {
         return clean; 
     });
 
-    const SUPABASE_URL = 'https://asjiiftlxyihlayydfju.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_W9OZS-Qu8r_N6PQ7dpZ-wA_1FDD8XO6';
     const response = await fetch(`${SUPABASE_URL}/rest/v1/books`, {
         method: 'POST',
         headers: {
@@ -83,8 +82,6 @@ export async function saveNews(newNews) {
         return clean;
     });
 
-    const SUPABASE_URL = 'https://asjiiftlxyihlayydfju.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_W9OZS-Qu8r_N6PQ7dpZ-wA_1FDD8XO6';
     const response = await fetch(`${SUPABASE_URL}/rest/v1/news`, {
         method: 'POST',
         headers: {
