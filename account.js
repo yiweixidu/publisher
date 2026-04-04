@@ -1,7 +1,7 @@
 // account.js — User Account Dashboard
 import { currentUser } from './auth.js';
 import { updateUserUI } from './auth.js';
-import { supabase }     from './supabaseClient.js';
+import { supabase } from './supabaseClient.js';
 
 export function getWishlist() { return JSON.parse(localStorage.getItem('acerWishlist') || '[]'); }
 function _saveWishlist(list)  { localStorage.setItem('acerWishlist', JSON.stringify(list)); }
@@ -10,13 +10,28 @@ export function isInWishlist(bookId) { return getWishlist().some(w => w.bookId =
 export function toggleWishlist(book) {
     const list = getWishlist();
     const idx  = list.findIndex(w => w.bookId === book.id);
-    if (idx >= 0) { list.splice(idx, 1); _saveWishlist(list); updateWishlistButtons(); return false; }
+    if (idx >= 0) {
+        list.splice(idx, 1);
+        _saveWishlist(list);
+        updateWishlistButtons();
+        // 🔁 Dispatch event so open UI components can refresh
+        window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+        return false;
+    }
     const cover = book.cover || '';
-    list.push({ bookId: book.id, title: book.title, title_fr: book.title_fr||'',
-        author: book.author, author_fr: book.author_fr||'',
+    list.push({
+        bookId: book.id,
+        title: book.title,
+        title_fr: book.title_fr||'',
+        author: book.author,
+        author_fr: book.author_fr||'',
         cover: cover.startsWith('/')||cover.startsWith('http') ? cover : (cover?'/'+cover:''),
-        price: parseFloat(book.price||0) });
-    _saveWishlist(list); updateWishlistButtons(); return true;
+        price: parseFloat(book.price||0)
+    });
+    _saveWishlist(list);
+    updateWishlistButtons();
+    window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+    return true;
 }
 
 export function updateWishlistButtons() {
@@ -94,7 +109,25 @@ export async function updateUserPassword(newPassword) {
 }
 
 export async function openAccountDashboard(forcedUser = null) {
-    const user = forcedUser || currentUser;
+    let user = forcedUser || currentUser;
+    // 🧩 FIX #3: if user is null, try to recover session from Supabase
+    if (!user) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+            user = session.user;
+            // Try to sync global currentUser (imported from auth.js)
+            const { currentUser: globalUser, updateUserUI } = await import('./auth.js');
+            if (!globalUser) {
+                // This is a fallback; the main initAuth will eventually sync.
+                // For immediate use we set a local property.
+                window.__tempUser = user;
+            }
+        } else {
+            console.log('No user session, cannot open account dashboard');
+            return;
+        }
+    }
+
     console.log('openAccountDashboard called, user:', user);
     if (!user) return;
     const overlay = document.getElementById('accountModal');
@@ -109,9 +142,9 @@ export async function openAccountDashboard(forcedUser = null) {
     const initial = displayName.charAt(0).toUpperCase();
     _set('accAvatarInitial',   el => el.textContent = initial);
     _set('accHeaderName',      el => el.textContent = displayName);
-    _set('accHeaderEmail',     el => el.textContent = currentUser.email);
+    _set('accHeaderEmail',     el => el.textContent = user.email);
     _set('profileDisplayName', el => el.value = displayName);
-    _set('profileEmail',       el => el.value = currentUser.email);
+    _set('profileEmail',       el => el.value = user.email);
     _set('profileMsg',         el => { el.textContent = ''; el.className = 'acc-msg'; });
     ['profileNewPw','profileConfirmPw'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
 

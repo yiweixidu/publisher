@@ -1,4 +1,4 @@
-// main.js
+// main.js (complete with fixes)
 import { BASE_PATH } from './constants.js';
 import { 
     setLanguage, renderBooks, renderAllBooks, renderNews, renderAllNews, renderNewsDetail,
@@ -20,7 +20,7 @@ import { renderReviews, renderDetailReviews, checkHashForReview } from './review
 import { navigateTo, handleRoute } from './routing.js';
 import { loadBooks, loadNews, loadReviews } from './data.js';
 
-// DOM elements (same as original, but we'll keep the selectors)
+// DOM elements (same as original)
 const adminSwitch = document.getElementById('adminSwitch');
 const langEn = document.getElementById('langEn');
 const langFr = document.getElementById('langFr');
@@ -31,7 +31,6 @@ const continueShoppingBtn = document.getElementById('continueShoppingBtn');
 const checkoutBtn = document.getElementById('checkoutBtn');
 const checkoutModal = document.getElementById('checkoutModal');
 const checkoutModalClose = document.getElementById('checkoutModalClose');
-// (paymentForm removed — now multi-step)
 const confirmationModal = document.getElementById('confirmationModal');
 const confirmationModalClose = document.getElementById('confirmationModalClose');
 const continueShoppingConfirmBtn = document.getElementById('continueShoppingConfirmBtn');
@@ -88,20 +87,16 @@ function updateAdminToggleVisibility() {
 
 // ---------- Event Listeners ----------
 
-// Admin toggle: now simply shows login modal if not admin, else logs out
+// Admin toggle
 adminSwitch?.addEventListener('click', () => {
     import('./auth.js').then(({ toggleAdminMode }) => toggleAdminMode());
 });
 
-// Admin login modal is no longer separate – we reuse the regular login modal
-// So we just open the regular login modal when admin toggle is clicked while not logged in.
-// The adminLoginBtn and adminLoginOverlay can be removed or repurposed; we'll keep them but disable.
 adminLoginBtn?.addEventListener('click', () => { /* no-op */ });
 adminLoginClose?.addEventListener('click', () => { /* no-op */ });
 adminLoginOverlay?.addEventListener('click', () => { /* no-op */ });
 
-// Regular login – updated to use email instead of username
-// Login: shared handler (button click + Enter key)
+// Regular login
 async function doLogin() {
     const email    = document.getElementById('loginUsername')?.value.trim();
     const password = document.getElementById('loginPassword')?.value;
@@ -109,18 +104,16 @@ async function doLogin() {
     if (!email && !password) { if(errEl) errEl.textContent = 'Please enter your email and password.'; return; }
     if (!email)    { if(errEl) errEl.textContent = 'Please enter your email.'; return; }
     if (!password) { if(errEl) errEl.textContent = 'Please enter your password.'; return; }
-    await login(email, password); // error displayed inside login()
+    await login(email, password);
 }
 loginBtn?.addEventListener('click', doLogin);
-
-// Enter key on either login field triggers login
 ['loginUsername','loginPassword'].forEach(id => {
     document.getElementById(id)?.addEventListener('keydown', e => {
         if (e.key === 'Enter') doLogin();
     });
 });
 
-// Password visibility toggles
+// Password toggles
 document.getElementById('loginPwToggle')?.addEventListener('click', () => {
     const inp = document.getElementById('loginPassword');
     const ico = document.querySelector('#loginPwToggle i');
@@ -175,19 +168,14 @@ document.getElementById('sendResetBtn')?.addEventListener('click', async () => {
     }
 });
 
-// Close login modal and reset links
 function closeLoginModalAndReset() {
     loginOverlay?.classList.remove('active');
     resetLoginModalLinks();
     document.getElementById('loginError').textContent = '';
 }
-
 loginClose?.addEventListener('click', closeLoginModalAndReset);
-
 loginOverlay?.addEventListener('click', (e) => {
-    if (e.target === loginOverlay) {
-        closeLoginModalAndReset();
-    }
+    if (e.target === loginOverlay) closeLoginModalAndReset();
 });
 
 // Signup
@@ -196,27 +184,23 @@ goToSignupLink?.addEventListener('click', (e) => {
     loginOverlay?.classList.remove('active');
     signupOverlay?.classList.add('active');
 });
-
 goToLoginLink?.addEventListener('click', (e) => {
     e.preventDefault();
     signupOverlay?.classList.remove('active');
     openLoginModal('user');
 });
-
 signupClose?.addEventListener('click', () => {
     signupOverlay?.classList.remove('active');
     document.getElementById('signupError').textContent = '';
 });
-
 signupOverlay?.addEventListener('click', (e) => {
     if (e.target === signupOverlay) {
         signupOverlay.classList.remove('active');
         document.getElementById('signupError').textContent = '';
     }
 });
-
 signupBtn?.addEventListener('click', async () => {
-    const email = document.getElementById('signupUsername').value.trim(); // email
+    const email = document.getElementById('signupUsername').value.trim();
     const displayName = document.getElementById('signupDisplayName').value.trim();
     const password = document.getElementById('signupPassword').value;
     const confirm = document.getElementById('signupConfirmPassword').value;
@@ -249,7 +233,7 @@ signupBtn?.addEventListener('click', async () => {
     }
 });
 
-// Language switch
+// Language
 langEn?.addEventListener('click', (e) => { e.preventDefault(); setLanguage('en'); });
 langFr?.addEventListener('click', (e) => { e.preventDefault(); setLanguage('fr'); });
 
@@ -268,9 +252,7 @@ cartModal?.addEventListener('click', (e) => {
 });
 continueShoppingBtn?.addEventListener('click', () => cartModal?.classList.remove('active'));
 
-// ═══════════════════════════════════════════════════════
-// Multi-Step Checkout  (FR #3 + #4)
-// ═══════════════════════════════════════════════════════
+// Multi-Step Checkout (unchanged from original)
 const SHIPPING_COSTS = { standard: 5.00, express: 15.00, pickup: 0.00 };
 let coStep = 1;
 let coShipData = {};
@@ -281,7 +263,6 @@ function goToCoStep(n) {
     coStep = n;
     document.querySelectorAll('.co-panel').forEach(p => p.classList.add('hidden'));
     document.getElementById(`coStep${n}`)?.classList.remove('hidden');
-    // Update progress dots
     document.querySelectorAll('.co-step-dot').forEach(dot => {
         const s = parseInt(dot.dataset.step);
         dot.classList.toggle('active',    s === n);
@@ -293,7 +274,6 @@ function openCheckout() {
     coStep = 1;
     coShipMethod = 'standard';
     coPayMethod  = 'card';
-    // Pre-fill email if logged in
     if (currentUser) {
         const emailEl = document.getElementById('shipEmail');
         if (emailEl && !emailEl.value) emailEl.value = currentUser.email;
@@ -316,7 +296,6 @@ checkoutBtn?.addEventListener('click', () => {
 checkoutModalClose?.addEventListener('click', closeCheckout);
 checkoutModal?.addEventListener('click', e => { if (e.target === checkoutModal) closeCheckout(); });
 
-// Step 1 → 2: validate shipping address
 document.getElementById('coNext1')?.addEventListener('click', () => {
     const fields = ['shipFirstName','shipLastName','shipEmail','shipAddress','shipCity','shipProvince','shipPostal'];
     const errEl  = document.getElementById('coErr1');
@@ -345,16 +324,12 @@ document.getElementById('coNext1')?.addEventListener('click', () => {
     };
     goToCoStep(2);
 });
-
-// Step 2 ← → 3
 document.getElementById('coBack2')?.addEventListener('click', () => goToCoStep(1));
 document.getElementById('coNext2')?.addEventListener('click', () => {
     const sel = document.querySelector('input[name="shippingMethod"]:checked');
     coShipMethod = sel ? sel.value : 'standard';
     goToCoStep(3);
 });
-
-// Payment method tabs
 document.querySelectorAll('.pay-tab').forEach(tab => {
     tab.addEventListener('click', () => {
         coPayMethod = tab.dataset.method;
@@ -364,8 +339,6 @@ document.querySelectorAll('.pay-tab').forEach(tab => {
         document.getElementById('payPaypalPanel')?.classList.toggle('hidden', coPayMethod !== 'paypal');
     });
 });
-
-// Step 3 ← → 4: validate payment + build review
 document.getElementById('coBack3')?.addEventListener('click', () => goToCoStep(2));
 document.getElementById('coNext3')?.addEventListener('click', () => {
     const errEl = document.getElementById('paymentError');
@@ -384,10 +357,9 @@ document.getElementById('coNext3')?.addEventListener('click', () => {
             return;
         }
     }
-    // Build review
     const subtotal = cart.reduce((s,i) => s + i.price * i.quantity, 0);
     const shipping = SHIPPING_COSTS[coShipMethod] ?? 5;
-    const tax      = subtotal * 0.15;   // 15% (QC)
+    const tax      = subtotal * 0.15;
     const total    = subtotal + shipping + tax;
     const isFr     = currentLang === 'fr';
     const shippingLabel = {
@@ -405,12 +377,12 @@ document.getElementById('coNext3')?.addEventListener('click', () => {
     document.getElementById('coReviewContent').innerHTML = `
         <div class="review-section">
             <h4>${isFr?'Adresse de livraison':'Shipping Address'}</h4>
-            <p style="color:#333;">${coShipData.firstName} ${coShipData.lastName}<br>
+            <p>${coShipData.firstName} ${coShipData.lastName}<br>
                ${coShipData.address}<br>${coShipData.city}, ${coShipData.province} ${coShipData.postal}<br>${coShipData.country}</p>
         </div>
         <div class="review-section">
             <h4>${isFr?'Mode de livraison':'Delivery Method'}</h4>
-            <p style="color:#333;">${shippingLabel}</p>
+            <p>${shippingLabel}</p>
         </div>
         <div class="review-section">
             <h4>${isFr?'Articles':'Items'}</h4>
@@ -424,12 +396,10 @@ document.getElementById('coNext3')?.addEventListener('click', () => {
         </div>
         <div class="review-section">
             <h4>${langPack[currentLang].paymentMethod}</h4>
-            <p style="color:#333;">${payDisplay}</p>
+            <p>${payDisplay}</p>
         </div>`;
     goToCoStep(4);
 });
-
-// Step 4 ← Place Order
 document.getElementById('coBack4')?.addEventListener('click', () => goToCoStep(3));
 document.getElementById('coPlaceOrder')?.addEventListener('click', async () => {
     const placeBtn = document.getElementById('coPlaceOrder');
@@ -455,7 +425,6 @@ document.getElementById('coPlaceOrder')?.addEventListener('click', async () => {
             status: 'pending',
         };
         await saveOrder(order);
-        // Build confirmation summary
         const isFr = currentLang === 'fr';
         const itemsHtml = cart.map(i => {
             const t = (isFr && i.title_fr) ? i.title_fr : i.title;
@@ -481,13 +450,12 @@ document.getElementById('coPlaceOrder')?.addEventListener('click', async () => {
         if (placeBtn) { placeBtn.disabled = false; placeBtn.innerHTML = `<i class="fas fa-lock"></i> ${langPack[currentLang].placeOrder}`; }
     }
 });
-
 window.addEventListener('openCheckoutFromCart', () => {
     if (cart.length === 0) { alert(langPack[currentLang].emptyCart); return; }
     if (!currentUser) { openLoginModal('user'); return; }
-    const cartModal = document.getElementById('cartModal');
-    if (cartModal) cartModal.classList.remove('active');
-    openCheckout();  // 假设 openCheckout 函数已定义且可访问
+    const cartModalEl = document.getElementById('cartModal');
+    if (cartModalEl) cartModalEl.classList.remove('active');
+    openCheckout();
 });
 
 // Confirmation modal
@@ -584,57 +552,32 @@ document.querySelector('.about-text .btn-outline-red').addEventListener('click',
     e.preventDefault();
     contactModal.classList.add('active');
 });
-
 contactModalClose.addEventListener('click', () => contactModal.classList.remove('active'));
 contactModal.addEventListener('click', (e) => {
     if (e.target === contactModal) contactModal.classList.remove('active');
 });
-
 contactForm.addEventListener('submit', (e) => {
     e.preventDefault();
-
     const firstName = document.getElementById('contactFirstName').value.trim();
     const lastName = document.getElementById('contactLastName').value.trim();
     const email = document.getElementById('contactEmail').value.trim();
     const message = document.getElementById('contactMessage').value.trim();
-    const contactError = document.getElementById('contactError');
-
-    if (contactError) contactError.textContent = '';
-
-    function isValidName(name) {
-        if (name.length === 0) return false;
-        return /[\p{L}]/u.test(name);
-    }
-
-    if (!isValidName(firstName)) {
-        contactError.textContent = 'Please enter a valid first name (letters only).';
-        return;
-    }
-    if (!isValidName(lastName)) {
-        contactError.textContent = 'Please enter a valid last name (letters only).';
-        return;
-    }
-
+    const contactErrorEl = document.getElementById('contactError');
+    if (contactErrorEl) contactErrorEl.textContent = '';
+    function isValidName(name) { return name.length > 0 && /[\p{L}]/u.test(name); }
+    if (!isValidName(firstName)) { contactErrorEl.textContent = 'Please enter a valid first name (letters only).'; return; }
+    if (!isValidName(lastName))  { contactErrorEl.textContent = 'Please enter a valid last name (letters only).'; return; }
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-        contactError.textContent = 'Invalid email address.';
-        return;
-    }
-
-    if (message.length === 0) {
-        contactError.textContent = 'Message cannot be empty.';
-        return;
-    }
-
+    if (!emailPattern.test(email)) { contactErrorEl.textContent = 'Invalid email address.'; return; }
+    if (message.length === 0) { contactErrorEl.textContent = 'Message cannot be empty.'; return; }
     const subject = 'Contact Form Submission from Acer Books';
     const body = `First Name: ${firstName}\nLast Name: ${lastName}\nEmail: ${email}\nMessage:\n${message}`;
     const mailtoLink = `mailto:yiweixidu@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
     window.location.href = mailtoLink;
     contactModal.classList.remove('active');
 });
 
-// Hamburger menu
+// Hamburger
 if (hamburger && navLinks) {
     hamburger.addEventListener('click', () => {
         hamburger.classList.toggle('active');
@@ -648,7 +591,7 @@ if (hamburger && navLinks) {
     });
 }
 
-// Responsive resize
+// Resize
 let resizeTimeout;
 window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
@@ -662,84 +605,71 @@ window.addEventListener('resize', () => {
 
 // Custom events for auth state changes
 window.addEventListener('adminLogin', () => {
-    // adminLogin is now triggered when user logs in with role admin
     const mainContent = document.getElementById('mainContent');
     const booksPage = document.getElementById('booksPage');
-    const detailPage = document.getElementById('bookDetailPage'); // <-- added
+    const detailPage = document.getElementById('bookDetailPage');
     const newsListPage = document.getElementById('newsListPage');
     const newsDetailPage = document.getElementById('newsDetailPage');
     const adminBooksPage = document.getElementById('adminBooksPage');
-
-    if (mainContent.style.display === 'block') {
-        renderBooks();
-        renderNews();
-    } else if (booksPage.style.display === 'block') {
-        renderAllBooks();
-    } else if (detailPage.style.display === 'block' && currentModalBook) {
-        renderBookDetail(currentModalBook);
-    } else if (newsListPage.style.display === 'block') {
-        renderAllNews();
-    } else if (newsDetailPage.style.display === 'block' && currentNewsItem) {
-        renderNewsDetail(currentNewsItem);
-    } else if (adminBooksPage.style.display === 'block') {
-        renderAdminBookList();
-    }
+    if (mainContent.style.display === 'block') { renderBooks(); renderNews(); }
+    else if (booksPage.style.display === 'block') { renderAllBooks(); }
+    else if (detailPage.style.display === 'block' && currentModalBook) { renderBookDetail(currentModalBook); }
+    else if (newsListPage.style.display === 'block') { renderAllNews(); }
+    else if (newsDetailPage.style.display === 'block' && currentNewsItem) { renderNewsDetail(currentNewsItem); }
+    else if (adminBooksPage.style.display === 'block') { renderAdminBookList(); }
     updateAdminToggleVisibility();
 });
 
 const adminToggleText = document.getElementById('adminToggleText');
 adminToggleText?.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (currentUser) {
-        logout();
-    }
+    if (currentUser) { logout(); }
 });
 
 window.addEventListener('adminLogout', () => {
     const mainContent = document.getElementById('mainContent');
     const booksPage = document.getElementById('booksPage');
-    const detailPage = document.getElementById('bookDetailPage'); // <-- added
+    const detailPage = document.getElementById('bookDetailPage');
     const newsListPage = document.getElementById('newsListPage');
     const newsDetailPage = document.getElementById('newsDetailPage');
     const adminBooksPage = document.getElementById('adminBooksPage');
-
-    if (mainContent.style.display === 'block') {
-        renderBooks();
-        renderNews();
-    } else if (booksPage.style.display === 'block') {
-        renderAllBooks();
-    } else if (detailPage.style.display === 'block' && currentModalBook) {
-        renderBookDetail(currentModalBook);
-    } else if (newsListPage.style.display === 'block') {
-        renderAllNews();
-    } else if (newsDetailPage.style.display === 'block' && currentNewsItem) {
-        renderNewsDetail(currentNewsItem);
-    } else if (adminBooksPage.style.display === 'block') {
+    if (mainContent.style.display === 'block') { renderBooks(); renderNews(); }
+    else if (booksPage.style.display === 'block') { renderAllBooks(); }
+    else if (detailPage.style.display === 'block' && currentModalBook) { renderBookDetail(currentModalBook); }
+    else if (newsListPage.style.display === 'block') { renderAllNews(); }
+    else if (newsDetailPage.style.display === 'block' && currentNewsItem) { renderNewsDetail(currentNewsItem); }
+    else if (adminBooksPage.style.display === 'block') {
         hideAdminBooksPage();
         mainContent.style.display = 'block';
-        renderBooks();
-        renderNews();
+        renderBooks(); renderNews();
     }
     updateAdminToggleVisibility();
 });
 
+// 🔁 FIX #5: Refresh cart modal on user login so button changes
 window.addEventListener('userLogin', () => {
     if (modalOverlay?.classList.contains('active') && currentModalBook) {
         renderReviews(currentModalBook.id, currentLang, currentUser);
     }
-    const detailPage = document.getElementById('bookDetailPage'); // <-- added
+    const detailPage = document.getElementById('bookDetailPage');
     if (detailPage && detailPage.style.display === 'block' && currentModalBook) {
         renderDetailReviews(currentModalBook.id, currentLang, currentUser);
     }
-    updateAdminNavLink(); // in case role changed
+    updateAdminNavLink();
     updateAdminToggleVisibility();
+
+    // Refresh cart modal if open
+    const cartModalEl = document.getElementById('cartModal');
+    if (cartModalEl && cartModalEl.classList.contains('active')) {
+        renderCartModal();
+    }
 });
 
 window.addEventListener('userLogout', () => {
     if (modalOverlay?.classList.contains('active') && currentModalBook) {
         renderReviews(currentModalBook.id, currentLang, currentUser);
     }
-    const detailPage = document.getElementById('bookDetailPage'); // <-- added
+    const detailPage = document.getElementById('bookDetailPage');
     if (detailPage && detailPage.style.display === 'block' && currentModalBook) {
         renderDetailReviews(currentModalBook.id, currentLang, currentUser);
     }
@@ -747,23 +677,36 @@ window.addEventListener('userLogout', () => {
     updateAdminToggleVisibility();
 });
 
+// 🔁 FIX #1 & #2: Refresh wishlist UI components when wishlist changes
+window.addEventListener('wishlistUpdated', () => {
+    // Refresh cart modal if open
+    const cartModalEl = document.getElementById('cartModal');
+    if (cartModalEl && cartModalEl.classList.contains('active')) {
+        renderCartModal();
+    }
+    // Refresh account dashboard wishlist tab if open
+    const accountModal = document.getElementById('accountModal');
+    if (accountModal && accountModal.classList.contains('active')) {
+        const activeTab = document.querySelector('#accountModal .acc-tab.active');
+        if (activeTab && activeTab.dataset.tab === 'wishlist') {
+            import('./account.js').then(({ renderWishlistTab }) => renderWishlistTab());
+        }
+    }
+});
+
 window.addEventListener('hashReview', (e) => {
     const { book, reviewId } = e.detail;
     openModal(book);
     setTimeout(() => {
         const reviewsTab = Array.from(document.querySelectorAll('.modal-tab')).find(t => t.dataset.tab === 'reviews');
-        if (reviewsTab) {
-            reviewsTab.click();
-        }
+        if (reviewsTab) reviewsTab.click();
     }, 100);
 });
 
 window.addEventListener('routeChanged', updateAdminToggleVisibility);
-
 window.addEventListener('popstate', handleRoute);
 
-
-// ── Account Dashboard wiring ─────────────────────────────────────────────────
+// Account Dashboard wiring
 document.getElementById('accountModalClose')?.addEventListener('click', () => {
     import('./account.js').then(({ closeAccountDashboard }) => closeAccountDashboard());
 });
@@ -777,7 +720,6 @@ document.querySelectorAll('.acc-tab').forEach(tab => {
     });
 });
 
-// Profile — save name
 document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
     const msgEl = document.getElementById('profileMsg');
     const name  = document.getElementById('profileDisplayName')?.value.trim();
@@ -791,7 +733,6 @@ document.getElementById('saveProfileBtn')?.addEventListener('click', async () =>
     } catch(err) { _accMsg(msgEl, err.message, 'error'); }
 });
 
-// Profile — change password
 document.getElementById('changePasswordBtn')?.addEventListener('click', async () => {
     const msgEl = document.getElementById('profileMsg');
     const pw1 = document.getElementById('profileNewPw')?.value;
@@ -807,7 +748,6 @@ document.getElementById('changePasswordBtn')?.addEventListener('click', async ()
     } catch(err) { _accMsg(msgEl, err.message, 'error'); }
 });
 
-// Addresses
 document.getElementById('addAddressBtn')?.addEventListener('click', () => {
     document.getElementById('addAddressForm')?.classList.toggle('visible');
 });
@@ -831,7 +771,6 @@ document.getElementById('saveAddressBtn')?.addEventListener('click', async () =>
     switchAccTab('addresses');
 });
 
-// Wishlist via event delegation
 document.body.addEventListener('click', e => {
     const btn = e.target.closest('[data-wishlist-bookid]');
     if (!btn) return;
@@ -857,18 +796,15 @@ window.addEventListener('openAccountDashboard', () => {
     import('./account.js').then(({ openAccountDashboard }) => openAccountDashboard());
 });
 
-// Triggered after user clicks the password-reset email link
 window.addEventListener('openPasswordRecovery', () => {
     import('./account.js').then(({ openAccountDashboard, switchAccTab }) => {
         openAccountDashboard().then(() => {
             switchAccTab('profile');
-            // Scroll to / highlight the Change Password section
             const pwSection = document.getElementById('profileNewPw');
             if (pwSection) {
                 pwSection.focus();
                 pwSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-            // Show a contextual message
             const msgEl = document.getElementById('profileMsg');
             if (msgEl) {
                 msgEl.textContent = 'Please enter your new password below.';
@@ -878,7 +814,6 @@ window.addEventListener('openPasswordRecovery', () => {
     });
 });
 
-// 全局委托：点击头像打开 Account Dashboard（传入当前用户）
 document.body.addEventListener('click', (e) => {
     const avatarBtn = e.target.closest('.user-avatar-btn');
     if (avatarBtn && avatarBtn.id === 'userNameBtn') {
@@ -894,7 +829,7 @@ document.body.addEventListener('click', (e) => {
 // ---------- Initialization ----------
 async function init() {
     loadCart();
-    await initAuth(); // sets up user session and auth listener
+    await initAuth();
     await Promise.all([loadBooks(), loadNews(), loadReviews()]);
     initQuillEditors();
     bindInactivityEvents();
@@ -903,7 +838,6 @@ async function init() {
     handleRoute();
     updateAdminToggleVisibility();
 
-    // Handle redirect from 404.html
     const redirect = sessionStorage.redirect;
     if (redirect) {
         sessionStorage.removeItem('redirect');
@@ -915,11 +849,8 @@ async function init() {
 
 init();
 
-// Fix 3: When browser restores page from bfcache (back-forward cache),
-// re-initialise auth so the logout button and user state are fresh.
 window.addEventListener('pageshow', (e) => {
     if (e.persisted) {
-        // Page was restored from bfcache — re-sync auth state without full reload
         import('./auth.js').then(({ initAuth }) => initAuth());
     }
 });
