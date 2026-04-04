@@ -1996,28 +1996,14 @@ select.checkout-input {
  
 /* ========== Admin导航链接样式 ========== */
 .admin-nav-link {
-    color: #333;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.85rem;
-    padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: white;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    white-space: nowrap;
-    cursor: pointer;
+    color: #ff0000;              
+    border: 1.5px solid #ff0000; 
+    background: white;           
 }
- 
+
 .admin-nav-link:hover {
-    background: #ff0000;
-    color: white;
-    border-color: #ff0000;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(255, 0, 0, 0.2);
+    background: #ff0000;         
+    color: white;                
 }
  
 .admin-nav-link:active {
@@ -2148,4 +2134,12 @@ select.checkout-input {
         height: 1px;
         margin: 0.3rem 0;
     }
+}
+
+#adminLogoutBtn {
+    display: none !important;
+}
+
+.admin-nav-divider {
+    display: none !important;
 }

@@ -139,6 +139,10 @@ export async function handleRoute() {
             return;
         }
         showAdminNewsPage();
+        setTimeout(() => {
+            const btn = document.querySelector('button[id*="Back"]');
+            if (btn) btn.onclick = () => navigateTo('/');
+        }, 100);
         document.title = 'Manage News | Acer Books';
  
     // ========== 新增：Manage Users 页面 ==========
