@@ -140,6 +140,8 @@ function generateBookCardHTML(book, adminMode, currentLang) {
                 <span class="fmt-btn" data-fmt="hardcover">HC</span>
             </div>` : ''}
         </div>`;
+    // Added wishlist button with data-wishlist-bookid
+    const wishlistBtn = `<button class="wishlist-icon-btn" data-wishlist-bookid="${book.id}" title="Add to wishlist"><i class="far fa-heart"></i></button>`;
     return `
         <div class="book-card" data-id="${book.id}">
             <div class="book-cover" style="${coverStyle} background-color: #2d2d2d;">
@@ -149,6 +151,7 @@ function generateBookCardHTML(book, adminMode, currentLang) {
                 <div class="book-title">${displayTitle}</div>
                 <div class="book-author">${displayAuthor}</div>
                 ${priceRow}
+                <div class="book-actions">${wishlistBtn}</div>
                 ${adminMode ? `<div class="admin-controls">${deleteBtn}</div>` : ''}
             </div>
         </div>
@@ -216,7 +219,7 @@ export async function renderBooks() {
         if (grid) grid.innerHTML = html;
         document.querySelectorAll('.book-card').forEach(card => {
             card.addEventListener('click', (e) => {
-                if (e.target.closest('.admin-controls') || e.target.closest('.fmt-toggle')) return;
+                if (e.target.closest('.admin-controls') || e.target.closest('.fmt-toggle') || e.target.closest('.wishlist-icon-btn')) return;
                 const bookId = card.dataset.id;
                 const book = books.find(b => b.id === bookId);
                 if (book) openModal(book);
@@ -306,6 +309,8 @@ function generateBookListRowHTML(book) {
     const title  = currentLang==='fr'&&book.title_fr  ? book.title_fr  : book.title;
     const author = currentLang==='fr'&&book.author_fr ? book.author_fr : book.author;
     const cover  = normalizeCover(book.cover);
+    // Add wishlist button for list view as well
+    const wishlistBtn = `<button class="wishlist-icon-btn" data-wishlist-bookid="${book.id}" title="Add to wishlist"><i class="far fa-heart"></i></button>`;
     return `
         <div class="book-list-row" data-id="${book.id}">
             <div class="book-list-cover" style="${cover?`background-image:url('${cover}');background-size:cover;background-position:center;`:'background:#2d2d2d;'}"></div>
@@ -315,6 +320,7 @@ function generateBookListRowHTML(book) {
                 <div class="book-list-meta">${book.language||''} · ${book.pub_date||''}</div>
             </div>
             <div class="book-list-price">$${parseFloat(book.price||0).toFixed(2)}</div>
+            <div class="book-list-actions">${wishlistBtn}</div>
         </div>`;
 }
 
@@ -373,7 +379,6 @@ function attachBooksEvents() {
     const gridBtn = document.getElementById('booksGridViewBtn');
     const listBtn = document.getElementById('booksListViewBtn');
 
-    // 实时更新筛选并重新渲染
     function updateFilters() {
         booksActiveFilters = {
             search:   searchInput?.value.trim() || '',
@@ -427,7 +432,8 @@ export async function renderAllBooks() {
                 booksGridAll.className = 'book-list';
                 booksGridAll.innerHTML = pageBooks.map(b => generateBookListRowHTML(b)).join('');
                 booksGridAll.querySelectorAll('.book-list-row').forEach(row => {
-                    row.addEventListener('click', () => {
+                    row.addEventListener('click', (e) => {
+                        if (e.target.closest('.wishlist-icon-btn')) return;
                         const book = books.find(b => b.id === row.dataset.id);
                         if (book) navigateTo(`/book/${toSlug(book.title)}`);
                     });
@@ -437,7 +443,7 @@ export async function renderAllBooks() {
                 booksGridAll.innerHTML = pageBooks.map(b => generateBookCardHTML(b, false, currentLang)).join('');
                 booksGridAll.querySelectorAll('.book-card').forEach(card => {
                     card.addEventListener('click', e => {
-                        if (e.target.closest('.fmt-toggle')) return;
+                        if (e.target.closest('.fmt-toggle') || e.target.closest('.wishlist-icon-btn')) return;
                         const book = books.find(b => b.id === card.dataset.id);
                         if (book) navigateTo(`/book/${toSlug(book.title)}`);
                     });
@@ -614,9 +620,14 @@ export function renderBookDetail(book) {
             : ` (${langPack[currentLang].paperback  || 'Paperback'})`;
         alert(langPack[currentLang].itemAddedToCart + fmtLabel);
     };
-    document.getElementById('detailAddToWishList').onclick = () => {
-        alert(langPack[currentLang].addedToWishList);
-    };
+    // Set wishlist button attribute
+    const detailWishlistBtn = document.getElementById('detailAddToWishList');
+    if (detailWishlistBtn) {
+        detailWishlistBtn.dataset.wishlistBookid = book.id;
+        detailWishlistBtn.onclick = () => {
+            alert(langPack[currentLang].addedToWishList);
+        };
+    }
     setupDetailTabs();
 }
 
@@ -713,7 +724,10 @@ export function openModal(book) {
         if (firstPane) firstPane.classList.add('active');
     }
     if (modalAddToCart) modalAddToCart.dataset.bookId = book.id;
-    if (modalAddToWishList) modalAddToWishList.dataset.bookId = book.id;
+    // Set wishlist button attribute
+    if (modalAddToWishList) {
+        modalAddToWishList.dataset.wishlistBookid = book.id;
+    }
     
     const modalHcBadge = document.getElementById('modalHcBadge');
     if (book.price_hardcover) {
