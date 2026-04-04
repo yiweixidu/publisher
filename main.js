@@ -88,8 +88,12 @@ function updateAdminToggleVisibility() {
 // ---------- Event Listeners ----------
 
 // Admin toggle
-adminSwitch?.addEventListener('click', () => {
-    import('./auth.js').then(({ toggleAdminMode }) => toggleAdminMode());
+adminSwitch?.addEventListener('click', async () => {
+    const { toggleAdminMode, updateAdminNavLink } = await import('./auth.js');
+    toggleAdminMode();
+    setTimeout(() => {
+        updateAdminNavLink();  // ✨ 关键：这一行更新UI
+    }, 100);
 });
 
 adminLoginBtn?.addEventListener('click', () => { /* no-op */ });
