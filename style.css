@@ -1998,7 +1998,10 @@ select.checkout-input {
 .admin-nav-link {
     color: #ff0000;              
     border: 1.5px solid #ff0000; 
-    background: white;           
+    background: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;           
 }
 
 .admin-nav-link:hover {
