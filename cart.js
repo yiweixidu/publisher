@@ -2,6 +2,7 @@
 import { getCurrentLang } from './i18n.js';
 import { currentUser, openLoginModal } from './auth.js';
 import { books, loadBooks } from './data.js';
+import { normalizeCover } from './utils.js';
 
 // DOM elements
 const cartItemsContainer = document.getElementById('cartItemsContainer');
@@ -29,13 +30,6 @@ function updateCartBadge() {
         const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
         cartBadge.textContent = totalItems;
     }
-}
-
-// Fix relative cover paths (also defined in ui.js — kept in sync)
-function normalizeCover(cover) {
-    if (!cover) return '';
-    if (cover.startsWith('http') || cover.startsWith('/') || cover.startsWith('data:')) return cover;
-    return '/' + cover;
 }
 
 export function addToCart(book, format = 'paperback') {
