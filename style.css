@@ -1792,3 +1792,106 @@ select.checkout-input {
 .share-option[data-platform="twitter"] i { color: #1da1f2; }
 .share-option[data-platform="instagram"] i { color: #e4405f; }
 .share-option[data-platform="wechat"] i { color: #2b9c2b; }
+
+/* 购物车底部 Wishlist 样式 */
+.cart-wishlist-section {
+    margin-top: 1.5rem;
+    border-top: 1px solid #eaeaea;
+    padding-top: 1rem;
+}
+.cart-wishlist-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ff0000;
+    margin-bottom: 0.8rem;
+}
+.cart-wishlist-container {
+    max-height: 200px;
+    overflow-y: auto;
+}
+.cart-wishlist-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+.cart-wishlist-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 0.6rem;
+    border: 1px solid #eee;
+}
+.cart-wishlist-cover {
+    width: 40px;
+    height: 56px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 4px;
+    background-color: #ddd;
+    flex-shrink: 0;
+}
+.cart-wishlist-info {
+    flex: 1;
+    min-width: 0;
+}
+.cart-wishlist-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 0 0.2rem;
+}
+.cart-wishlist-author {
+    font-size: 0.7rem;
+    color: #666;
+}
+.cart-wishlist-price {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ff0000;
+    margin-top: 0.2rem;
+}
+.cart-wishlist-format {
+    display: flex;
+    gap: 0.2rem;
+    margin-top: 0.2rem;
+}
+.fmt-wishlist-btn {
+    font-size: 0.6rem;
+    padding: 0.05rem 0.3rem;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #fff;
+    cursor: pointer;
+    color: #555;
+}
+.fmt-wishlist-btn.active {
+    background: #ff0000;
+    border-color: #ff0000;
+    color: #fff;
+}
+.cart-wishlist-add {
+    background: #fff;
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.cart-wishlist-add:hover {
+    background: #ff0000;
+    color: #fff;
+}
+.wishlist-empty {
+    font-size: 0.8rem;
+    color: #999;
+    text-align: center;
+    padding: 0.8rem;
+}
