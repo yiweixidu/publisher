@@ -55,6 +55,18 @@ const sortSelect = document.getElementById('sortBooks');
 const addNewBookBtn = document.getElementById('addNewBookBtn');
 const bookFormModal = document.getElementById('bookFormModal');
 const formModalClose = document.getElementById('bookFormModalClose');
+formModalClose?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const modal = document.getElementById('bookFormModal');
+    if (modal) {
+        modal.classList.remove('active');
+        // 清空表单
+        document.querySelectorAll('#bookFormModal input, #bookFormModal textarea').forEach(el => {
+            el.value = '';
+        });
+    }
+});
 const cancelFormBtn = document.getElementById('cancelFormBtn');
 const backToHomeFromAdmin = document.getElementById('backToHomeFromAdmin');
 const modalClose = document.getElementById('modalClose');
@@ -711,6 +723,31 @@ document.getElementById('submitBookForm')?.addEventListener('click', async () =>
         bookFormModal?.classList.remove('active');
     } catch(err) {
         alert('Error: ' + err.message);
+    }
+});
+
+// ========== Back to Home 和 Add News 按钮 ==========
+document.addEventListener('click', function(e) {
+    // Back to Home 按钮
+    if (e.target.textContent.includes('Back to Home') || 
+        e.target.classList.contains('admin-back-btn') ||
+        e.target.id.includes('backToHome')) {
+        e.preventDefault();
+        e.stopPropagation();
+        import('./routing.js').then(({ navigateTo }) => {
+            navigateTo('/');
+        });
+    }
+    
+    // Add News 按钮
+    if (e.target.id === 'addNewsBtn' || 
+        e.target.textContent.includes('Add news')) {
+        e.preventDefault();
+        e.stopPropagation();
+        // 打开新闻表单模态框
+        const newsModal = document.getElementById('newsFormModal') || 
+                         document.querySelector('[id*="newsForm"]');
+        if (newsModal) newsModal.classList.add('active');
     }
 });
 

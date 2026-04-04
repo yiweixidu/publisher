@@ -2143,3 +2143,18 @@ select.checkout-input {
 .admin-nav-divider {
     display: none !important;
 }
+
+/* Manage 按钮样式 - 白底红字 */
+.admin-nav-link {
+    background: white !important;
+    color: #ff0000 !important;
+    border: 1.5px solid #ff0000 !important;
+    font-weight: 600;
+}
+
+.admin-nav-link:hover {
+    background: #ff0000 !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 0, 0, 0.2);
+}
