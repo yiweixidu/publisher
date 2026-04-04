@@ -721,7 +721,7 @@ newsMoreLink?.addEventListener('click', e => {
     navigateTo('/news');
 });
 
-// About button → open contact modal
+// About button → open contact modal (no login required)
 document.querySelector('.about-text button')?.addEventListener('click', e => {
     e.preventDefault();
     const contactModal = document.getElementById('contactModal');
@@ -743,7 +743,7 @@ document.getElementById('contactForm')?.addEventListener('submit', e => {
     if (!firstName || !lastName || !email || !message) return;
     const subject = encodeURIComponent(`Message from ${firstName} ${lastName}`);
     const body    = encodeURIComponent(`From: ${firstName} ${lastName}\nEmail: ${email}\n\n${message}`);
-    window.location.href = `mailto:info@acerbooks.ca?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:acerbookscanada@gmail.com?subject=${subject}&body=${body}`;
     document.getElementById('contactModal')?.classList.remove('active');
     document.getElementById('contactForm')?.reset();
 });
