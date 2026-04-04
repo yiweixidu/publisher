@@ -1,7 +1,7 @@
 // account.js — User Account Dashboard
-import { currentUser } from './auth.js';
-import { updateUserUI } from './auth.js';
+import { currentUser, updateUserUI } from './auth.js';
 import { supabase } from './supabaseClient.js';
+import { normalizeCover } from './utils.js';
 
 export function getWishlist() { return JSON.parse(localStorage.getItem('acerWishlist') || '[]'); }
 function _saveWishlist(list)  { localStorage.setItem('acerWishlist', JSON.stringify(list)); }
@@ -18,14 +18,13 @@ export function toggleWishlist(book) {
         window.dispatchEvent(new CustomEvent('wishlistUpdated'));
         return false;
     }
-    const cover = book.cover || '';
     list.push({
         bookId: book.id,
         title: book.title,
         title_fr: book.title_fr||'',
         author: book.author,
         author_fr: book.author_fr||'',
-        cover: cover.startsWith('/')||cover.startsWith('http') ? cover : (cover?'/'+cover:''),
+        cover: normalizeCover(book.cover),
         price: parseFloat(book.price||0)
     });
     _saveWishlist(list);
