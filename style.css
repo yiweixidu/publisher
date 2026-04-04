@@ -167,11 +167,13 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 #continueShoppingBtn { padding: 0.7rem 2rem; }
 
 /* Checkout Modal */
+.checkout-modal-content { max-width: 600px; padding: 2rem; }
 .checkout-title { font-size: 1.8rem; font-family: 'Lora', serif; margin-bottom: 1.5rem; }
 .form-group { margin-bottom: 1.2rem; }
 .form-group label { display: block; font-weight: 500; margin-bottom: 0.3rem; font-size: 0.9rem; }
 .checkout-input { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
 .form-row { display: flex; gap: 1rem; }
+.form-group.half { flex: 1; }
 #payNowBtn { width: 100%; margin-top: 1rem; }
 .payment-error { color: #ff0000; font-size: 0.9rem; margin-top: 0.5rem; text-align: center; }
 
@@ -253,7 +255,26 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .page-header { display: flex; justify-content: space-between; align-items: center; margin: 2rem 0; }
 .page-header h2 { font-size: 2rem; font-family: 'Lora', serif; }
 .book-detail-page { min-height: 100vh; background: #fff; padding: 2rem; }
-/* .detail-container — see consolidated rule below */
+.detail-container { max-width: 1200px; margin: 0 auto; position: relative; }
+.detail-back-btn {
+    background: transparent;
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    padding: 0.5rem 1.5rem;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+.detail-back-btn:hover {
+    background: #ff0000;
+    color: white;
+}
 .detail-content { display: flex; gap: 3rem; flex-wrap: wrap; margin-top: 3rem; }
 .detail-left { flex: 1 1 300px;}
 .detail-cover { width: 100%; aspect-ratio: 2/3; background-size: cover; background-position: center; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.2);}
@@ -303,6 +324,11 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 
 /* Admin news list */
 .admin-news-list { background: #fff; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: auto; }
+.admin-news-row { display: grid; grid-template-columns: 120px 2fr 2fr 150px; gap: 1rem; align-items: center; padding: 1rem; border-bottom: 1px solid #eaeaea; }
+.admin-news-row:last-child { border-bottom: none; }
+.admin-news-row .actions { display: flex; gap: 0.5rem; }
+.admin-news-row button { background: none; border: none; color: #5a5a5a; cursor: pointer; font-size: 0.9rem; }
+.admin-news-row button:hover { color: #ff0000; }
 
 /* Contact modal */
 .contact-modal-content { max-width: 600px; padding: 2rem; }
@@ -319,6 +345,25 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 /* ═══════════════════════════════════════════════════════════════════════════
    NEW FEATURES — FR #1, #3, #4 + UX improvements
    ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Footer language switch ─────────────────────────────────────────────── */
+.footer-lang-switch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin: 0.5rem 0;
+}
+.footer-lang {
+    font-size: 0.72rem;
+    color: #888;
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    transition: color 0.2s;
+}
+.footer-lang.active { color: #ff0000; font-weight: 600; }
+.footer-lang:hover  { color: #fff; }
+.footer-lang-sep    { color: #444; font-size: 0.72rem; }
 
 /* ── Books page — category tabs ─────────────────────────────────────────── */
 .books-category-tabs {
@@ -344,14 +389,45 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .cat-tab.active        { background: #ff0000; border-color: #ff0000; color: #fff; font-weight: 600; }
 
 /* ── Books page — filter bar ────────────────────────────────────────────── */
+.books-filter-bar {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+.books-filter-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.books-search-wrap { flex: 1; min-width: 200px; position: relative; display: flex; align-items: center; }
+.books-search-wrap .fa-search { position: absolute; left: 0.85rem; color: #666; font-size: 0.85rem; pointer-events: none; }
+.books-search-input { width: 100%; padding: 0.55rem 0.9rem 0.55rem 2.2rem; background: #111; border: 1px solid #333; border-radius: 8px; color: #eee; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+.books-search-input:focus { border-color: #ff0000; }
+.books-view-toggle { display: flex; gap: 0.4rem; }
+.view-btn { background: #111; border: 1px solid #333; border-radius: 7px; color: #888; width: 34px; height: 34px; cursor: pointer; transition: background 0.2s, color 0.2s; display: flex; align-items: center; justify-content: center; }
+.view-btn.active, .view-btn:hover { background: #ff0000; border-color: #ff0000; color: #fff; }
+.books-filter-controls { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.books-filter-select { background: #111; border: 1px solid #333; border-radius: 8px; color: #ccc; padding: 0.45rem 0.7rem; font-size: 0.85rem; cursor: pointer; outline: none; transition: border-color 0.2s; }
+.books-filter-select:focus { border-color: #ff0000; }
+.books-price-range { display: flex; align-items: center; gap: 0.35rem; }
+.price-sep { color: #555; font-size: 0.9rem; }
+.books-price-input { width: 70px; background: #111; border: 1px solid #333; border-radius: 8px; color: #ccc; padding: 0.45rem 0.55rem; font-size: 0.85rem; outline: none; }
+.books-price-input:focus { border-color: #ff0000; }
+.books-price-input::-webkit-inner-spin-button { display: none; }
+.btn-sm { padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 7px; border: 1.5px solid #ff0000; background: #ff0000; color: #fff; cursor: pointer; white-space: nowrap; }
+.btn-sm:hover { opacity: 0.85; }
+.btn-sm-ghost { padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 7px; border: 1.5px solid #444; background: transparent; color: #aaa; cursor: pointer; white-space: nowrap; }
+.btn-sm-ghost:hover { border-color: #ff0000; color: #ff0000; }
+.books-result-count { font-size: 0.82rem; color: #666; margin: 0 0 0.75rem; }
 
 /* ── List view ──────────────────────────────────────────────────────────── */
 .book-list { display: flex; flex-direction: column; gap: 0; }
 .book-list-row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-bottom: 1px solid #1e1e1e; cursor: pointer; border-radius: 6px; transition: background 0.15s; }
-.book-list-row:hover { background: #d0d0d0; }
+.book-list-row:hover { background: #161616; }
 .book-list-cover { width: 48px; height: 68px; flex-shrink: 0; border-radius: 4px; background: #2d2d2d; background-size: cover; background-position: center; }
 .book-list-info { flex: 1; min-width: 0; }
-.book-list-title  { font-size: 0.95rem; font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.book-list-title  { font-size: 0.95rem; font-weight: 600; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .book-list-author { font-size: 0.82rem; color: #888; margin-top: 0.2rem; }
 .book-list-meta   { font-size: 0.75rem; color: #555; margin-top: 0.15rem; }
 .book-list-price  { font-size: 0.9rem; font-weight: 700; color: #ff0000; flex-shrink: 0; }
@@ -363,6 +439,43 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .page-btn.active  { background: #fff !important; border-color: #ff0000 !important; color: #ff0000 !important; font-weight: 700; }
 .page-btn[disabled] { background: #f5f5f5 !important; border-color: #eaeaea !important; color: #ccc !important; cursor: default; opacity: 0.7; }
 .page-ellipsis  { color: #aaa !important; }
+
+/* ── Hardcover / Paperback format toggle on book cards ──────────────────── */
+.book-price-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; }
+.book-price { font-size: 0.9rem; font-weight: 700; color: #ff0000; }
+.fmt-toggle { display: flex; align-items: center; gap: 0.25rem; }
+.fmt-btn { font-size: 0.65rem; font-weight: 600; color: #666; cursor: pointer; padding: 0.1rem 0.3rem; border-radius: 3px; border: 1px solid #333; transition: background 0.15s, color 0.15s, border-color 0.15s; user-select: none; }
+.fmt-btn.active { background: #ff0000; border-color: #ff0000; color: #fff; }
+.fmt-sep { color: #444; font-size: 0.65rem; }
+
+/* ── Format selector (modal + detail page) ──────────────────────────────── */
+.format-selector { display: flex; gap: 0.5rem; margin: 0.6rem 0 0.4rem; }
+.format-btn { padding: 0.35rem 0.9rem; border-radius: 6px; border: 1.5px solid #333; background: transparent; color: #aaa; font-size: 0.82rem; cursor: pointer; transition: background 0.2s, border-color 0.2s, color 0.2s; }
+.format-btn.active { background: #111; border-color: #ff0000; color: #fff; }
+.format-btn:hover  { border-color: #ff0000; color: #fff; }
+
+/* ── Cart format badge ──────────────────────────────────────────────────── */
+.cart-fmt-badge { font-size: 0.65rem; font-weight: 700; background: #ff0000; color: #fff; padding: 0.05rem 0.35rem; border-radius: 3px; vertical-align: middle; margin-left: 0.3rem; }
+
+/* ── Mobile swipe carousel (homepage) ───────────────────────────────────── */
+@media (max-width: 640px) {
+    .home-grid {
+        display: flex !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        gap: 1rem;
+        padding: 0.25rem 0.5rem 1rem;
+        scrollbar-width: none;
+    }
+    .home-grid::-webkit-scrollbar { display: none; }
+    .home-grid .book-card {
+        flex: 0 0 72vw;
+        max-width: 72vw;
+        scroll-snap-align: center;
+    }
+}
 
 /* ── Multi-step checkout ─────────────────────────────────────────────────── */
 .checkout-modal-content {
@@ -390,17 +503,16 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .co-step-dot span {
     width: 30px; height: 30px;
     border-radius: 50%;
-    background: #fff;
-    border: 2px solid #ff0000;
+    background: #222;
+    border: 2px solid #333;
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.82rem; font-weight: 600; color: #ff0000;
+    font-size: 0.82rem; font-weight: 600; color: #666;
     transition: background 0.25s, border-color 0.25s, color 0.25s;
 }
-.co-step-dot small { font-size: 0.65rem; color: #888; white-space: nowrap; }
+.co-step-dot small { font-size: 0.65rem; color: #555; white-space: nowrap; }
 .co-step-dot.active span   { background: #ff0000; border-color: #ff0000; color: #fff; }
-.co-step-dot.completed span{ background: #ff0000; border-color: #ff0000; color: #fff; }
+.co-step-dot.completed span{ background: #2d2d2d; border-color: #ff0000; color: #ff0000; }
 .co-step-dot.active small   { color: #ff0000; font-weight: 600; }
-.co-step-dot.completed small { color: #ff0000; }
 .co-line { flex: 1; height: 2px; background: #2a2a2a; min-width: 24px; max-width: 60px; transition: background 0.25s; }
 
 /* Panels */
@@ -414,12 +526,12 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 /* Shipping options */
 .shipping-options { display: flex; flex-direction: column; gap: 0.75rem; margin: 1rem 0; }
 .shipping-option {
-    display: flex; align-items: center; gap: 0.8rem;
-    background: #f5f5f5; border: 1.5px solid #e0e0e0;
-    border-radius: 10px; padding: 1rem;
+    display: flex; align-items: center; gap: 1rem;
+    background: #111; border: 1.5px solid #2a2a2a;
+    border-radius: 10px; padding: 0.85rem 1rem;
     cursor: pointer; transition: border-color 0.2s, background 0.2s;
 }
-.shipping-option:has(input:checked) { border-color: #ff0000; background: #fff0f0; }
+.shipping-option:has(input:checked) { border-color: #ff0000; background: #160000; }
 .shipping-option input[type="radio"] { accent-color: #ff0000; width: 16px; height: 16px; flex-shrink: 0; }
 .so-body { flex: 1; }
 .so-name { font-size: 0.9rem; font-weight: 600; color: #eee; }
@@ -462,7 +574,7 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .review-section { margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid #1e1e1e; }
 .review-section:last-child { border-bottom: none; }
 .review-section h4 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: #666; margin-bottom: 0.5rem; }
-.review-section p { font-size: 0.88rem; color: #333; line-height: 1.6; margin: 0; }
+.review-section p { font-size: 0.88rem; color: #ccc; line-height: 1.6; margin: 0; }
 .review-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; color: #ccc; padding: 0.2rem 0; }
 .review-totals .review-item { padding: 0.3rem 0; }
 .review-totals .total-row { border-top: 1px solid #2a2a2a; margin-top: 0.5rem; padding-top: 0.5rem; font-size: 1rem; color: #fff; }
@@ -476,6 +588,76 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     .books-price-range { display: none; }
     .books-filter-controls { gap: 0.4rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PATCH: White / light filter bar
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Filter bar shell ── */
+.books-filter-bar {
+    background: #fff !important;
+    border: 1px solid #e8e8e8 !important;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* ── Search box ── */
+.books-search-input {
+    background: #f7f7f7 !important;
+    border: 1px solid #ddd !important;
+    color: #1a1a1a !important;
+}
+.books-search-input::placeholder { color: #aaa !important; }
+.books-search-input:focus         { border-color: #ff0000 !important; background: #fff !important; }
+.books-search-wrap .fa-search     { color: #aaa !important; }
+
+/* ── Dropdowns ── */
+.books-filter-select {
+    background: #f7f7f7 !important;
+    border: 1px solid #ddd !important;
+    color: #333 !important;
+}
+.books-filter-select:focus { border-color: #ff0000 !important; }
+
+/* ── Price inputs ── */
+.books-price-input {
+    background: #f7f7f7 !important;
+    border: 1px solid #ddd !important;
+    color: #333 !important;
+}
+.books-price-input:focus  { border-color: #ff0000 !important; }
+.price-sep                { color: #bbb !important; }
+
+/* ── Reset button ── */
+.btn-sm-ghost {
+    border-color: #ddd !important;
+    color: #666 !important;
+    background: #fff !important;
+}
+.btn-sm-ghost:hover { border-color: #ff0000 !important; color: #ff0000 !important; }
+
+/* ── View-toggle ── */
+.view-btn {
+    background: #f7f7f7 !important;
+    border-color: #ddd !important;
+    color: #999 !important;
+}
+.view-btn.active,
+.view-btn:hover { background: #ff0000 !important; border-color: #ff0000 !important; color: #fff !important; }
+
+/* ── Result count text ── */
+.books-result-count { color: #999 !important; }
+
+/* ── Category tabs (match light theme) ── */
+.books-category-tabs {
+    border-bottom-color: #eee !important;
+}
+.cat-tab {
+    border-color: #e0e0e0 !important;
+    color: #666 !important;
+}
+.cat-tab:hover  { border-color: #ff0000 !important; color: #ff0000 !important; background: #fff5f5 !important; }
+.cat-tab.active { background: #ff0000 !important; border-color: #ff0000 !important; color: #fff !important; }
 
 /* ══════════════════════════════════════════════════════════════════════
    NEW FEATURES — HC badge, category dropdown, filter bar, nav, admin
@@ -959,7 +1141,17 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     transform: translateY(1rem);
 }
 
-/* book-list-title/row — merged into base definition above */
+/* ── 列表视图书名深灰色 + hover 浅灰背景 ── */
+.book-list-title {
+    color: #333 !important;
+    font-weight: 600;
+}
+.book-list-row:hover {
+    background: #d0d0d0 !important;
+}
+.book-list-row:hover .book-list-title {
+    color: #333 !important;
+}
 
 /* ── Review user avatar circles (existing) ── */
 .review-user-avatar, .comment-user-avatar {
@@ -1000,7 +1192,53 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 .wechat-comment-text {
     color: #444;
 }
+.wechat-comment-date {
+    font-size: 0.7rem;
+    color: #999;
+}
+.review-form-header {
+    margin-bottom: 0.5rem;
+}
+.review-form-username {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
 /* ── Circular icon buttons for share & post review ── */
+.circle-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    border: none;
+    color: #555;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+.circle-icon:hover {
+    background: #ff0000;
+    color: white;
+}
+.wechat-review-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.wechat-review-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem 0;
+}
+.wechat-review-content-area {
+    flex: 1;
+}
 
 /* ── 白底红字红边按钮（用于 Post review 和 Post comment）── */
 .btn-post {
@@ -1023,8 +1261,19 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 }
 
 /* 评论输入框宽度占满内容区 */
+.wechat-comment-input {
+    width: 100% !important;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
 
 /* 评论表单容器（输入框独立一行） */
+.wechat-comment-form {
+    margin-top: 0.8rem;
+}
 
 /* 右侧按钮列：垂直排列，间距一致 */
 .wechat-review-footer {
@@ -1109,7 +1358,34 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     }
 }
 
+.language-checkboxes {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.3rem;
+}
+.language-checkboxes label {
+    font-weight: normal;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+/* 确保在表单行内对齐 */
+.form-group.half {
+    display: flex;
+    flex-direction: column;
+}
+
 /* 书籍详情页整体下移，露出返回按钮 */
+.detail-container {
+    padding-top: 3.5rem;
+}
+@media (max-width: 768px) {
+    .detail-container {
+        padding-top: 2rem;
+    }
+}
 
 /* 评论输入框与书评输入框字体一致 */
 .wechat-comment-input,
@@ -1121,7 +1397,15 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 
 /* 统一提交按钮与输入框的间距 */
 .review-submit-wrapper,
+.comment-submit-wrapper {
+    margin-top: 0.8rem;
+}
+
 /* 确保评论输入框宽度和书评输入框一致 */
+.wechat-comment-input {
+    width: 100% !important;
+    box-sizing: border-box;
+}
 
 /* 让语言复选框所在容器占满整行，并保持水平排列 */
 .full-width {
@@ -1153,10 +1437,8 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 
 /* 修复详情页返回按钮位置 */
 .detail-container {
-    max-width: 1200px;
-    margin: 0 auto;
     position: relative;
-    padding-top: 1rem;
+    padding-top: 1rem;   /* 增加顶部空间，避免按钮紧贴 */
 }
 .detail-back-btn {
     position: static;     /* 取消绝对定位 */
@@ -1190,8 +1472,12 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    width: 100%;
 }
+.comment-submit-wrapper {
+    display: flex;
+    justify-content: flex-end;
+}
+
 /* 评论/书评的操作按钮组 */
 .review-actions-right {
     display: flex;
@@ -1265,6 +1551,9 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     width: 100%;
     margin-top: 0.75rem;
 }
+.wechat-comment-form {
+    width: 100%;
+}
 .comment-submit-wrapper {
     display: flex;
     justify-content: flex-end;
@@ -1323,10 +1612,55 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 /* ========== 结账页面修复 ========== */
 
 /* 降低输入框高度 */
+.checkout-input {
+    padding: 0.5rem 0.8rem !important;
+    height: 38px !important;
+    line-height: 1.3 !important;
+}
+select.checkout-input {
+    height: 38px !important;
+}
+#expiry, #cvv {
+    height: 38px !important;
+}
 
-/* co-step-dot colors — merged into base definitions above */
+/* 步骤圆圈颜色 */
+.co-step-dot span {
+    background: #fff !important;
+    border: 2px solid #ff0000 !important;
+    color: #ff0000 !important;
+}
+.co-step-dot.active span {
+    background: #ff0000 !important;
+    border-color: #ff0000 !important;
+    color: #fff !important;
+}
+.co-step-dot.completed span {
+    background: #ff0000 !important;
+    border-color: #ff0000 !important;
+    color: #fff !important;
+}
+.co-step-dot.active small {
+    color: #ff0000 !important;
+    font-weight: 600;
+}
+.co-step-dot.completed small {
+    color: #ff0000 !important;
+}
+.co-step-dot small {
+    color: #888 !important;
+}
 
 /* Delivery 选项浅灰色背景 */
+.shipping-option {
+    background: #f5f5f5 !important;
+    border: 1.5px solid #e0e0e0 !important;
+}
+.shipping-option:has(input:checked) {
+    border-color: #ff0000 !important;
+    background: #fff0f0 !important;
+}
+
 /* Card / PayPal 标签色 */
 .pay-tab[data-method="card"] {
     background: #ffffff !important;
@@ -1350,6 +1684,9 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 }
 
 /* 复现信息深灰色字体 */
+.review-section p {
+    color: #333 !important;
+}
 .review-item {
     color: #333 !important;
 }
@@ -1358,6 +1695,34 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 }
 .review-totals .total-row strong {
     color: #ff0000 !important;
+}
+
+/* ========== 最终结账样式修复 ========== */
+
+/* 强制所有结账输入框降低高度（覆盖所有优先级） */
+.checkout-modal-content .checkout-input,
+#coStep1 .checkout-input,
+#coStep1 input,
+#coStep1 select,
+#shipFirstName, #shipLastName,
+#shipCity, #shipProvince, #shipPostal, #shipCountry,
+#expiry, #cvv {
+    height: 36px !important;
+    padding: 0.3rem 0.8rem !important;
+    line-height: 1.2 !important;
+    font-size: 0.9rem !important;
+    box-sizing: border-box !important;
+}
+
+/* Delivery 选项描述文字改为深灰色 */
+.shipping-option .so-desc {
+    color: #555 !important;
+    font-size: 0.78rem;
+}
+
+/* 确保信用卡输入框内的图标不干扰高度 */
+.card-input-wrap .checkout-input {
+    padding-right: 2.5rem !important;
 }
 
 /* 自定义分享弹窗 */
@@ -1433,6 +1798,12 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
     margin-top: 1.5rem;
     border-top: 1px solid #eaeaea;
     padding-top: 1rem;
+}
+.cart-wishlist-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ff0000;
+    margin-bottom: 0.8rem;
 }
 .cart-wishlist-container {
     max-height: 200px;
@@ -1572,6 +1943,12 @@ select.checkout-input {
     padding-right: 2.2rem !important;
 }
 
+/* Delivery选项调整 */
+.shipping-option {
+    padding: 1rem !important;
+    gap: 0.8rem !important;
+}
+
 /* ========== 移动设备适配 ========== */
 @media (max-width: 600px) {
     .checkout-modal-content .form-group {
@@ -1660,11 +2037,12 @@ select.checkout-input {
     margin-right: 0.2rem;
 }
  
-/* ========== Admin导航分隔符 (currently hidden) ========== */
+/* ========== Admin导航分隔符 ========== */
 .admin-nav-divider {
-    display: none !important;
-    /* Base styles preserved for future use:
-       width: 1px; height: 24px; background: #ddd; margin: 0 0.5rem; */
+    width: 1px;
+    height: 24px;
+    background: #ddd;
+    margin: 0 0.5rem;
 }
  
 /* ========== Admin登出按钮 ========== */
@@ -1781,6 +2159,25 @@ select.checkout-input {
 
 #adminLogoutBtn {
     display: none !important;
+}
+
+.admin-nav-divider {
+    display: none !important;
+}
+
+/* Manage 按钮样式 - 白底红字 */
+.admin-nav-link {
+    background: white !important;
+    color: #ff0000 !important;
+    border: 1.5px solid #ff0000 !important;
+    font-weight: 600;
+}
+
+.admin-nav-link:hover {
+    background: #ff0000 !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 0, 0, 0.2);
 }
 
 /* Pages 输入框高度 - 最终版 */
