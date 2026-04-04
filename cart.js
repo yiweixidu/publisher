@@ -1,5 +1,6 @@
 // cart.js
 import { getCurrentLang } from './i18n.js';
+import { currentUser, openLoginModal } from './auth.js';
 
 // DOM elements
 const cartItemsContainer = document.getElementById('cartItemsContainer');
@@ -64,11 +65,14 @@ export function addToCart(book, format = 'paperback') {
 export function renderCartModal() {
     const currentLang = getCurrentLang();
     if (!cartItemsContainer) return;
+
     if (cart.length === 0) {
         cartItemsContainer.innerHTML = '<p class="empty-cart">Your cart is empty.</p>';
         if (cartSubtotal) cartSubtotal.textContent = '$0.00';
         if (cartTax) cartTax.textContent = '$0.00';
         if (cartTotal) cartTotal.textContent = '$0.00';
+        // 即使空购物车也要渲染按钮（保持界面一致）
+        renderCartButtons();
         return;
     }
 
@@ -104,7 +108,7 @@ export function renderCartModal() {
     if (cartTax) cartTax.textContent = `$${tax.toFixed(2)}`;
     if (cartTotal) cartTotal.textContent = `$${total.toFixed(2)}`;
 
-    // Attach event listeners
+    // 重新绑定数量/删除事件
     document.querySelectorAll('.cart-quantity-input').forEach(input => {
         input.addEventListener('change', function(e) {
             const index = this.dataset.index;
@@ -123,5 +127,49 @@ export function renderCartModal() {
             saveCart();
             renderCartModal();
         });
+    });
+
+    renderCartButtons();
+}
+
+function renderCartButtons() {
+    const cartActions = document.querySelector('.cart-actions');
+    if (!cartActions) return;
+
+    const isLoggedIn = !!currentUser;
+    const continueBtn = document.createElement('button');
+    continueBtn.id = 'continueShoppingBtn';
+    continueBtn.className = 'btn-outline-red';
+    continueBtn.innerHTML = `<span>${getCurrentLang() === 'fr' ? 'Continuer vos achats' : 'Continue Shopping'}</span>`;
+
+    let checkoutBtn;
+    if (isLoggedIn) {
+        checkoutBtn = document.createElement('button');
+        checkoutBtn.id = 'checkoutBtn';
+        checkoutBtn.className = 'btn-primary';
+        checkoutBtn.innerHTML = `<i class="fas fa-lock"></i> <span>${getCurrentLang() === 'fr' ? 'Passer à la caisse' : 'Proceed to Checkout'}</span>`;
+        checkoutBtn.addEventListener('click', () => {
+            const event = new CustomEvent('openCheckoutFromCart');
+            window.dispatchEvent(event);
+        });
+    } else {
+        checkoutBtn = document.createElement('button');
+        checkoutBtn.id = 'loginToCheckoutBtn';
+        checkoutBtn.className = 'btn-primary';
+        checkoutBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i> <span>${getCurrentLang() === 'fr' ? 'Connectez-vous pour passer à la caisse' : 'Login to proceed to checkout'}</span>`;
+        checkoutBtn.addEventListener('click', () => {
+            openLoginModal('user');
+        });
+    }
+
+    // 清空原有内容并添加新按钮（左边 Continue，右边 登录/结账）
+    cartActions.innerHTML = '';
+    cartActions.appendChild(continueBtn);
+    cartActions.appendChild(checkoutBtn);
+
+    // 重新绑定 Continue Shopping 事件（关闭购物车模态窗）
+    continueBtn.addEventListener('click', () => {
+        const cartModal = document.getElementById('cartModal');
+        if (cartModal) cartModal.classList.remove('active');
     });
 }
