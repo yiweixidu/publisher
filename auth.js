@@ -199,44 +199,86 @@ export async function initAuth() {
 // ---------- Admin Nav Link ----------
 export function updateAdminNavLink() {
     const nav = document.getElementById('navLinks');
-    const existingContainer = document.getElementById('adminNavContainer');
-    if (existingContainer) existingContainer.remove();
+    const adminNavContainer = document.getElementById('adminNavContainer');
+    
+    if (!nav || !adminNavContainer) return;
+    
     if (adminMode) {
-        const container = document.createElement('div');
-        container.id = 'adminNavContainer';
-        container.className = 'admin-nav-container';
-        container.style.display = 'flex';
-        container.style.gap = '1rem';
-        container.style.alignItems = 'center';
-
-        const booksLink = document.createElement('a');
-        booksLink.id = 'adminManageBooksLink';
-        booksLink.href = '#';
-        booksLink.setAttribute('data-i18n', 'adminNavManageBooks');
-        booksLink.innerText = 'MANAGE BOOKS';
-        booksLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            navigateTo('/admin/books');
-        });
-        const newsLink = document.createElement('a');
-        newsLink.id = 'adminManageNewsLink';
-        newsLink.href = '#';
-        newsLink.setAttribute('data-i18n', 'adminNavManageNews');
-        newsLink.innerText = 'MANAGE NEWS';
-        newsLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            navigateTo('/admin/news');
-        });
-
-        container.appendChild(booksLink);
-        container.appendChild(newsLink);
-
-        const cartIcon = document.querySelector('.cart-icon');
-        if (cartIcon && cartIcon.parentNode === nav) {
-            nav.insertBefore(container, cartIcon.nextSibling);
-        } else {
-            nav.appendChild(container);
+        // ========== Admin模式：显示admin导航，隐藏普通导航 ==========
+        nav.classList.add('admin-nav-active');
+        adminNavContainer.style.display = 'flex';
+        
+        // ========== 为新按钮添加事件监听 ==========
+        
+        // MANAGE BOOKS 按钮
+        const booksLink = document.getElementById('adminManageBooksLink');
+        if (booksLink) {
+            booksLink.replaceWith(booksLink.cloneNode(true));
+            const newBooksLink = document.getElementById('adminManageBooksLink');
+            if (newBooksLink) {
+                newBooksLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigateTo('/admin/books');
+                });
+            }
         }
+        
+        // MANAGE NEWS 按钮
+        const newsLink = document.getElementById('adminManageNewsLink');
+        if (newsLink) {
+            newsLink.replaceWith(newsLink.cloneNode(true));
+            const newNewsLink = document.getElementById('adminManageNewsLink');
+            if (newNewsLink) {
+                newNewsLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigateTo('/admin/news');
+                });
+            }
+        }
+        
+        // MANAGE USERS 按钮 (新增)
+        const manageUsersLink = document.getElementById('adminManageUsersLink');
+        if (manageUsersLink) {
+            manageUsersLink.replaceWith(manageUsersLink.cloneNode(true));
+            const newManageUsersLink = document.getElementById('adminManageUsersLink');
+            if (newManageUsersLink) {
+                newManageUsersLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigateTo('/admin/users');
+                });
+            }
+        }
+        
+        // MANAGE COMMENTS 按钮 (新增)
+        const manageCommentsLink = document.getElementById('adminManageCommentsLink');
+        if (manageCommentsLink) {
+            manageCommentsLink.replaceWith(manageCommentsLink.cloneNode(true));
+            const newManageCommentsLink = document.getElementById('adminManageCommentsLink');
+            if (newManageCommentsLink) {
+                newManageCommentsLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigateTo('/admin/comments');
+                });
+            }
+        }
+        
+        // LOGOUT 按钮 (新增)
+        const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+        if (adminLogoutBtn) {
+            adminLogoutBtn.replaceWith(adminLogoutBtn.cloneNode(true));
+            const newLogoutBtn = document.getElementById('adminLogoutBtn');
+            if (newLogoutBtn) {
+                newLogoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleAdminMode();
+                });
+            }
+        }
+        
+    } else {
+        // ========== 普通模式：隐藏admin导航，显示普通导航 ==========
+        nav.classList.remove('admin-nav-active');
+        adminNavContainer.style.display = 'none';
     }
 }
 
