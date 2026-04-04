@@ -482,6 +482,14 @@ document.getElementById('coPlaceOrder')?.addEventListener('click', async () => {
     }
 });
 
+window.addEventListener('openCheckoutFromCart', () => {
+    if (cart.length === 0) { alert(langPack[currentLang].emptyCart); return; }
+    if (!currentUser) { openLoginModal('user'); return; }
+    const cartModal = document.getElementById('cartModal');
+    if (cartModal) cartModal.classList.remove('active');
+    openCheckout();  // 假设 openCheckout 函数已定义且可访问
+});
+
 // Confirmation modal
 confirmationModalClose?.addEventListener('click', () => confirmationModal?.classList.remove('active'));
 confirmationModal?.addEventListener('click', (e) => {

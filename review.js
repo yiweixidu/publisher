@@ -26,34 +26,97 @@ async function getUserDisplayName(userId) {
     }
 }
 
-function fallbackCopy(review, shareUrl) {
-    const message = `【Review】${review.username} reviewed this book:\n“${review.text}”\nView full review: ${shareUrl}`;
-    navigator.clipboard.writeText(message).then(() => {
-        alert('Review copied. You can paste and send it to friends.');
-    }).catch(() => {
-        alert('Copy failed. Please manually copy the link: ' + shareUrl);
+// 自定义分享弹窗
+function showShareModal(reviewId, reviewText, reviewUsername, shareUrl) {
+    // 移除已有的弹窗
+    const existingModal = document.getElementById('customShareModal');
+    if (existingModal) existingModal.remove();
+
+    const modalHtml = `
+        <div id="customShareModal" class="share-modal-overlay">
+            <div class="share-modal-content">
+                <div class="share-modal-header">
+                    <span>Share via</span>
+                    <button class="share-modal-close">&times;</button>
+                </div>
+                <div class="share-options">
+                    <button class="share-option" data-platform="facebook">
+                        <i class="fab fa-facebook-f"></i> Facebook
+                    </button>
+                    <button class="share-option" data-platform="twitter">
+                        <i class="fab fa-twitter"></i> X (Twitter)
+                    </button>
+                    <button class="share-option" data-platform="instagram">
+                        <i class="fab fa-instagram"></i> Instagram
+                    </button>
+                    <button class="share-option" data-platform="wechat">
+                        <i class="fab fa-weixin"></i> WeChat
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const modal = document.getElementById('customShareModal');
+    const closeBtn = modal.querySelector('.share-modal-close');
+    const overlay = modal;
+
+    closeBtn.addEventListener('click', () => modal.remove());
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) modal.remove();
+    });
+
+    // 处理各平台分享
+    modal.querySelectorAll('.share-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const platform = btn.dataset.platform;
+            let shareLink = '';
+            const encodedUrl = encodeURIComponent(shareUrl);
+            const encodedText = encodeURIComponent(reviewText.substring(0, 200));
+
+            switch (platform) {
+                case 'facebook':
+                    shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+                    window.open(shareLink, '_blank', 'width=600,height=400');
+                    break;
+                case 'twitter':
+                    shareLink = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+                    window.open(shareLink, '_blank', 'width=600,height=400');
+                    break;
+                case 'instagram':
+                    // Instagram 没有直接的分享 URL，复制链接并提示
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        alert('Link copied! Open Instagram to share.');
+                    }).catch(() => {
+                        alert('Please copy the link: ' + shareUrl);
+                    });
+                    break;
+                case 'wechat':
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        alert('Link copied! Open WeChat and paste to share.');
+                    }).catch(() => {
+                        alert('Please copy the link: ' + shareUrl);
+                    });
+                    break;
+            }
+            modal.remove();
+        });
     });
 }
 
 async function attachEventsToContainer(container, bookId, currentLang, currentUser) {
     if (!container) return;
 
-    // 分享按钮 (现在位于头部右侧)
+    // 分享按钮 (自定义弹窗)
     container.querySelectorAll('.wechat-share-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const reviewId = btn.dataset.reviewId;
             const review = reviews.find(r => r.id === reviewId);
             if (!review) return;
-            const shareTitle = `review by ${review.username}`;
-            const shareText = review.text.substring(0, 100) + (review.text.length > 100 ? '…' : '');
             const shareUrl = window.location.href.split('#')[0] + '#review-' + reviewId;
-            if (navigator.share) {
-                navigator.share({ title: shareTitle, text: shareText, url: shareUrl })
-                    .catch(() => fallbackCopy(review, shareUrl));
-            } else {
-                fallbackCopy(review, shareUrl);
-            }
+            showShareModal(reviewId, review.text, review.username, shareUrl);
         });
     });
 
