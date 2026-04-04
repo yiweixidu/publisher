@@ -130,20 +130,28 @@ export async function handleRoute() {
         document.title = 'Manage Books | Acer Books';
 
     } else if (path === 'admin/news') {
-        if (!adminMode) {
-            history.replaceState(null, '', BASE_PATH);
-            mainContent.style.display = 'block';
-            await Promise.all([renderBooks(), renderNews()]);
-            resetMetaTags();
-            window.dispatchEvent(new CustomEvent('routeChanged'));
-            return;
-        }
-        showAdminNewsPage();
-        setTimeout(() => {
-            const btn = document.querySelector('button[id*="Back"]');
-            if (btn) btn.onclick = () => navigateTo('/');
-        }, 100);
-        document.title = 'Manage News | Acer Books';
+    if (!adminMode) {
+        history.replaceState(null, '', BASE_PATH);
+        mainContent.style.display = 'block';
+        await Promise.all([renderBooks(), renderNews()]);
+        resetMetaTags();
+        window.dispatchEvent(new CustomEvent('routeChanged'));
+        return;
+    }
+    
+    // ✨ 显示admin news页面
+    const adminNewsPage = document.getElementById('adminNewsPage');
+    if (adminNewsPage) {
+        adminNewsPage.style.display = 'block';
+    }
+    
+    // ✨ 隐藏其他页面
+    const mainContent = document.getElementById('mainContent');
+    if (mainContent) mainContent.style.display = 'none';
+    
+    showAdminNewsPage();
+    document.title = 'Manage News | Acer Books';
+    window.dispatchEvent(new CustomEvent('routeChanged'));
  
     // ========== 新增：Manage Users 页面 ==========
     } else if (path === 'admin/users') {
