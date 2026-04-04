@@ -140,7 +140,59 @@ export async function handleRoute() {
         }
         showAdminNewsPage();
         document.title = 'Manage News | Acer Books';
-
+ 
+    // ========== 新增：Manage Users 页面 ==========
+    } else if (path === 'admin/users') {
+        if (!adminMode) {
+            // 非admin用户访问时重定向到首页
+            history.replaceState(null, '', BASE_PATH);
+            mainContent.style.display = 'block';
+            await Promise.all([renderBooks(), renderNews()]);
+            resetMetaTags();
+            window.dispatchEvent(new CustomEvent('routeChanged'));
+            return;
+        }
+        // Admin用户可以访问
+        // TODO: 实现 showAdminUsersPage() 函数或显示placeholder
+        mainContent.style.display = 'block';
+        const mainContentEl = document.getElementById('mainContent');
+        if (mainContentEl) {
+            mainContentEl.innerHTML = `
+                <div style="padding: 2rem; text-align: center;">
+                    <h2 style="color: #ff0000; margin-bottom: 1rem;">Manage Users</h2>
+                    <p style="color: #666; margin-bottom: 2rem;">User management page coming soon...</p>
+                    <button onclick="window.location.href='/';" class="btn-primary">Back to Home</button>
+                </div>
+            `;
+        }
+        document.title = 'Manage Users | Acer Books';
+ 
+    // ========== 新增：Manage Comments 页面 ==========
+    } else if (path === 'admin/comments') {
+        if (!adminMode) {
+            // 非admin用户访问时重定向到首页
+            history.replaceState(null, '', BASE_PATH);
+            mainContent.style.display = 'block';
+            await Promise.all([renderBooks(), renderNews()]);
+            resetMetaTags();
+            window.dispatchEvent(new CustomEvent('routeChanged'));
+            return;
+        }
+        // Admin用户可以访问
+        // TODO: 实现 showAdminCommentsPage() 函数或显示placeholder
+        mainContent.style.display = 'block';
+        const mainContentEl = document.getElementById('mainContent');
+        if (mainContentEl) {
+            mainContentEl.innerHTML = `
+                <div style="padding: 2rem; text-align: center;">
+                    <h2 style="color: #ff0000; margin-bottom: 1rem;">Manage Comments</h2>
+                    <p style="color: #666; margin-bottom: 2rem;">Comment management page coming soon...</p>
+                    <button onclick="window.location.href='/';" class="btn-primary">Back to Home</button>
+                </div>
+            `;
+        }
+        document.title = 'Manage Comments | Acer Books';
+ 
     } else {
         navigateTo('/');
     }

@@ -1973,3 +1973,179 @@ select.checkout-input {
         margin-bottom: 0.3rem !important;
     }
 }
+
+/* ========== Admin 导航栏样式修复 ========== */
+ 
+/* 普通用户导航链接 */
+.nav-user-link {
+    transition: all 0.2s ease;
+}
+ 
+/* Admin模式下隐藏普通导航 */
+.admin-nav-active .nav-user-link {
+    display: none !important;
+}
+ 
+/* ========== Admin导航容器 ========== */
+.admin-nav-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+ 
+/* ========== Admin导航链接样式 ========== */
+.admin-nav-link {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+ 
+.admin-nav-link:hover {
+    background: #ff0000;
+    color: white;
+    border-color: #ff0000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 0, 0, 0.2);
+}
+ 
+.admin-nav-link:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(255, 0, 0, 0.15);
+}
+ 
+.admin-nav-link i {
+    font-size: 0.9rem;
+    margin-right: 0.2rem;
+}
+ 
+/* ========== Admin导航分隔符 ========== */
+.admin-nav-divider {
+    width: 1px;
+    height: 24px;
+    background: #ddd;
+    margin: 0 0.5rem;
+}
+ 
+/* ========== Admin登出按钮 ========== */
+.admin-logout {
+    background: transparent;
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+ 
+.admin-logout:hover {
+    background: #ff0000;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 0, 0, 0.2);
+}
+ 
+.admin-logout:active {
+    transform: translateY(0);
+}
+ 
+.admin-logout i {
+    font-size: 0.9rem;
+}
+ 
+/* ========== 响应式设计 - 平板 ========== */
+@media (max-width: 1024px) {
+    .admin-nav-container {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .admin-nav-link {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    .admin-nav-divider {
+        width: 1px;
+        height: 20px;
+        margin: 0 0.3rem;
+    }
+    
+    .admin-logout {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}
+ 
+/* ========== 响应式设计 - 手机 ========== */
+@media (max-width: 768px) {
+    .navbar {
+        flex-wrap: wrap;
+    }
+    
+    .admin-nav-container {
+        width: 100%;
+        margin-top: 0.5rem;
+        padding: 0.5rem 0;
+        border-top: 1px solid #eaeaea;
+        justify-content: center;
+        flex-direction: row;
+    }
+    
+    .admin-nav-link {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.75rem;
+        flex: 0 1 auto;
+    }
+    
+    .admin-nav-divider {
+        height: 16px;
+        margin: 0 0.2rem;
+    }
+    
+    .admin-logout {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.75rem;
+    }
+}
+ 
+/* ========== 超小屏幕 ========== */
+@media (max-width: 480px) {
+    .admin-nav-container {
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 0.5rem;
+    }
+    
+    .admin-nav-link,
+    .admin-logout {
+        width: 100%;
+        justify-content: center;
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .admin-nav-divider {
+        width: 100%;
+        height: 1px;
+        margin: 0.3rem 0;
+    }
+}
