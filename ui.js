@@ -6,6 +6,7 @@ import { addToCart } from './cart.js';
 import { renderReviews, renderDetailReviews } from './review.js';
 import { navigateTo, toSlug } from './routing.js';
 import { renderCartModal } from './cart.js';
+import { normalizeCover } from './utils.js';
 
 // DOM elements
 const grid = document.getElementById('bookGrid');
@@ -43,13 +44,6 @@ const booksPage = document.getElementById('booksPage');
 export let currentModalBook = null;
 export let currentNewsItem = null;
 export let currentModalFormat = 'paperback'; // tracks selected format in modal/detail
-
-// Fix relative cover paths (DB stores e.g. "zhijian/image.jpg" → "/zhijian/image.jpg")
-function normalizeCover(cover) {
-    if (!cover) return '';
-    if (cover.startsWith('http') || cover.startsWith('/') || cover.startsWith('data:')) return cover;
-    return '/' + cover;
-}
 
 // ---------- Translation ----------
 export function translateUI(lang) {
