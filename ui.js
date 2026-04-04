@@ -139,9 +139,8 @@ function generateBookCardHTML(book, adminMode, currentLang) {
                 <span class="fmt-sep">|</span>
                 <span class="fmt-btn" data-fmt="hardcover">HC</span>
             </div>` : ''}
+            <button class="wishlist-icon-btn" data-wishlist-bookid="${book.id}" title="Add to wishlist"><i class="far fa-heart"></i></button>
         </div>`;
-    // Added wishlist button with data-wishlist-bookid
-    const wishlistBtn = `<button class="wishlist-icon-btn" data-wishlist-bookid="${book.id}" title="Add to wishlist"><i class="far fa-heart"></i></button>`;
     return `
         <div class="book-card" data-id="${book.id}">
             <div class="book-cover" style="${coverStyle} background-color: #2d2d2d;">
@@ -151,7 +150,6 @@ function generateBookCardHTML(book, adminMode, currentLang) {
                 <div class="book-title">${displayTitle}</div>
                 <div class="book-author">${displayAuthor}</div>
                 ${priceRow}
-                <div class="book-actions">${wishlistBtn}</div>
                 ${adminMode ? `<div class="admin-controls">${deleteBtn}</div>` : ''}
             </div>
         </div>

@@ -1039,6 +1039,22 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 /* Icon buttons */
 .btn-icon { background: none; border: none; cursor: pointer; color: #ccc; padding: 0.3rem 0.4rem; border-radius: 6px; transition: color 0.15s, background 0.15s; font-size: 0.88rem; flex-shrink: 0; }
 .btn-icon:hover { color: #ff0000; background: #fff0f0; }
+.wishlist-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ff0000;
+    font-size: 1rem;
+    padding: 0;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    transition: transform 0.15s;
+    flex-shrink: 0;
+}
+.wishlist-icon-btn:hover {
+    transform: scale(1.15);
+}
 .wishlisted i { color: #ff0000 !important; }
 
 /* Save address checkbox */
