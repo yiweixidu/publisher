@@ -878,12 +878,16 @@ window.addEventListener('openPasswordRecovery', () => {
     });
 });
 
-// 全局委托：点击头像打开 Account Dashboard
+// 全局委托：点击头像打开 Account Dashboard（传入当前用户）
 document.body.addEventListener('click', (e) => {
     const avatarBtn = e.target.closest('.user-avatar-btn');
     if (avatarBtn && avatarBtn.id === 'userNameBtn') {
         e.preventDefault();
-        window.dispatchEvent(new CustomEvent('openAccountDashboard'));
+        import('./auth.js').then(({ currentUser }) => {
+            import('./account.js').then(({ openAccountDashboard }) => {
+                openAccountDashboard(currentUser);
+            });
+        });
     }
 });
 
