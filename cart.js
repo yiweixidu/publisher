@@ -1,6 +1,8 @@
 // cart.js
 import { getCurrentLang } from './i18n.js';
 import { currentUser, openLoginModal } from './auth.js';
+import { books, loadBooks } from './data.js';
+import { addToCart as addToCartAction } from './cart.js'; // 避免循环引用，使用别名
 
 // DOM elements
 const cartItemsContainer = document.getElementById('cartItemsContainer');
@@ -62,7 +64,92 @@ export function addToCart(book, format = 'paperback') {
     saveCart();
 }
 
-export function renderCartModal() {
+// 获取心愿单（与 account.js 保持一致）
+function getWishlist() {
+    return JSON.parse(localStorage.getItem('acerWishlist') || '[]');
+}
+
+// 根据 bookId 获取完整书籍信息
+async function getBookById(bookId) {
+    if (!books.length) await loadBooks();
+    return books.find(b => b.id === bookId);
+}
+
+// 渲染心愿单区域（购物车底部）
+async function renderWishlistSection() {
+    const wishlistContainer = document.getElementById('cartWishlistContainer');
+    if (!wishlistContainer) return;
+
+    const wishlist = getWishlist();
+    if (!wishlist.length) {
+        wishlistContainer.innerHTML = '<p class="wishlist-empty">Your wishlist is empty. Click <i class="fas fa-heart"></i> on any book to save it here.</p>';
+        return;
+    }
+
+    const lang = getCurrentLang();
+    let html = '<div class="cart-wishlist-grid">';
+    for (const item of wishlist) {
+        const book = await getBookById(item.bookId);
+        if (!book) continue;
+        const displayTitle = (lang === 'fr' && book.title_fr) ? book.title_fr : book.title;
+        const displayAuthor = (lang === 'fr' && book.author_fr) ? book.author_fr : book.author;
+        const cover = normalizeCover(book.cover);
+        const price = parseFloat(book.price || 0).toFixed(2);
+        const hasHardcover = !!book.price_hardcover;
+
+        html += `
+            <div class="cart-wishlist-item" data-book-id="${book.id}">
+                <div class="cart-wishlist-cover" style="background-image: url('${cover}');"></div>
+                <div class="cart-wishlist-info">
+                    <div class="cart-wishlist-title">${displayTitle}</div>
+                    <div class="cart-wishlist-author">${displayAuthor}</div>
+                    <div class="cart-wishlist-price">$${price}</div>
+                    ${hasHardcover ? `<div class="cart-wishlist-format">
+                        <button class="fmt-wishlist-btn active" data-fmt="paperback">PB</button>
+                        <span class="fmt-sep">|</span>
+                        <button class="fmt-wishlist-btn" data-fmt="hardcover">HC</button>
+                    </div>` : ''}
+                </div>
+                <button class="cart-wishlist-add btn-sm" data-book-id="${book.id}">Add to Cart</button>
+            </div>
+        `;
+    }
+    html += '</div>';
+    wishlistContainer.innerHTML = html;
+
+    // 绑定格式切换事件
+    wishlistContainer.querySelectorAll('.fmt-wishlist-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const parent = btn.closest('.cart-wishlist-item');
+            const bookId = parent.dataset.bookId;
+            const fmt = btn.dataset.fmt;
+            parent.querySelectorAll('.fmt-wishlist-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            // 可选：暂时存储选择的格式，添加时使用
+            parent.dataset.selectedFormat = fmt;
+        });
+    });
+
+    // 绑定加入购物车按钮
+    wishlistContainer.querySelectorAll('.cart-wishlist-add').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const bookId = btn.dataset.bookId;
+            const book = await getBookById(bookId);
+            if (!book) return;
+            const parent = btn.closest('.cart-wishlist-item');
+            const selectedFormat = parent?.dataset.selectedFormat || 'paperback';
+            addToCart(book, selectedFormat);
+            // 可选：显示提示
+            alert(`${book.title} added to cart!`);
+            // 刷新购物车显示
+            renderCartModal();
+        });
+    });
+}
+
+export async function renderCartModal() {
     const currentLang = getCurrentLang();
     if (!cartItemsContainer) return;
 
@@ -71,8 +158,8 @@ export function renderCartModal() {
         if (cartSubtotal) cartSubtotal.textContent = '$0.00';
         if (cartTax) cartTax.textContent = '$0.00';
         if (cartTotal) cartTotal.textContent = '$0.00';
-        // 即使空购物车也要渲染按钮（保持界面一致）
         renderCartButtons();
+        await renderWishlistSection();
         return;
     }
 
@@ -108,7 +195,7 @@ export function renderCartModal() {
     if (cartTax) cartTax.textContent = `$${tax.toFixed(2)}`;
     if (cartTotal) cartTotal.textContent = `$${total.toFixed(2)}`;
 
-    // 重新绑定数量/删除事件
+    // 绑定数量/删除事件
     document.querySelectorAll('.cart-quantity-input').forEach(input => {
         input.addEventListener('change', function(e) {
             const index = this.dataset.index;
@@ -130,6 +217,7 @@ export function renderCartModal() {
     });
 
     renderCartButtons();
+    await renderWishlistSection();
 }
 
 function renderCartButtons() {
@@ -137,39 +225,38 @@ function renderCartButtons() {
     if (!cartActions) return;
 
     const isLoggedIn = !!currentUser;
+    const lang = getCurrentLang();
+    const continueText = lang === 'fr' ? 'Continuer vos achats' : 'Continue Shopping';
+
     const continueBtn = document.createElement('button');
     continueBtn.id = 'continueShoppingBtn';
     continueBtn.className = 'btn-outline-red';
-    continueBtn.innerHTML = `<span>${getCurrentLang() === 'fr' ? 'Continuer vos achats' : 'Continue Shopping'}</span>`;
-
-    let checkoutBtn;
-    if (isLoggedIn) {
-        checkoutBtn = document.createElement('button');
-        checkoutBtn.id = 'checkoutBtn';
-        checkoutBtn.className = 'btn-primary';
-        checkoutBtn.innerHTML = `<i class="fas fa-lock"></i> <span>${getCurrentLang() === 'fr' ? 'Passer à la caisse' : 'Proceed to Checkout'}</span>`;
-        checkoutBtn.addEventListener('click', () => {
-            const event = new CustomEvent('openCheckoutFromCart');
-            window.dispatchEvent(event);
-        });
-    } else {
-        checkoutBtn = document.createElement('button');
-        checkoutBtn.id = 'loginToCheckoutBtn';
-        checkoutBtn.className = 'btn-primary';
-        checkoutBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i> <span>${getCurrentLang() === 'fr' ? 'Connectez-vous pour passer à la caisse' : 'Login to proceed to checkout'}</span>`;
-        checkoutBtn.addEventListener('click', () => {
-            openLoginModal('user');
-        });
-    }
-
-    // 清空原有内容并添加新按钮（左边 Continue，右边 登录/结账）
-    cartActions.innerHTML = '';
-    cartActions.appendChild(continueBtn);
-    cartActions.appendChild(checkoutBtn);
-
-    // 重新绑定 Continue Shopping 事件（关闭购物车模态窗）
+    continueBtn.innerHTML = `<span>${continueText}</span>`;
     continueBtn.addEventListener('click', () => {
         const cartModal = document.getElementById('cartModal');
         if (cartModal) cartModal.classList.remove('active');
     });
+
+    let rightBtn;
+    if (isLoggedIn) {
+        rightBtn = document.createElement('button');
+        rightBtn.id = 'checkoutBtn';
+        rightBtn.className = 'btn-primary';
+        rightBtn.innerHTML = `<i class="fas fa-lock"></i> <span>${lang === 'fr' ? 'Passer à la caisse' : 'Proceed to Checkout'}</span>`;
+        rightBtn.addEventListener('click', () => {
+            window.dispatchEvent(new CustomEvent('openCheckoutFromCart'));
+        });
+    } else {
+        rightBtn = document.createElement('button');
+        rightBtn.id = 'loginToCheckoutBtn';
+        rightBtn.className = 'btn-primary';
+        rightBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i> <span>${lang === 'fr' ? 'Connectez-vous pour passer à la caisse' : 'Login to proceed to checkout'}</span>`;
+        rightBtn.addEventListener('click', () => {
+            openLoginModal('user');
+        });
+    }
+
+    cartActions.innerHTML = '';
+    cartActions.appendChild(continueBtn);
+    cartActions.appendChild(rightBtn);
 }
