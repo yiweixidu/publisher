@@ -40,6 +40,12 @@ export function updateWishlistButtons() {
         const active = ids.has(btn.dataset.wishlistBookid);
         btn.classList.toggle('wishlisted', active);
         btn.title = active ? 'Remove from wishlist' : 'Add to wishlist';
+        // Toggle heart icon: outline ↔ filled
+        const icon = btn.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('far', !active);
+            icon.classList.toggle('fas', active);
+        }
     });
 }
 
