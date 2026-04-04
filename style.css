@@ -2187,11 +2187,17 @@ select.checkout-input {
 
 /* Pages 输入框高度 - 最终版 */
 #formPages {
-    min-height: 30px !important;
-    height: 30px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    flex: none !important;
     resize: none !important;
-    padding: 0.3rem 0.5rem !important;
+    padding: 0.3rem 0.8rem !important;
     font-size: 0.9rem;
+}
+/* Prevent Pages group from stretching to match Language group */
+.form-group.half:has(#formPages) {
+    align-self: flex-start;
 }
 
 /* Add News Button 样式 */
