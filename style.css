@@ -1996,19 +1996,37 @@ select.checkout-input {
  
 /* ========== Admin导航链接样式 ========== */
 .admin-nav-link {
-    color: #ff0000;              
-    border: 1.5px solid #ff0000; 
-    background: white;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;           
+    background: white !important;
+    color: #ff0000 !important;
+    border: 1.5px solid #ff0000 !important;
+    
+    /* ✨ 加大尺寸 */
+    padding: 0.6rem 1.5rem !important;      /* 增加内边距 */
+    font-size: 0.9rem !important;           /* 字号恢复到0.85-0.9 */
+    font-weight: 600;
+    
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    
+    /* ✨ 对标 discover our books button */
+    min-width: 140px;
+    text-align: center;
+    justify-content: center;
 }
 
 .admin-nav-link:hover {
-    background: #ff0000;         
-    color: white;                
+    background: #ff0000 !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 0, 0, 0.2);
 }
- 
+
 .admin-nav-link:active {
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(255, 0, 0, 0.15);
@@ -2160,4 +2178,34 @@ select.checkout-input {
     color: white !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(255, 0, 0, 0.2);
+}
+
+/* Pages 输入框高度 - 最终版 */
+#formPages {
+    min-height: 30px !important;
+    height: 30px !important;
+    resize: none !important;
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.9rem;
+}
+
+/* Add News Button 样式 */
+#addNewsBtn {
+    background-color: white !important;
+    color: #999 !important;
+    border: none !important;
+    padding: 0.5rem 1.2rem !important;
+    border-radius: 4px !important;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#addNewsBtn:hover {
+    background-color: #f5f5f5 !important;
+    color: #666 !important;
+}
+
+#addNewsBtn:active {
+    background-color: #eee !important;
 }
