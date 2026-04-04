@@ -54,6 +54,23 @@ const searchInput = document.getElementById('searchBooks');
 const sortSelect = document.getElementById('sortBooks');
 const addNewBookBtn = document.getElementById('addNewBookBtn');
 const bookFormModal = document.getElementById('bookFormModal');
+// ========== News Form Modal Close Button ==========
+const newsFormModal = document.getElementById('newsFormModal');
+const newsFormClose = document.querySelector('[id*="newsFormModalClose"], .news-form-close');
+
+if (newsFormClose) {
+    newsFormClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (newsFormModal) {
+            newsFormModal.classList.remove('active');
+            // 清空表单
+            document.querySelectorAll('#newsFormModal input, #newsFormModal textarea').forEach(el => {
+                el.value = '';
+            });
+        }
+    });
+}
 const formModalClose = document.getElementById('bookFormModalClose');
 formModalClose?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -68,6 +85,23 @@ formModalClose?.addEventListener('click', (e) => {
     }
 });
 const cancelFormBtn = document.getElementById('cancelFormBtn');
+// ========== Cancel News Form Button ==========
+const newsCancelBtn = document.querySelector('[id*="newsCancelBtn"], [id*="cancelNewsBtn"]');
+
+if (newsCancelBtn) {
+    newsCancelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const modal = document.getElementById('newsFormModal');
+        if (modal) {
+            modal.classList.remove('active');
+            // 清空表单
+            document.querySelectorAll('#newsFormModal input, #newsFormModal textarea').forEach(el => {
+                el.value = '';
+            });
+        }
+    });
+}
 const backToHomeFromAdmin = document.getElementById('backToHomeFromAdmin');
 const modalClose = document.getElementById('modalClose');
 const modalAddToCart = document.getElementById('modalAddToCart');
