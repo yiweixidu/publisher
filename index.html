@@ -24,20 +24,57 @@
                     <span></span>
                 </div>
                 <div class="nav-links" id="navLinks">
-                    <a href="#" id="navHome" data-i18n="navHome">HOME</a>
-                    <a href="#" id="navBooks" data-i18n="navBooks">BOOKS</a>
-                    <a href="#" id="navAbout" data-i18n="navAbout">ABOUT</a>
-                    <a href="#" id="navNews" data-i18n="navNews">NEWS</a>
-                    <div class="cart-icon" id="cartIcon">
+                    <!-- ========== 普通用户导航 ========== -->
+                    <a href="#" id="navHome" data-i18n="navHome" class="nav-user-link">HOME</a>
+                    <a href="#" id="navBooks" data-i18n="navBooks" class="nav-user-link">BOOKS</a>
+                    <a href="#" id="navAbout" data-i18n="navAbout" class="nav-user-link">ABOUT</a>
+                    <a href="#" id="navNews" data-i18n="navNews" class="nav-user-link">NEWS</a>
+                    
+                    <!-- ========== 购物车 ========== -->
+                    <div class="cart-icon nav-user-link" id="cartIcon">
                         <i class="fas fa-shopping-bag"></i>
                         <span class="cart-badge">0</span>
                     </div>
-                    <div id="userSection" class="user-info"></div>
+                    
+                    <!-- ========== 用户账户 ========== -->
+                    <div id="userSection" class="user-info nav-user-link"></div>
+                    
+                    <!-- ========== Admin模式导航 (新增，初始隐藏) ========== -->
+                    <div id="adminNavContainer" class="admin-nav-container" style="display: none; gap: 1rem; align-items: center;">
+                        <!-- MANAGE BOOKS -->
+                        <a href="#" id="adminManageBooksLink" class="admin-nav-link" data-i18n="adminNavManageBooks">
+                            <i class="fas fa-book"></i> MANAGE BOOKS
+                        </a>
+                        
+                        <!-- MANAGE NEWS -->
+                        <a href="#" id="adminManageNewsLink" class="admin-nav-link" data-i18n="adminNavManageNews">
+                            <i class="fas fa-newspaper"></i> MANAGE NEWS
+                        </a>
+                        
+                        <!-- MANAGE USERS (新增) -->
+                        <a href="#" id="adminManageUsersLink" class="admin-nav-link" data-i18n="adminNavManageUsers">
+                            <i class="fas fa-users"></i> MANAGE USERS
+                        </a>
+                        
+                        <!-- MANAGE COMMENTS (新增) -->
+                        <a href="#" id="adminManageCommentsLink" class="admin-nav-link" data-i18n="adminNavManageComments">
+                            <i class="fas fa-comments"></i> MANAGE COMMENTS
+                        </a>
+                        
+                        <!-- 分隔符 -->
+                        <div class="admin-nav-divider"></div>
+                        
+                        <!-- LOGOUT按钮 -->
+                        <button id="adminLogoutBtn" class="btn-outline-red admin-logout" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                            <i class="fas fa-sign-out-alt"></i> LOGOUT
+                        </button>
+                    </div>
+                    
+                    <!-- ========== Admin开关（始终显示）========== -->
                     <div class="admin-toggle hidden" id="adminToggle">
                         <span id="adminToggleText" style="font-size:0.8rem;">Admin</span>
                         <span id="adminSwitch" class="switch" role="switch" tabindex="0"></span>
                     </div>
-
                 </div>
             </nav>
 
