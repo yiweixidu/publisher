@@ -864,6 +864,7 @@ async function init() {
     checkHashForReview();
     handleRoute();
     updateAdminToggleVisibility();
+    updateAdminNavLink();
 
     const redirect = sessionStorage.redirect;
     if (redirect) {
@@ -871,6 +872,7 @@ async function init() {
         history.replaceState(null, '', redirect);
         await handleRoute();
         updateAdminToggleVisibility();
+        updateAdminNavLink();
     }
 }
 
