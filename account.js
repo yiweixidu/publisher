@@ -93,16 +93,16 @@ export async function updateUserPassword(newPassword) {
     if (error) throw error;
 }
 
-export async function openAccountDashboard() {
-    console.log('openAccountDashboard called, currentUser:', currentUser);
-    if (!currentUser) return;
+export async function openAccountDashboard(forcedUser = null) {
+    const user = forcedUser || currentUser;
+    console.log('openAccountDashboard called, user:', user);
+    if (!user) return;
     const overlay = document.getElementById('accountModal');
-    console.log('overlay element:', overlay);
     if (!overlay) return;
 
-    let displayName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
+    let displayName = user.user_metadata?.display_name || user.email.split('@')[0];
     try {
-        const { data } = await supabase.from('profiles').select('display_name').eq('id', currentUser.id).single();
+        const { data } = await supabase.from('profiles').select('display_name').eq('id', user.id).single();
         if (data?.display_name) displayName = data.display_name;
     } catch(_) {}
 
