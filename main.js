@@ -721,31 +721,10 @@ newsMoreLink?.addEventListener('click', e => {
     navigateTo('/news');
 });
 
-// About button → open contact modal
+// About button
 document.querySelector('.about-text button')?.addEventListener('click', e => {
     e.preventDefault();
-    const contactModal = document.getElementById('contactModal');
-    if (contactModal) contactModal.classList.add('active');
-});
-
-// Contact modal: close
-document.getElementById('contactModalClose')?.addEventListener('click', () => {
-    document.getElementById('contactModal')?.classList.remove('active');
-});
-
-// Contact modal: submit → mailto
-document.getElementById('contactForm')?.addEventListener('submit', e => {
-    e.preventDefault();
-    const firstName = document.getElementById('contactFirstName')?.value.trim();
-    const lastName  = document.getElementById('contactLastName')?.value.trim();
-    const email     = document.getElementById('contactEmail')?.value.trim();
-    const message   = document.getElementById('contactMessage')?.value.trim();
-    if (!firstName || !lastName || !email || !message) return;
-    const subject = encodeURIComponent(`Message from ${firstName} ${lastName}`);
-    const body    = encodeURIComponent(`From: ${firstName} ${lastName}\nEmail: ${email}\n\n${message}`);
-    window.location.href = `mailto:info@acerbooks.ca?subject=${subject}&body=${body}`;
-    document.getElementById('contactModal')?.classList.remove('active');
-    document.getElementById('contactForm')?.reset();
+    openLoginModal('user');
 });
 
 // Admin pages
