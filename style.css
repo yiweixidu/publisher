@@ -1696,3 +1696,99 @@ select.checkout-input {
 .review-totals .total-row strong {
     color: #ff0000 !important;
 }
+
+/* ========== 最终结账样式修复 ========== */
+
+/* 强制所有结账输入框降低高度（覆盖所有优先级） */
+.checkout-modal-content .checkout-input,
+#coStep1 .checkout-input,
+#coStep1 input,
+#coStep1 select,
+#shipFirstName, #shipLastName,
+#shipCity, #shipProvince, #shipPostal, #shipCountry,
+#expiry, #cvv {
+    height: 36px !important;
+    padding: 0.3rem 0.8rem !important;
+    line-height: 1.2 !important;
+    font-size: 0.9rem !important;
+    box-sizing: border-box !important;
+}
+
+/* Delivery 选项描述文字改为深灰色 */
+.shipping-option .so-desc {
+    color: #555 !important;
+    font-size: 0.78rem;
+}
+
+/* 确保信用卡输入框内的图标不干扰高度 */
+.card-input-wrap .checkout-input {
+    padding-right: 2.5rem !important;
+}
+
+/* 自定义分享弹窗 */
+.share-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+.share-modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 280px;
+    max-width: 90%;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+.share-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+    font-size: 1rem;
+}
+.share-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #999;
+}
+.share-modal-close:hover {
+    color: #ff0000;
+}
+.share-options {
+    padding: 8px 0;
+}
+.share-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1rem;
+    text-align: left;
+    transition: background 0.2s;
+}
+.share-option:hover {
+    background: #f5f5f5;
+}
+.share-option i {
+    width: 24px;
+    font-size: 1.2rem;
+}
+.share-option[data-platform="facebook"] i { color: #1877f2; }
+.share-option[data-platform="twitter"] i { color: #1da1f2; }
+.share-option[data-platform="instagram"] i { color: #e4405f; }
+.share-option[data-platform="wechat"] i { color: #2b9c2b; }
