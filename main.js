@@ -506,6 +506,35 @@ backToHomeFromBooks?.addEventListener('click', () => navigateTo('/'));
 backToBooks?.addEventListener('click', () => navigateTo('/books'));
 viewLink?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('/books'); });
 
+// Navbar buttons linking to sections
+document.getElementById('navHome')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('/');
+});
+document.getElementById('navBooks')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    resetBooksPageState();
+    navigateTo('/books');
+});
+document.getElementById('navAbout')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('/');
+    setTimeout(() => {
+        const aboutSection = document.getElementById('sectionAbout');
+        if (aboutSection) aboutSection.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+});
+document.getElementById('navNews')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('/news');
+});
+
+// Newsletter link in footer
+document.getElementById('newsletterLink')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo('/news');
+});
+
 // Admin management
 addNewBookBtn?.addEventListener('click', () => openBookFormModal());
 searchInput?.addEventListener('input', (e) => setAdminSearchTerm(e.target.value));
@@ -646,7 +675,7 @@ window.addEventListener('adminLogout', () => {
     updateAdminToggleVisibility();
 });
 
-// 🔁 FIX #5: Refresh cart modal on user login so button changes
+// FIX #5: Refresh cart modal on user login so button changes
 window.addEventListener('userLogin', () => {
     if (modalOverlay?.classList.contains('active') && currentModalBook) {
         renderReviews(currentModalBook.id, currentLang, currentUser);
@@ -677,7 +706,7 @@ window.addEventListener('userLogout', () => {
     updateAdminToggleVisibility();
 });
 
-// 🔁 FIX #1 & #2: Refresh wishlist UI components when wishlist changes
+// FIX #1 & #2: Refresh wishlist UI components when wishlist changes
 window.addEventListener('wishlistUpdated', () => {
     // Refresh cart modal if open
     const cartModalEl = document.getElementById('cartModal');
@@ -849,8 +878,32 @@ async function init() {
 
 init();
 
-window.addEventListener('pageshow', (e) => {
+// Fix for session persistence after leaving page (bfcache)
+window.addEventListener('pageshow', async (e) => {
     if (e.persisted) {
-        import('./auth.js').then(({ initAuth }) => initAuth());
+        await import('./auth.js').then(async ({ initAuth, currentUser: newUser }) => {
+            await initAuth();  // re-sync session
+            // Force UI update
+            const { updateUserUI } = await import('./auth.js');
+            await updateUserUI();
+            // Re-render current page content
+            const mainContent = document.getElementById('mainContent');
+            const booksPage = document.getElementById('booksPage');
+            const detailPage = document.getElementById('bookDetailPage');
+            const newsListPage = document.getElementById('newsListPage');
+            const newsDetailPage = document.getElementById('newsDetailPage');
+            if (mainContent.style.display === 'block') {
+                await renderBooks();
+                await renderNews();
+            } else if (booksPage.style.display === 'block') {
+                await renderAllBooks();
+            } else if (detailPage.style.display === 'block' && window.currentModalBook) {
+                renderBookDetail(window.currentModalBook);
+            } else if (newsListPage.style.display === 'block') {
+                await renderAllNews();
+            } else if (newsDetailPage.style.display === 'block' && window.currentNewsItem) {
+                renderNewsDetail(window.currentNewsItem);
+            }
+        });
     }
 });

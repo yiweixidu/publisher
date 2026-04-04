@@ -87,14 +87,14 @@ function showShareModal(reviewId, reviewText, reviewUsername, shareUrl) {
                 case 'instagram':
                     // Instagram 没有直接的分享 URL，复制链接并提示
                     navigator.clipboard.writeText(shareUrl).then(() => {
-                        alert('Link copied! Open Instagram to share.');
+                        alert('Link copied! Please open Instagram and paste to share.');
                     }).catch(() => {
                         alert('Please copy the link: ' + shareUrl);
                     });
                     break;
                 case 'wechat':
                     navigator.clipboard.writeText(shareUrl).then(() => {
-                        alert('Link copied! Open WeChat and paste to share.');
+                        alert('Link copied! Please open WeChat and paste to a chat or Moments.');
                     }).catch(() => {
                         alert('Please copy the link: ' + shareUrl);
                     });
