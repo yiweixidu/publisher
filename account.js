@@ -1,7 +1,13 @@
 // account.js — User Account Dashboard
 import { currentUser, updateUserUI } from './auth.js';
 import { supabase } from './supabaseClient.js';
-import { normalizeCover } from './utils.js';
+
+// Fix relative cover paths (shared logic with ui.js / cart.js)
+function normalizeCover(cover) {
+    if (!cover) return '';
+    if (cover.startsWith('http') || cover.startsWith('/') || cover.startsWith('data:')) return cover;
+    return '/' + cover;
+}
 
 export function getWishlist() { return JSON.parse(localStorage.getItem('acerWishlist') || '[]'); }
 function _saveWishlist(list)  { localStorage.setItem('acerWishlist', JSON.stringify(list)); }
