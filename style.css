@@ -1895,3 +1895,81 @@ select.checkout-input {
     text-align: center;
     padding: 0.8rem;
 }
+
+/* ========== Acer Books Checkout 表单紧凑化修复 ========== */
+/* 
+   加入这段代码到 style.css 的末尾
+   这会改进checkout表单的视觉紧凑性
+*/
+
+/* 减少表单组的垂直间距 */
+.checkout-modal-content .form-group {
+    margin-bottom: 0.7rem !important;
+}
+
+/* 减少表单行之间的gap */
+.checkout-modal-content .form-row {
+    gap: 0.6rem !important;
+}
+
+/* 优化所有checkout输入框的高度、padding和行高 */
+.checkout-input,
+#coStep1 input,
+#coStep1 select,
+#shipFirstName, #shipLastName,
+#shipCity, #shipProvince, #shipPostal, #shipCountry,
+#cardName, #cardNumber, #expiry, #cvv {
+    height: 36px !important;
+    padding: 0.2rem 0.7rem !important;
+    line-height: 1.1 !important;
+    font-size: 0.9rem !important;
+    box-sizing: border-box !important;
+}
+
+/* 微调label的下边距，使其更接近输入框 */
+.checkout-modal-content .form-group label {
+    margin-bottom: 0.2rem !important;
+    font-size: 0.85rem !important;
+}
+
+/* 确保select元素高度一致 */
+select.checkout-input {
+    height: 36px !important;
+    padding: 0.2rem 0.7rem !important;
+}
+
+/* 支付卡输入框的图标不应该增加高度 */
+.card-input-wrap .checkout-input {
+    padding-right: 2.2rem !important;
+}
+
+/* Delivery选项调整 */
+.shipping-option {
+    padding: 1rem !important;
+    gap: 0.8rem !important;
+}
+
+/* ========== 移动设备适配 ========== */
+@media (max-width: 600px) {
+    .checkout-modal-content .form-group {
+        margin-bottom: 0.6rem !important;
+    }
+    
+    .checkout-modal-content .form-row {
+        gap: 0.5rem !important;
+    }
+    
+    .checkout-input,
+    #coStep1 input,
+    #coStep1 select {
+        height: 40px !important;
+        padding: 0.3rem 0.8rem !important;
+        font-size: 1rem !important;
+    }
+    
+    /* 在移动设备上增加label间距便于阅读 */
+    .checkout-modal-content .form-group label {
+        font-size: 0.9rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+}
