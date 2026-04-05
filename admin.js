@@ -559,6 +559,20 @@ export async function renderAdminNewsList() {
         const dateB = b.event_date ? new Date(b.event_date) : 0;
         return dateB - dateA;
     });
+
+    // Show subscriber count banner
+    let subCount = 0;
+    try {
+        const { getSubscriberCount } = await import('./newsletter.js');
+        subCount = await getSubscriberCount();
+    } catch (_) {}
+    const subBanner = `
+        <div class="anr-sub-banner">
+            <i class="fas fa-users"></i>
+            <strong>${subCount}</strong> active subscriber${subCount !== 1 ? 's' : ''}
+            <span class="anr-sub-hint">— use <i class="fas fa-paper-plane"></i> Send to deliver a news item to all subscribers by email</span>
+        </div>`;
+
     let html = sorted.map(item => `
         <div class="admin-news-row" data-id="${item.id}">
             <div class="anr-date">${item.display_date || ''}</div>
@@ -571,12 +585,17 @@ export async function renderAdminNewsList() {
                         ${item.status === 'published' ? 'Unpublish' : 'Publish'}
                     </button>
                     <button class="edit-news anr-btn" data-id="${item.id}"><i class="fas fa-edit"></i> Edit</button>
+                    ${item.status === 'published'
+                        ? `<button class="send-newsletter anr-btn anr-btn--send" data-id="${item.id}" title="Send to all subscribers">
+                               <i class="fas fa-paper-plane"></i> Send
+                           </button>`
+                        : ''}
                     <button class="delete-news anr-btn anr-btn--danger" data-id="${item.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </div>
         </div>
     `).join('');
-    document.getElementById('adminNewsList').innerHTML = html;
+    document.getElementById('adminNewsList').innerHTML = subBanner + html;
 
     document.querySelectorAll('.toggle-status').forEach(btn => {
         btn.addEventListener('click', async (e) => {
@@ -614,6 +633,41 @@ export async function renderAdminNewsList() {
             } catch (err) {
                 console.error('Delete error:', err);
                 showToast('Delete failed: ' + err.message, 'error');
+            }
+        });
+    });
+
+    // ── Send Newsletter ──────────────────────────────────────────────────────
+    document.querySelectorAll('.send-newsletter').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id    = btn.dataset.id;
+            const item  = newsItems.find(n => n.id === id);
+            if (!item) return;
+
+            let subCount = 0;
+            try {
+                const { getSubscriberCount } = await import('./newsletter.js');
+                subCount = await getSubscriberCount();
+            } catch (_) {}
+
+            if (!confirm(
+                `Send "${item.title?.en || 'this news'}" to ${subCount} subscriber${subCount !== 1 ? 's' : ''}?\n\n` +
+                `This will dispatch a newsletter email immediately.`
+            )) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            try {
+                const { currentAccessToken } = await import('./auth.js');
+                const { sendNewsletterEmail }  = await import('./newsletter.js');
+                const sent = await sendNewsletterEmail(id, currentAccessToken);
+                showToast(`Newsletter sent to ${sent} subscriber${sent !== 1 ? 's' : ''}! 📨`);
+            } catch (err) {
+                console.error('Send newsletter error:', err);
+                showToast('Send failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
             }
         });
     });
