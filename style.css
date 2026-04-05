@@ -2265,3 +2265,292 @@ select.checkout-input {
 .wishlisted i {
     color: #ff0000 !important;
 }
+/* ================================================================
+   Newsletter Modal — two-panel layout mirroring account modal
+   ================================================================ */
+
+.newsletter-modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    width: min(780px, 96vw);
+    max-height: 90vh;
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+}
+
+/* ── Sidebar ── */
+.nl-sidebar {
+    width: 210px;
+    flex-shrink: 0;
+    background: linear-gradient(160deg, #1a0000 0%, #4a0000 60%, #6b0000 100%);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.nl-sidebar-brand {
+    padding: 2.2rem 1.4rem 1.6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.nl-sidebar-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #cc0000;
+    border: 3px solid rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #fff;
+    margin-bottom: 0.85rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.nl-sidebar-title {
+    color: #fff;
+    font-family: 'Lora', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+}
+
+.nl-sidebar-sub {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.nl-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0;
+    flex: 1;
+}
+
+.nl-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 1.4rem;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+    letter-spacing: 0.02em;
+}
+
+.nl-nav-item:hover {
+    color: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.05);
+}
+
+.nl-nav-item.active {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+    border-left-color: #ff4444;
+}
+
+.nl-sidebar-viewall {
+    margin: auto 1.2rem 1.4rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.65rem 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background 0.2s, border-color 0.2s;
+    letter-spacing: 0.02em;
+}
+
+.nl-sidebar-viewall:hover {
+    background: rgba(255,68,68,0.3);
+    border-color: #ff4444;
+}
+
+/* ── Body (right panel) ── */
+.nl-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.8rem 1.6rem;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── News list ── */
+.nl-news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.nl-news-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: 10px;
+    background: #fafafa;
+    border: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.18s, box-shadow 0.18s, transform 0.15s;
+    outline: none;
+}
+
+.nl-news-item:hover,
+.nl-news-item:focus {
+    background: #fff5f5;
+    border-color: #ffcccc;
+    box-shadow: 0 3px 12px rgba(200,0,0,0.08);
+    transform: translateY(-1px);
+}
+
+.nl-news-item--featured {
+    background: #fff0f0;
+    border: 1.5px solid #ffb3b3;
+}
+
+.nl-news-item--featured:hover,
+.nl-news-item--featured:focus {
+    background: #ffe8e8;
+    border-color: #ff6666;
+    box-shadow: 0 4px 16px rgba(200,0,0,0.12);
+}
+
+.nl-news-thumb {
+    width: 62px;
+    height: 62px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: #ddd;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nl-news-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.nl-badge {
+    display: inline-block;
+    background: #cc0000;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-bottom: 0.35rem;
+}
+
+.nl-news-date {
+    font-size: 0.73rem;
+    color: #cc0000;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+}
+
+.nl-news-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 0.3rem;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nl-news-summary {
+    font-size: 0.8rem;
+    color: #666;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.nl-news-arrow {
+    flex-shrink: 0;
+    color: #ccc;
+    font-size: 0.85rem;
+    align-self: center;
+    transition: color 0.15s, transform 0.15s;
+}
+
+.nl-news-item:hover .nl-news-arrow,
+.nl-news-item:focus .nl-news-arrow {
+    color: #cc0000;
+    transform: translateX(3px);
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+    .newsletter-modal-content {
+        flex-direction: column;
+        max-height: 95vh;
+    }
+
+    .nl-sidebar {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .nl-sidebar-brand {
+        flex-direction: row;
+        padding: 0;
+        border-bottom: none;
+        gap: 0.7rem;
+        text-align: left;
+        flex: 1;
+    }
+
+    .nl-sidebar-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+        margin-bottom: 0;
+    }
+
+    .nl-sidebar-title { font-size: 0.88rem; }
+    .nl-sidebar-nav   { display: none; }
+
+    .nl-sidebar-viewall {
+        margin: 0;
+        font-size: 0.7rem;
+        padding: 0.5rem 0.8rem;
+        white-space: nowrap;
+    }
+
+    .nl-body { padding: 1.2rem; }
+}
