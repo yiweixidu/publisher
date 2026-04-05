@@ -79,12 +79,19 @@ export async function getSubscriberCount() {
  * @param {string} accessToken – Admin JWT (from auth.js currentAccessToken)
  * @returns {number}           – Number of emails sent
  */
-export async function sendNewsletterEmail(newsItemId, accessToken) {
+export async function sendNewsletterEmail(newsItemId) {
+    // Always get the latest session token
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+        throw new Error('No active session. Please log in again.');
+    }
+    const token = session.access_token;
+
     const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-newsletter`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ newsItemId })
     });
