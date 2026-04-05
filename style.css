@@ -2536,3 +2536,143 @@ select.checkout-input {
     .acc-review-row { flex-wrap:wrap; }
     .acc-comments-block { padding-left:1rem; }
 }
+
+/* fmt-badge: single-format label (PB only or HC only) */
+.fmt-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.12rem 0.45rem;
+    border-radius: 3px;
+    background: #f0f0f0;
+    color: #555;
+    border: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+/* Newsletter send button in admin */
+.anr-sub-banner { display:flex; align-items:center; gap:0.5rem; background:#fff8f8; border:1px solid #ffd5d5; border-radius:8px; padding:0.65rem 1rem; font-size:0.82rem; color:#555; margin-bottom:1rem; flex-wrap:wrap; }
+.anr-sub-banner i { color:#cc0000; }
+.anr-sub-banner strong { color:#cc0000; font-size:1rem; }
+.anr-sub-hint { color:#999; font-size:0.75rem; }
+.anr-btn--send { background:#1a6e3c !important; color:#fff !important; border-color:#1a6e3c !important; }
+.anr-btn--send:hover { background:#14562f !important; }
+
+/* ── Newsletter modal (two-panel) ── */
+.newsletter-modal-content { position:relative; display:flex; flex-direction:row; width:min(780px,96vw); max-height:90vh; background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.22); }
+.nl-sidebar { width:210px; flex-shrink:0; background:linear-gradient(160deg,#1a0000 0%,#4a0000 60%,#6b0000 100%); display:flex; flex-direction:column; overflow-y:auto; }
+.nl-sidebar-brand { padding:2.2rem 1.4rem 1.6rem; display:flex; flex-direction:column; align-items:center; text-align:center; border-bottom:1px solid rgba(255,255,255,0.1); }
+.nl-sidebar-icon { width:60px; height:60px; border-radius:50%; background:#cc0000; border:3px solid rgba(255,255,255,0.25); display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#fff; margin-bottom:0.85rem; box-shadow:0 4px 16px rgba(0,0,0,0.3); }
+.nl-sidebar-title { color:#fff; font-family:'Lora',serif; font-size:1rem; font-weight:700; line-height:1.3; margin-bottom:0.25rem; }
+.nl-sidebar-sub { color:rgba(255,255,255,0.5); font-size:0.72rem; letter-spacing:0.04em; text-transform:uppercase; }
+.nl-sidebar-nav { display:flex; flex-direction:column; padding:1rem 0; flex:1; }
+.nl-nav-item { display:flex; align-items:center; gap:0.6rem; padding:0.7rem 1.4rem; color:rgba(255,255,255,0.6); font-size:0.82rem; font-weight:500; cursor:pointer; border-left:3px solid transparent; transition:color 0.15s,background 0.15s,border-color 0.15s; }
+.nl-nav-item:hover { color:rgba(255,255,255,0.85); background:rgba(255,255,255,0.05); }
+.nl-nav-item.active { color:#fff; background:rgba(255,255,255,0.1); border-left-color:#ff4444; }
+.nl-subscribe-btn { margin:auto 1.2rem 1.4rem; background:#cc0000; border:none; border-radius:8px; color:#fff; font-size:0.8rem; font-weight:700; padding:0.75rem 1rem; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:0.3rem; text-align:center; line-height:1.3; transition:background 0.2s,transform 0.15s,box-shadow 0.2s; box-shadow:0 3px 10px rgba(0,0,0,0.25); }
+.nl-subscribe-btn:hover:not(:disabled) { background:#aa0000; transform:translateY(-1px); box-shadow:0 5px 16px rgba(0,0,0,0.35); }
+.nl-subscribe-btn:disabled { opacity:0.65; cursor:not-allowed; }
+.nl-subscribe-btn--active { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.35); box-shadow:none; }
+.nl-subscribe-btn--active:hover:not(:disabled) { background:rgba(255,60,60,0.25); border-color:#ff6666; transform:none; }
+.nl-unsub-hint { font-size:0.65rem; font-weight:400; opacity:0.7; }
+.nl-body { flex:1; overflow-y:auto; padding:1.8rem 1.6rem; display:flex; flex-direction:column; }
+.nl-news-list { display:flex; flex-direction:column; gap:0.75rem; flex:1; }
+.nl-issue-card { border-radius:12px; border:1.5px solid #f0d0d0; overflow:hidden; cursor:pointer; background:#fff; transition:box-shadow 0.2s,transform 0.18s; margin-bottom:0.5rem; outline:none; }
+.nl-issue-card:hover,.nl-issue-card:focus { box-shadow:0 6px 24px rgba(180,0,0,0.13); transform:translateY(-2px); }
+.nl-issue-header { display:flex; align-items:center; justify-content:space-between; padding:0.6rem 1rem 0.5rem; background:#fff8f8; border-bottom:1px solid #f5e0e0; font-size:0.72rem; }
+.nl-issue-label { color:#cc0000; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; display:flex; align-items:center; gap:0.35em; }
+.nl-issue-label i { font-size:0.5rem; animation:nl-pulse 1.8s infinite; }
+@keyframes nl-pulse { 0%,100%{opacity:1}50%{opacity:0.35} }
+.nl-issue-date { color:#999; display:flex; align-items:center; gap:0.35em; }
+.nl-issue-hero { width:100%; height:170px; background-size:cover; background-position:center; background-color:#f5e5e5; }
+.nl-issue-hero--placeholder { display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#3a0000,#7a0000); font-size:2.5rem; color:rgba(255,255,255,0.25); }
+.nl-issue-body { padding:1rem 1.1rem 1.1rem; }
+.nl-issue-title { font-family:'Lora',serif; font-size:1.15rem; font-weight:700; color:#1a1a1a; margin:0 0 0.55rem; line-height:1.35; }
+.nl-issue-summary { font-size:0.85rem; color:#555; line-height:1.6; margin:0 0 0.9rem; }
+.nl-issue-cta { display:inline-flex; align-items:center; gap:0.4em; color:#cc0000; font-size:0.82rem; font-weight:700; transition:gap 0.15s; }
+.nl-issue-card:hover .nl-issue-cta { gap:0.65em; }
+.nl-compact-list { display:flex; flex-direction:column; gap:0.6rem; }
+.nl-news-item { display:flex; align-items:flex-start; gap:1rem; padding:0.9rem 1rem; border-radius:10px; background:#fafafa; border:1px solid #f0f0f0; cursor:pointer; transition:background 0.18s,box-shadow 0.18s,transform 0.15s; outline:none; }
+.nl-news-item:hover,.nl-news-item:focus { background:#fff5f5; border-color:#ffcccc; box-shadow:0 3px 12px rgba(200,0,0,0.08); transform:translateY(-1px); }
+.nl-news-thumb { width:62px; height:62px; flex-shrink:0; border-radius:8px; background:#ddd; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.nl-news-info { flex:1; min-width:0; }
+.nl-news-date { font-size:0.73rem; color:#cc0000; font-weight:600; margin-bottom:0.25rem; display:flex; align-items:center; gap:0.3em; }
+.nl-news-title { font-size:0.9rem; font-weight:700; color:#1a1a1a; margin-bottom:0.3rem; line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nl-news-summary { font-size:0.8rem; color:#666; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.nl-news-arrow { flex-shrink:0; color:#ccc; font-size:0.85rem; align-self:center; transition:color 0.15s,transform 0.15s; }
+.nl-news-item:hover .nl-news-arrow,.nl-news-item:focus .nl-news-arrow { color:#cc0000; transform:translateX(3px); }
+
+/* Unsubscribe survey */
+.unsub-modal-content { position:relative; background:#fff; border-radius:16px; padding:2.2rem 2rem 1.8rem; width:min(420px,96vw); box-shadow:0 20px 60px rgba(0,0,0,0.2); display:flex; flex-direction:column; }
+.unsub-header { text-align:center; margin-bottom:1.4rem; }
+.unsub-icon { width:56px; height:56px; border-radius:50%; background:#fff0f0; border:2px solid #ffcccc; display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:#cc0000; margin:0 auto 0.8rem; }
+.unsub-title { font-family:'Lora',serif; font-size:1.2rem; font-weight:700; color:#1a1a1a; margin:0 0 0.3rem; }
+.unsub-sub { font-size:0.83rem; color:#777; line-height:1.5; margin:0; }
+.unsub-reasons { display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.8rem; }
+.unsub-reason-row { display:flex; align-items:center; gap:0.7rem; padding:0.55rem 0.8rem; border-radius:8px; border:1px solid #eee; cursor:pointer; font-size:0.86rem; color:#333; transition:background 0.15s,border-color 0.15s; }
+.unsub-reason-row:hover { background:#fff5f5; border-color:#ffcccc; }
+.unsub-reason-row input[type="radio"] { accent-color:#cc0000; flex-shrink:0; }
+.unsub-other-input { width:100%; box-sizing:border-box; border:1px solid #ddd; border-radius:8px; padding:0.6rem 0.8rem; font-size:0.84rem; resize:none; font-family:inherit; color:#333; margin-bottom:0.6rem; }
+.unsub-other-input:focus { outline:none; border-color:#cc0000; }
+.unsub-actions { display:flex; flex-direction:column; gap:0.6rem; margin-top:0.4rem; }
+.unsub-keep-btn,.unsub-confirm-btn { width:100%; }
+
+/* Manage Users */
+.admin-users-list { display:flex; flex-direction:column; gap:0; }
+.admin-user-row { display:flex; align-items:center; gap:1rem; padding:0.85rem 1rem; border-bottom:1px solid #f2f2f2; background:#fff; transition:background 0.12s; }
+.admin-user-row:first-child { border-top:1px solid #f2f2f2; border-radius:8px 8px 0 0; }
+.admin-user-row:last-child { border-radius:0 0 8px 8px; }
+.admin-user-row:hover { background:#fff8f8; }
+.aur-avatar { width:38px; height:38px; border-radius:50%; background:#cc0000; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:700; flex-shrink:0; border:2px solid rgba(204,0,0,0.15); }
+.aur-avatar--admin { background:linear-gradient(135deg,#1a0000,#6b0000); border-color:rgba(107,0,0,0.25); }
+.aur-info { flex:1; min-width:0; }
+.aur-name { font-size:0.9rem; font-weight:600; color:#1a1a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.aur-meta { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-top:0.2rem; }
+.aur-chip { display:inline-flex; align-items:center; gap:0.3em; font-size:0.7rem; padding:0.15rem 0.5rem; border-radius:20px; font-weight:500; }
+.aur-chip--sub   { background:#fff0f0; color:#cc0000; border:1px solid #ffcccc; }
+.aur-chip--nosub { background:#f7f7f7; color:#aaa;    border:1px solid #e8e8e8; }
+.aur-chip--date  { background:#f7f7f7; color:#888;    border:1px solid #eee; }
+.aur-role-badge { display:inline-block; font-size:0.68rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; padding:0.22rem 0.65rem; border-radius:4px; flex-shrink:0; }
+.aur-role-badge--admin { background:#1a0000; color:#fff; }
+.aur-role-badge--user  { background:#f0f0f0; color:#555; border:1px solid #ddd; }
+.aur-actions { display:flex; align-items:center; gap:0.4rem; flex-shrink:0; }
+.aur-count--admin { color:#1a6e3c !important; }
+.aur-count--sub   { color:#cc0000 !important; }
+
+/* Manage Comments */
+.admin-comments-list { display:flex; flex-direction:column; gap:0.75rem; }
+.admin-comment-card { background:#fff; border:1px solid #eee; border-radius:10px; overflow:hidden; transition:box-shadow 0.15s; }
+.admin-comment-card:hover { box-shadow:0 3px 14px rgba(0,0,0,0.07); }
+.acc-book-strip { display:flex; align-items:center; gap:0.65rem; padding:0.55rem 1rem; background:#fafafa; border-bottom:1px solid #f0f0f0; }
+.acc-book-thumb { width:32px; height:44px; border-radius:4px; background-size:cover; background-position:center; flex-shrink:0; border:1px solid #e8e8e8; }
+.acc-book-thumb--blank { background:linear-gradient(135deg,#3a0000,#7a0000); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.4); font-size:0.8rem; }
+.acc-book-label { flex:1; font-size:0.8rem; font-weight:700; color:#cc0000; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.acc-comment-badge { font-size:0.68rem; background:#fff0f0; color:#cc0000; border:1px solid #ffcccc; border-radius:20px; padding:0.15rem 0.55rem; display:inline-flex; align-items:center; gap:0.3em; flex-shrink:0; }
+.acc-review-row { display:flex; align-items:flex-start; gap:0.75rem; padding:0.85rem 1rem; }
+.acc-reviewer-avatar { width:34px; height:34px; border-radius:50%; background:#cc0000; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.9rem; font-weight:700; flex-shrink:0; }
+.acc-review-body { flex:1; min-width:0; }
+.acc-review-meta { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.3rem; flex-wrap:wrap; }
+.acc-reviewer-name { font-size:0.85rem; color:#1a1a1a; }
+.acc-review-date { font-size:0.72rem; color:#aaa; }
+.acc-review-text { font-size:0.84rem; color:#444; line-height:1.55; margin:0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.acc-comments-block { border-top:1px solid #f5f5f5; background:#fafafa; padding:0.4rem 1rem 0.6rem 3.5rem; display:flex; flex-direction:column; gap:0.5rem; }
+.acc-comment-item { display:flex; align-items:flex-start; gap:0.55rem; padding:0.45rem 0.65rem; background:#fff; border:1px solid #efefef; border-radius:8px; }
+.acc-comment-avatar { width:26px; height:26px; border-radius:50%; background:#f0f0f0; color:#666; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; flex-shrink:0; }
+.acc-comment-body { flex:1; min-width:0; }
+.acc-comment-user { font-size:0.75rem; font-weight:700; color:#333; margin-right:0.4em; }
+.acc-comment-date { font-size:0.68rem; color:#bbb; }
+.acc-comment-text { font-size:0.8rem; color:#555; margin:0.2rem 0 0; line-height:1.45; }
+
+@media (max-width:600px) {
+    .newsletter-modal-content { flex-direction:column; max-height:95vh; }
+    .nl-sidebar { width:100%; flex-direction:row; align-items:center; padding:0.8rem 1rem; border-bottom:1px solid rgba(255,255,255,0.1); }
+    .nl-sidebar-brand { flex-direction:row; padding:0; border-bottom:none; gap:0.7rem; text-align:left; flex:1; }
+    .nl-sidebar-icon { width:40px; height:40px; font-size:1rem; margin-bottom:0; }
+    .nl-sidebar-nav { display:none; }
+    .nl-subscribe-btn { margin:0; font-size:0.7rem; padding:0.5rem 0.8rem; }
+    .nl-body { padding:1.2rem; }
+    .admin-user-row { flex-wrap:wrap; }
+    .aur-actions { width:100%; justify-content:flex-end; }
+    .acc-comments-block { padding-left:1rem; }
+}
