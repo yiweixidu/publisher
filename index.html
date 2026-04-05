@@ -874,6 +874,70 @@
         </div>
     </div>
 
+
+    <!-- ══════════════════════════════════════════════
+         Admin: Manage Users
+    ══════════════════════════════════════════════ -->
+    <div id="adminUsersPage" style="display:none;">
+        <div class="container">
+            <div class="page-header">
+                <h2>Manage Users</h2>
+                <div class="page-header-actions">
+                    <button class="btn-outline-red" id="backToHomeFromAdminUsers">
+                        <i class="fas fa-arrow-left"></i> Back to Home
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="admin-controls">
+                <input type="text" id="searchUsers"
+                       placeholder="Search by display name…"
+                       style="flex:1;">
+                <select id="filterUserRole" class="books-filter-select">
+                    <option value="">All Roles</option>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+
+            <!-- Stats banner (populated by JS) -->
+            <div id="adminUsersBanner" class="anr-sub-banner" style="margin-bottom:1rem;"></div>
+
+            <!-- User list (populated by JS) -->
+            <div id="adminUsersList" class="admin-users-list"></div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         Admin: Manage Comments
+    ══════════════════════════════════════════════ -->
+    <div id="adminCommentsPage" style="display:none;">
+        <div class="container">
+            <div class="page-header">
+                <h2>Manage Comments</h2>
+                <div class="page-header-actions">
+                    <button class="btn-outline-red" id="backToHomeFromAdminComments">
+                        <i class="fas fa-arrow-left"></i> Back to Home
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search bar -->
+            <div class="admin-controls">
+                <input type="text" id="searchComments"
+                       placeholder="Search by book, reviewer, or text…"
+                       style="flex:1;">
+            </div>
+
+            <!-- Stats banner (populated by JS) -->
+            <div id="adminCommentsBanner" class="anr-sub-banner" style="margin-bottom:1rem;"></div>
+
+            <!-- Comments list (populated by JS) -->
+            <div id="adminCommentsList" class="admin-comments-list"></div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script type="module" src="main.js"></script>

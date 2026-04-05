@@ -2,7 +2,7 @@
 import { newsItems } from './data.js';
 import { books } from './data.js';
 import { renderBooks, renderAllBooks, renderBookDetail, renderNews, renderAllNews, renderNewsDetail, resetMetaTags, updateMetaTags } from './ui.js';
-import { showAdminBooksPage, showAdminNewsPage } from './admin.js';
+import { showAdminBooksPage, showAdminNewsPage, showAdminUsersPage, showAdminCommentsPage } from './admin.js';
 import { BASE_PATH } from './constants.js';
 import { adminMode } from './auth.js';
 
@@ -47,15 +47,19 @@ export async function handleRoute() {
     const newsDetailPage = document.getElementById('newsDetailPage');
     const adminBooksPage = document.getElementById('adminBooksPage');
     const adminNewsPage  = document.getElementById('adminNewsPage');
+    const adminUsersPage     = document.getElementById('adminUsersPage');
+    const adminCommentsPage  = document.getElementById('adminCommentsPage');
 
     // Hide all
     mainContent.style.display = 'none';
     booksPage.style.display   = 'none';
     detailPage.style.display  = 'none';
-    if (newsListPage)   newsListPage.style.display   = 'none';
-    if (newsDetailPage) newsDetailPage.style.display = 'none';
-    if (adminBooksPage) adminBooksPage.style.display = 'none';
-    if (adminNewsPage)  adminNewsPage.style.display  = 'none';
+    if (newsListPage)       newsListPage.style.display       = 'none';
+    if (newsDetailPage)     newsDetailPage.style.display     = 'none';
+    if (adminBooksPage)     adminBooksPage.style.display     = 'none';
+    if (adminNewsPage)      adminNewsPage.style.display      = 'none';
+    if (adminUsersPage)     adminUsersPage.style.display     = 'none';
+    if (adminCommentsPage)  adminCommentsPage.style.display  = 'none';
 
     if (path === '/' || path === '') {
         mainContent.style.display = 'block';
@@ -153,10 +157,8 @@ export async function handleRoute() {
     document.title = 'Manage News | Acer Books';
     window.dispatchEvent(new CustomEvent('routeChanged'));
  
-    // ========== 新增：Manage Users 页面 ==========
     } else if (path === 'admin/users') {
         if (!adminMode) {
-            // 非admin用户访问时重定向到首页
             history.replaceState(null, '', BASE_PATH);
             mainContent.style.display = 'block';
             await Promise.all([renderBooks(), renderNews()]);
@@ -164,25 +166,11 @@ export async function handleRoute() {
             window.dispatchEvent(new CustomEvent('routeChanged'));
             return;
         }
-        // Admin用户可以访问
-        // TODO: 实现 showAdminUsersPage() 函数或显示placeholder
-        mainContent.style.display = 'block';
-        const mainContentEl = document.getElementById('mainContent');
-        if (mainContentEl) {
-            mainContentEl.innerHTML = `
-                <div style="padding: 2rem; text-align: center;">
-                    <h2 style="color: #ff0000; margin-bottom: 1rem;">Manage Users</h2>
-                    <p style="color: #666; margin-bottom: 2rem;">User management page coming soon...</p>
-                    <button onclick="window.location.href='/';" class="btn-primary">Back to Home</button>
-                </div>
-            `;
-        }
+        showAdminUsersPage();
         document.title = 'Manage Users | Acer Books';
  
-    // ========== 新增：Manage Comments 页面 ==========
     } else if (path === 'admin/comments') {
         if (!adminMode) {
-            // 非admin用户访问时重定向到首页
             history.replaceState(null, '', BASE_PATH);
             mainContent.style.display = 'block';
             await Promise.all([renderBooks(), renderNews()]);
@@ -190,19 +178,7 @@ export async function handleRoute() {
             window.dispatchEvent(new CustomEvent('routeChanged'));
             return;
         }
-        // Admin用户可以访问
-        // TODO: 实现 showAdminCommentsPage() 函数或显示placeholder
-        mainContent.style.display = 'block';
-        const mainContentEl = document.getElementById('mainContent');
-        if (mainContentEl) {
-            mainContentEl.innerHTML = `
-                <div style="padding: 2rem; text-align: center;">
-                    <h2 style="color: #ff0000; margin-bottom: 1rem;">Manage Comments</h2>
-                    <p style="color: #666; margin-bottom: 2rem;">Comment management page coming soon...</p>
-                    <button onclick="window.location.href='/';" class="btn-primary">Back to Home</button>
-                </div>
-            `;
-        }
+        showAdminCommentsPage();
         document.title = 'Manage Comments | Acer Books';
  
     } else {
