@@ -129,16 +129,19 @@ function generateBookCardHTML(book, adminMode, currentLang) {
         ? `background-image: url('${cover}'); background-size: cover; background-position: center;`
         : `background: #2d2d2d;`;
     const deleteBtn = adminMode ? `<button class="delete-book" data-id="${book.id}"><i class="fas fa-trash-alt"></i></button>` : '';
-    const pbPrice = parseFloat(book.price || 0);
+    const pbPrice = book.price ? parseFloat(book.price) : null;
     const hcPrice = book.price_hardcover ? parseFloat(book.price_hardcover) : null;
+    // Determine default display price and format
+    const defaultPrice  = pbPrice ?? hcPrice ?? 0;
+    const defaultFormat = pbPrice ? 'paperback' : 'hardcover';
     const priceRow = `
         <div class="book-price-row">
-            <span class="book-price" id="card-price-${book.id}">$${pbPrice.toFixed(2)}</span>
-            ${hcPrice ? `<div class="fmt-toggle" data-book-id="${book.id}" data-pb="${pbPrice}" data-hc="${hcPrice}">
+            <span class="book-price" id="card-price-${book.id}">$${defaultPrice.toFixed(2)}</span>
+            ${(pbPrice && hcPrice) ? `<div class="fmt-toggle" data-book-id="${book.id}" data-pb="${pbPrice}" data-hc="${hcPrice}">
                 <span class="fmt-btn active" data-fmt="paperback">PB</span>
                 <span class="fmt-sep">|</span>
                 <span class="fmt-btn" data-fmt="hardcover">HC</span>
-            </div>` : ''}
+            </div>` : (pbPrice ? `<span class="fmt-badge">PB</span>` : `<span class="fmt-badge">HC</span>`)}
             <button class="wishlist-icon-btn" data-wishlist-bookid="${book.id}" title="Add to wishlist"><i class="far fa-heart"></i></button>
         </div>`;
     return `
@@ -574,12 +577,15 @@ export function renderNewsDetail(item) {
 
 export function renderBookDetail(book) {
     currentModalBook = book;
-    currentModalFormat = 'paperback';
+    currentModalFormat = book.price ? 'paperback' : 'hardcover';
     const cover = normalizeCover(book.cover);
     document.getElementById('detailCover').style.backgroundImage = cover ? `url('${cover}')` : '';
     document.getElementById('detailTitle').innerText = (currentLang === 'fr' && book.title_fr) ? book.title_fr : book.title;
     document.getElementById('detailAuthor').innerText = (currentLang === 'fr' && book.author_fr) ? book.author_fr : book.author;
-    document.getElementById('detailPrice').innerText = `$${book.price}`;
+    const displayPrice = book.price
+        ? parseFloat(book.price).toFixed(2)
+        : (book.price_hardcover ? parseFloat(book.price_hardcover).toFixed(2) : '—');
+    document.getElementById('detailPrice').innerText = `$${displayPrice}`;
     document.getElementById('detailAvailability').innerText = langPack[currentLang].availability;
     document.getElementById('detailIsbn').innerText = book.isbn || '978-1-7381938-6-8';
     document.getElementById('detailPublisher').innerText = book.publisher || 'Acer Books';
@@ -589,7 +595,7 @@ export function renderBookDetail(book) {
     renderDetailReviews(book.id, currentLang, currentUser);
     
     const detailHcBadge = document.getElementById('detailHcBadge');
-    if (book.price_hardcover) {
+    if (book.price_hardcover && book.price) {
         if (detailHcBadge) {
             detailHcBadge.style.display = '';
             detailHcBadge.style.cursor = 'pointer';
@@ -607,6 +613,14 @@ export function renderBookDetail(book) {
                     document.getElementById('detailPrice').innerText = `$${parseFloat(book.price_hardcover).toFixed(2)}`;
                 }
             });
+        }
+    } else if (book.price_hardcover && !book.price) {
+        if (detailHcBadge) {
+            detailHcBadge.style.display = '';
+            detailHcBadge.style.cursor = 'default';
+            detailHcBadge.classList.add('hc-badge--active');
+            const freshDetail = detailHcBadge.cloneNode(true);
+            detailHcBadge.parentNode.replaceChild(freshDetail, detailHcBadge);
         }
     } else {
         if (detailHcBadge) detailHcBadge.style.display = 'none';
@@ -698,12 +712,17 @@ export function updateDetailLanguage(book) {
 
 export function openModal(book) {
     currentModalBook = book;
-    currentModalFormat = 'paperback';
+    // If no paperback, default to hardcover
+    currentModalFormat = book.price ? 'paperback' : 'hardcover';
     const cover = normalizeCover(book.cover);
     if (modalCover) modalCover.style.backgroundImage = cover ? `url('${cover}')` : '';
     if (modalTitle) modalTitle.innerText = (currentLang === 'fr' && book.title_fr) ? book.title_fr : book.title;
     if (modalAuthor) modalAuthor.innerText = (currentLang === 'fr' && book.author_fr) ? book.author_fr : book.author;
-    if (modalPrice) modalPrice.innerText = `$${book.price}`;
+    // Show appropriate price
+    const displayPrice = book.price
+        ? parseFloat(book.price).toFixed(2)
+        : (book.price_hardcover ? parseFloat(book.price_hardcover).toFixed(2) : '—');
+    if (modalPrice) modalPrice.innerText = `$${displayPrice}`;
     if (modalAvailability) modalAvailability.innerText = langPack[currentLang].availability;
     if (modalIsbn) modalIsbn.innerText = book.isbn || '978-1-7381938-6-8';
     if (modalPublisher) modalPublisher.innerText = book.publisher || 'Acer Books';
@@ -728,7 +747,8 @@ export function openModal(book) {
     }
     
     const modalHcBadge = document.getElementById('modalHcBadge');
-    if (book.price_hardcover) {
+    if (book.price_hardcover && book.price) {
+        // Both PB and HC exist — show toggle badge
         if (modalHcBadge) {
             modalHcBadge.style.display = '';
             modalHcBadge.style.cursor = 'pointer';
@@ -747,7 +767,18 @@ export function openModal(book) {
                 }
             });
         }
+    } else if (book.price_hardcover && !book.price) {
+        // HC only — show static badge (already active), no toggle needed
+        if (modalHcBadge) {
+            modalHcBadge.style.display = '';
+            modalHcBadge.style.cursor = 'default';
+            modalHcBadge.classList.add('hc-badge--active');
+            // Remove old listeners
+            const freshModal = modalHcBadge.cloneNode(true);
+            modalHcBadge.parentNode.replaceChild(freshModal, modalHcBadge);
+        }
     } else {
+        // No HC at all — hide badge
         if (modalHcBadge) modalHcBadge.style.display = 'none';
     }
     if (modalOverlay) modalOverlay.classList.add('active');
@@ -765,7 +796,12 @@ export function updateModalLanguage() {
         languageEl: modalLanguage
     };
     updateBookLanguage(book, elements);
-    if (modalPrice) modalPrice.innerText = `$${book.price}`;
+    if (modalPrice) {
+        const p = currentModalFormat === 'hardcover' && book.price_hardcover
+            ? parseFloat(book.price_hardcover).toFixed(2)
+            : (book.price ? parseFloat(book.price).toFixed(2) : (book.price_hardcover ? parseFloat(book.price_hardcover).toFixed(2) : '—'));
+        modalPrice.innerText = `$${p}`;
+    }
     if (modalAvailability) modalAvailability.innerText = langPack[currentLang].availability;
     if (modalAddToCart) modalAddToCart.innerHTML = `<i class="fas fa-shopping-cart"></i> ${langPack[currentLang].addToCart}`;
     if (modalAddToWishList) modalAddToWishList.innerHTML = `<i class="fas fa-heart"></i> ${langPack[currentLang].addToWishList}`;
