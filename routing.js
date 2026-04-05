@@ -47,8 +47,8 @@ export async function handleRoute() {
     const newsDetailPage = document.getElementById('newsDetailPage');
     const adminBooksPage = document.getElementById('adminBooksPage');
     const adminNewsPage  = document.getElementById('adminNewsPage');
-    const adminUsersPage     = document.getElementById('adminUsersPage');
-    const adminCommentsPage  = document.getElementById('adminCommentsPage');
+    const adminUsersPage    = document.getElementById('adminUsersPage');
+    const adminCommentsPage = document.getElementById('adminCommentsPage');
 
     // Hide all
     mainContent.style.display = 'none';

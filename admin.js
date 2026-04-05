@@ -347,7 +347,7 @@ async function saveBookFromForm() {
         pub_date: formPubDate.value.trim(),
         pages: parseInt(formPages.value) || null,
         language: selectedLanguages,
-        price: parseFloat(formPrice.value).toFixed(2),
+        price: formPrice.value.trim() !== '' ? parseFloat(formPrice.value).toFixed(2) : null,
         price_hardcover: formPriceHardcover.value.trim() !== '' ? parseFloat(formPriceHardcover.value) : null,
         stock_status: formStockStatus.value,
         description: document.getElementById('formDescription').value,
@@ -817,48 +817,42 @@ export function attachAdminNewsEvents() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// XSS-safe string helper (local to admin, avoids import conflict)
+// Shared helpers
 // ─────────────────────────────────────────────────────────────────────────────
 function _esc(str) {
     if (!str) return '';
     return String(str).replace(/[&<>'"]/g, m =>
-        ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[m]));
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[m]));
 }
 
 function _hideAllAdminPages() {
-    const ids = ['mainContent','booksPage','bookDetailPage','newsListPage',
-                 'newsDetailPage','adminBooksPage','adminNewsPage',
-                 'adminUsersPage','adminCommentsPage'];
-    ids.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    ['mainContent','booksPage','bookDetailPage','newsListPage','newsDetailPage',
+     'adminBooksPage','adminNewsPage','adminUsersPage','adminCommentsPage']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MANAGE USERS
 // ─────────────────────────────────────────────────────────────────────────────
-
 export function showAdminUsersPage() {
     _hideAllAdminPages();
     const page = document.getElementById('adminUsersPage');
     if (page) page.style.display = 'block';
 
-    // Wire up controls (guard against duplicate listeners with clone trick)
     const search = document.getElementById('searchUsers');
     if (search) {
-        const fresh = search.cloneNode(true);
-        search.replaceWith(fresh);
-        fresh.addEventListener('input', renderAdminUsersList);
+        const f = search.cloneNode(true); search.replaceWith(f);
+        f.addEventListener('input', renderAdminUsersList);
     }
     const roleFilter = document.getElementById('filterUserRole');
     if (roleFilter) {
-        const fresh = roleFilter.cloneNode(true);
-        roleFilter.replaceWith(fresh);
-        fresh.addEventListener('change', renderAdminUsersList);
+        const f = roleFilter.cloneNode(true); roleFilter.replaceWith(f);
+        f.addEventListener('change', renderAdminUsersList);
     }
     document.getElementById('backToHomeFromAdminUsers')?.addEventListener('click', () => {
         if (page) page.style.display = 'none';
         navigateTo('/');
     });
-
     renderAdminUsersList();
 }
 
@@ -870,44 +864,33 @@ export async function renderAdminUsersList() {
 
     try {
         const { data: profiles, error } = await supabase
-            .from('profiles')
-            .select('id, display_name, role, created_at')
+            .from('profiles').select('id, display_name, role, created_at')
             .order('created_at', { ascending: false });
         if (error) throw error;
 
-        // Subscriber status
         let subscriberIds = new Set();
         try {
-            const { data: subs } = await supabase
-                .from('subscribers').select('user_id').eq('status', 'active');
+            const { data: subs } = await supabase.from('subscribers').select('user_id').eq('status','active');
             if (subs) subs.forEach(s => subscriberIds.add(s.user_id));
-        } catch (_) {}
+        } catch(_) {}
 
-        // Filters
-        const searchTerm  = (document.getElementById('searchUsers')?.value || '').toLowerCase();
-        const roleFilter  = document.getElementById('filterUserRole')?.value || '';
+        const searchTerm = (document.getElementById('searchUsers')?.value || '').toLowerCase();
+        const roleFilter = document.getElementById('filterUserRole')?.value || '';
         let filtered = (profiles || [])
-            .filter(p => !searchTerm || (p.display_name || '').toLowerCase().includes(searchTerm))
-            .filter(p => !roleFilter || (p.role || 'user') === roleFilter);
+            .filter(p => !searchTerm || (p.display_name||'').toLowerCase().includes(searchTerm))
+            .filter(p => !roleFilter || (p.role||'user') === roleFilter);
 
-        // Banner
         if (bannerEl) {
-            const total      = (profiles || []).length;
-            const adminCount = (profiles || []).filter(p => p.role === 'admin').length;
+            const total      = (profiles||[]).length;
+            const adminCount = (profiles||[]).filter(p => p.role==='admin').length;
             bannerEl.innerHTML = `
                 <i class="fas fa-users"></i>
-                <strong>${total}</strong> user${total !== 1 ? 's' : ''}
-                &nbsp;·&nbsp;
-                <strong class="aur-count--admin">${adminCount}</strong> admin${adminCount !== 1 ? 's' : ''}
-                &nbsp;·&nbsp;
-                <strong class="aur-count--sub">${subscriberIds.size}</strong> newsletter subscriber${subscriberIds.size !== 1 ? 's' : ''}
-            `;
+                <strong>${total}</strong> user${total!==1?'s':''}
+                &nbsp;·&nbsp;<strong class="aur-count--admin">${adminCount}</strong> admin${adminCount!==1?'s':''}
+                &nbsp;·&nbsp;<strong class="aur-count--sub">${subscriberIds.size}</strong> newsletter subscriber${subscriberIds.size!==1?'s':''}`;
         }
 
-        if (!filtered.length) {
-            listEl.innerHTML = '<p class="acc-empty">No users match this filter.</p>';
-            return;
-        }
+        if (!filtered.length) { listEl.innerHTML = '<p class="acc-empty">No users match this filter.</p>'; return; }
 
         listEl.innerHTML = filtered.map(p => {
             const name    = p.display_name || 'Unknown';
@@ -916,11 +899,11 @@ export async function renderAdminUsersList() {
             const isAdmin = role === 'admin';
             const isSub   = subscriberIds.has(p.id);
             const joined  = p.created_at
-                ? new Date(p.created_at).toLocaleDateString('en-CA', { year:'numeric', month:'short', day:'numeric' })
+                ? new Date(p.created_at).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'})
                 : '—';
             return `
             <div class="admin-user-row" data-id="${p.id}">
-                <div class="aur-avatar ${isAdmin ? 'aur-avatar--admin' : ''}">${initial}</div>
+                <div class="aur-avatar ${isAdmin?'aur-avatar--admin':''}">${initial}</div>
                 <div class="aur-info">
                     <div class="aur-name">${_esc(name)}</div>
                     <div class="aur-meta">
@@ -945,45 +928,33 @@ export async function renderAdminUsersList() {
             </div>`;
         }).join('');
 
-        // Toggle role
         listEl.querySelectorAll('.toggle-user-role').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const newRole = btn.dataset.role === 'admin' ? 'user' : 'admin';
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 try {
-                    const { error } = await supabase
-                        .from('profiles').update({ role: newRole }).eq('id', btn.dataset.id);
+                    const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', btn.dataset.id);
                     if (error) throw error;
                     showToast(`Role changed to ${newRole}`);
                     await renderAdminUsersList();
-                } catch (err) {
-                    showToast('Update failed: ' + err.message, 'error');
-                    btn.disabled = false;
-                }
+                } catch(err) { showToast('Update failed: ' + err.message, 'error'); btn.disabled = false; }
             });
         });
 
-        // Delete profile
         listEl.querySelectorAll('.delete-user-profile').forEach(btn => {
             btn.addEventListener('click', async () => {
-                const name = btn.dataset.name;
-                if (!confirm(`Delete profile for "${name}"?\n\nThis removes their profile. Their login account remains.`)) return;
+                if (!confirm(`Delete profile for "${btn.dataset.name}"?\n\nThis removes their profile row. Their login account remains.`)) return;
                 btn.disabled = true;
                 try {
-                    const { error } = await supabase
-                        .from('profiles').delete().eq('id', btn.dataset.id);
+                    const { error } = await supabase.from('profiles').delete().eq('id', btn.dataset.id);
                     if (error) throw error;
                     showToast('Profile deleted');
                     await renderAdminUsersList();
-                } catch (err) {
-                    showToast('Delete failed: ' + err.message, 'error');
-                    btn.disabled = false;
-                }
+                } catch(err) { showToast('Delete failed: ' + err.message, 'error'); btn.disabled = false; }
             });
         });
 
-    } catch (err) {
+    } catch(err) {
         console.error('renderAdminUsersList:', err);
         listEl.innerHTML = `<p class="acc-empty" style="color:#cc0000;">Error: ${err.message}</p>`;
     }
@@ -992,7 +963,6 @@ export async function renderAdminUsersList() {
 // ─────────────────────────────────────────────────────────────────────────────
 // MANAGE COMMENTS
 // ─────────────────────────────────────────────────────────────────────────────
-
 export function showAdminCommentsPage() {
     _hideAllAdminPages();
     const page = document.getElementById('adminCommentsPage');
@@ -1000,15 +970,13 @@ export function showAdminCommentsPage() {
 
     const search = document.getElementById('searchComments');
     if (search) {
-        const fresh = search.cloneNode(true);
-        search.replaceWith(fresh);
-        fresh.addEventListener('input', renderAdminCommentsList);
+        const f = search.cloneNode(true); search.replaceWith(f);
+        f.addEventListener('input', renderAdminCommentsList);
     }
     document.getElementById('backToHomeFromAdminComments')?.addEventListener('click', () => {
         if (page) page.style.display = 'none';
         navigateTo('/');
     });
-
     renderAdminCommentsList();
 }
 
@@ -1023,61 +991,55 @@ export async function renderAdminCommentsList() {
             .from('reviews').select('*').order('timestamp', { ascending: false });
         if (error) throw error;
 
-        // Client-side book data
         const { books: allBooks } = await import('./data.js');
-
         const searchTerm = (document.getElementById('searchComments')?.value || '').toLowerCase();
+
         let filtered = (allReviews || []).filter(r => {
             if (!searchTerm) return true;
-            const book    = allBooks.find(b => b.id === r.book_id);
-            const bTitle  = (book?.title || '').toLowerCase();
-            const rText   = (r.text || '').toLowerCase();
-            const rUser   = (r.username || '').toLowerCase();
-            const cTexts  = (r.comments || []).map(c => (c.text || '').toLowerCase()).join(' ');
-            return bTitle.includes(searchTerm) || rText.includes(searchTerm)
-                || rUser.includes(searchTerm)  || cTexts.includes(searchTerm);
+            const book   = allBooks.find(b => b.id === r.book_id);
+            const bTitle = (book?.title||'').toLowerCase();
+            const rText  = (r.text||'').toLowerCase();
+            const rUser  = (r.username||'').toLowerCase();
+            const cText  = (r.comments||[]).map(c=>(c.text||'').toLowerCase()).join(' ');
+            return bTitle.includes(searchTerm)||rText.includes(searchTerm)||rUser.includes(searchTerm)||cText.includes(searchTerm);
         });
 
-        const totalComments = filtered.reduce((s, r) => s + (r.comments?.length || 0), 0);
+        const totalComments = filtered.reduce((s,r) => s + (r.comments?.length||0), 0);
 
         if (bannerEl) {
             bannerEl.innerHTML = `
                 <i class="fas fa-comments"></i>
-                <strong>${filtered.length}</strong> review${filtered.length !== 1 ? 's' : ''}
-                &nbsp;·&nbsp;
-                <strong>${totalComments}</strong> comment${totalComments !== 1 ? 's' : ''}
-                <span class="anr-sub-hint">— click <i class="fas fa-trash-alt"></i> to remove any inappropriate content</span>
-            `;
+                <strong>${filtered.length}</strong> review${filtered.length!==1?'s':''}
+                &nbsp;·&nbsp;<strong>${totalComments}</strong> comment${totalComments!==1?'s':''}
+                <span class="anr-sub-hint">— click <i class="fas fa-trash-alt"></i> to remove inappropriate content</span>`;
         }
 
-        if (!filtered.length) {
-            listEl.innerHTML = '<p class="acc-empty">No reviews found.</p>';
-            return;
-        }
+        if (!filtered.length) { listEl.innerHTML = '<p class="acc-empty">No reviews found.</p>'; return; }
 
         listEl.innerHTML = filtered.map(r => {
             const book      = allBooks.find(b => b.id === r.book_id);
             const bookTitle = book?.title || 'Unknown Book';
             const cover     = book?.cover
-                ? (book.cover.startsWith('/') || book.cover.startsWith('http') ? book.cover : '/' + book.cover)
+                ? (book.cover.startsWith('/')||book.cover.startsWith('http') ? book.cover : '/'+book.cover)
                 : '';
             const username  = r.username || 'Unknown';
             const initial   = username.charAt(0).toUpperCase();
             const date      = r.timestamp
-                ? new Date(r.timestamp).toLocaleDateString('en-CA', { year:'numeric', month:'short', day:'numeric' })
+                ? new Date(r.timestamp).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'})
                 : '—';
             const comments  = r.comments || [];
 
             const commentsHtml = comments.map(c => `
                 <div class="acc-comment-item">
-                    <div class="acc-comment-avatar">${(c.username || '?').charAt(0).toUpperCase()}</div>
+                    <div class="acc-comment-avatar">${(c.username||'?').charAt(0).toUpperCase()}</div>
                     <div class="acc-comment-body">
-                        <span class="acc-comment-user">${_esc(c.username || 'User')}</span>
+                        <span class="acc-comment-user">${_esc(c.username||'User')}</span>
                         <span class="acc-comment-date">${new Date(c.timestamp).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</span>
-                        <p class="acc-comment-text">${_esc(c.text || '')}</p>
+                        <p class="acc-comment-text">${_esc(c.text||'')}</p>
                     </div>
                     <button class="anr-btn anr-btn--danger acc-del-comment"
-                            data-review-id="${r.id}" data-comment-ts="${c.timestamp}"
+                            data-review-id="${r.id}"
+                            data-comment-ts="${c.timestamp}"
                             title="Delete comment">
                         <i class="fas fa-trash-alt"></i>
                     </button>
@@ -1090,9 +1052,7 @@ export async function renderAdminCommentsList() {
                         ? `<div class="acc-book-thumb" style="background-image:url('${cover}');"></div>`
                         : `<div class="acc-book-thumb acc-book-thumb--blank"><i class="fas fa-book"></i></div>`}
                     <span class="acc-book-label">${_esc(bookTitle)}</span>
-                    ${comments.length
-                        ? `<span class="acc-comment-badge"><i class="fas fa-comment"></i> ${comments.length}</span>`
-                        : ''}
+                    ${comments.length ? `<span class="acc-comment-badge"><i class="fas fa-comment"></i> ${comments.length}</span>` : ''}
                 </div>
                 <div class="acc-review-row">
                     <div class="acc-reviewer-avatar">${initial}</div>
@@ -1101,10 +1061,10 @@ export async function renderAdminCommentsList() {
                             <strong class="acc-reviewer-name">${_esc(username)}</strong>
                             <span class="acc-review-date">${date}</span>
                         </div>
-                        <p class="acc-review-text">${_esc(r.text || '')}</p>
+                        <p class="acc-review-text">${_esc(r.text||'')}</p>
                     </div>
                     <button class="anr-btn anr-btn--danger acc-del-review"
-                            data-review-id="${r.id}" title="Delete entire review">
+                            data-review-id="${r.id}">
                         <i class="fas fa-trash-alt"></i> Delete
                     </button>
                 </div>
@@ -1112,7 +1072,7 @@ export async function renderAdminCommentsList() {
             </div>`;
         }).join('');
 
-        // Delete review
+        // Delete entire review
         listEl.querySelectorAll('.acc-del-review').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirm('Delete this entire review and all its comments?')) return;
@@ -1122,38 +1082,39 @@ export async function renderAdminCommentsList() {
                     if (error) throw error;
                     showToast('Review deleted');
                     await renderAdminCommentsList();
-                } catch (err) {
+                } catch(err) {
                     showToast('Delete failed: ' + err.message, 'error');
                     btn.disabled = false;
                 }
             });
         });
 
-        // Delete individual comment
+        // Delete individual comment — FIX: use Number() for type-safe timestamp comparison
         listEl.querySelectorAll('.acc-del-comment').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirm('Delete this comment?')) return;
                 btn.disabled = true;
                 try {
                     const reviewId  = btn.dataset.reviewId;
-                    const commentTs = parseInt(btn.dataset.commentTs);
+                    const commentTs = Number(btn.dataset.commentTs);   // ← Fix #2: Number() not parseInt
                     const { data, error: fetchErr } = await supabase
                         .from('reviews').select('comments').eq('id', reviewId).single();
                     if (fetchErr) throw fetchErr;
-                    const updated = (data.comments || []).filter(c => c.timestamp !== commentTs);
+                    // ← Fix #2: compare as Number on both sides
+                    const updated = (data.comments || []).filter(c => Number(c.timestamp) !== commentTs);
                     const { error: updErr } = await supabase
                         .from('reviews').update({ comments: updated }).eq('id', reviewId);
                     if (updErr) throw updErr;
                     showToast('Comment deleted');
                     await renderAdminCommentsList();
-                } catch (err) {
+                } catch(err) {
                     showToast('Delete failed: ' + err.message, 'error');
                     btn.disabled = false;
                 }
             });
         });
 
-    } catch (err) {
+    } catch(err) {
         console.error('renderAdminCommentsList:', err);
         listEl.innerHTML = `<p class="acc-empty" style="color:#cc0000;">Error: ${err.message}</p>`;
     }
