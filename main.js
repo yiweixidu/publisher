@@ -217,39 +217,145 @@ if (navNews) {
 }
 
 /* ============================================
-   Newsletter Modal — redesigned to match the
-   user profile modal (two-panel: sidebar + body)
+   Newsletter Modal — two-panel, subscribe-aware
    ============================================ */
+
+import {
+    getSubscriptionStatus, subscribeUser, unsubscribeUser
+} from './newsletter.js';
 
 const newsletterLink = document.getElementById('newsletterLink');
 
-/** Close the newsletter modal helper */
+// ── helpers ──────────────────────────────────────────────────────────────────
+
 function _closeNewsletterModal() {
-    const modal = document.getElementById('newsletterModal');
-    if (modal) {
-        modal.classList.remove('active');
-        modal.style.display = 'none';
+    const m = document.getElementById('newsletterModal');
+    if (m) { m.classList.remove('active'); m.style.display = 'none'; }
+}
+
+function _closeUnsubModal() {
+    const m = document.getElementById('unsubModal');
+    if (m) { m.classList.remove('active'); m.style.display = 'none'; }
+}
+
+// ── unsubscribe survey modal ──────────────────────────────────────────────────
+
+function _getOrCreateUnsubModal() {
+    let m = document.getElementById('unsubModal');
+    if (m) return m;
+    m = document.createElement('div');
+    m.id = 'unsubModal';
+    m.className = 'login-overlay';
+    m.style.display = 'none';
+    m.innerHTML = `
+        <div class="unsub-modal-content">
+            <button class="acc-modal-close" id="unsubModalClose" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="unsub-header">
+                <div class="unsub-icon"><i class="fas fa-heart-broken"></i></div>
+                <h3 class="unsub-title">Sorry to see you go</h3>
+                <p class="unsub-sub">Help us improve — why are you leaving?<br><em>(optional)</em></p>
+            </div>
+            <div class="unsub-reasons">
+                <label class="unsub-reason-row">
+                    <input type="radio" name="unsubReason" value="Too many emails">
+                    <span>Too many emails</span>
+                </label>
+                <label class="unsub-reason-row">
+                    <input type="radio" name="unsubReason" value="Content not relevant">
+                    <span>Content not relevant to me</span>
+                </label>
+                <label class="unsub-reason-row">
+                    <input type="radio" name="unsubReason" value="Didn't sign up">
+                    <span>I didn't sign up for this</span>
+                </label>
+                <label class="unsub-reason-row">
+                    <input type="radio" name="unsubReason" value="Other">
+                    <span>Other</span>
+                </label>
+            </div>
+            <textarea id="unsubOtherText" class="unsub-other-input" placeholder="Tell us more (optional)…" rows="2"></textarea>
+            <div class="unsub-actions">
+                <button class="btn-primary unsub-keep-btn" id="unsubKeepBtn">
+                    <i class="fas fa-heart"></i> Keep my subscription
+                </button>
+                <button class="btn-outline-red unsub-confirm-btn" id="unsubConfirmBtn">
+                    Unsubscribe
+                </button>
+            </div>
+            <div id="unsubMsg" class="acc-msg" style="text-align:center;margin-top:0.5rem;"></div>
+        </div>
+    `;
+    document.body.appendChild(m);
+
+    m.addEventListener('click', e => { if (e.target === m) _closeUnsubModal(); });
+    document.getElementById('unsubModalClose')?.addEventListener('click', _closeUnsubModal);
+    document.getElementById('unsubKeepBtn')?.addEventListener('click', _closeUnsubModal);
+
+    // Show/hide textarea for "Other"
+    m.querySelectorAll('input[name="unsubReason"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const ta = document.getElementById('unsubOtherText');
+            if (ta) ta.style.display = radio.value === 'Other' ? 'block' : 'none';
+        });
+    });
+
+    return m;
+}
+
+async function _doUnsubscribe() {
+    const btn = document.getElementById('unsubConfirmBtn');
+    const msg = document.getElementById('unsubMsg');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Unsubscribing…'; }
+    try {
+        const selected = document.querySelector('input[name="unsubReason"]:checked');
+        let reason = selected?.value || '';
+        if (reason === 'Other') {
+            const ta = document.getElementById('unsubOtherText');
+            reason = ta?.value.trim() || 'Other';
+        }
+        const { currentUser } = await import('./auth.js');
+        if (!currentUser) throw new Error('Not logged in');
+        await unsubscribeUser(currentUser.id, reason);
+        if (msg) { msg.textContent = 'You have been unsubscribed.'; msg.className = 'acc-msg success'; }
+        setTimeout(() => {
+            _closeUnsubModal();
+            _updateSubscribeBtn(false);
+        }, 1600);
+    } catch (err) {
+        if (msg) { msg.textContent = 'Error: ' + err.message; msg.className = 'acc-msg error'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = 'Unsubscribe'; }
     }
 }
 
-/**
- * Build or retrieve the newsletter modal shell.
- * The inner structure mirrors the account modal layout:
- *   .newsletter-modal-content
- *     .nl-sidebar   (dark crimson, branding + stat pills)
- *     .nl-body      (scrollable news list)
- */
-function getOrCreateNewsletterModal() {
+// ── subscribe button state ────────────────────────────────────────────────────
+
+function _updateSubscribeBtn(isSubscribed) {
+    const btn = document.getElementById('nlSubscribeBtn');
+    if (!btn) return;
+    if (isSubscribed) {
+        btn.className = 'nl-subscribe-btn nl-subscribe-btn--active';
+        btn.innerHTML = `<i class="fas fa-check-circle"></i> Subscribed
+            <span class="nl-unsub-hint">click to unsubscribe</span>`;
+    } else {
+        btn.className = 'nl-subscribe-btn';
+        btn.innerHTML = `<i class="fas fa-envelope"></i> Subscribe to Newsletter`;
+    }
+}
+
+// ── newsletter modal shell ────────────────────────────────────────────────────
+
+function _getOrCreateNewsletterModal() {
     let modal = document.getElementById('newsletterModal');
     if (modal) return modal;
 
     modal = document.createElement('div');
     modal.id = 'newsletterModal';
-    modal.className = 'login-overlay';          // reuse the same backdrop class
+    modal.className = 'login-overlay';
     modal.style.display = 'none';
     modal.innerHTML = `
         <div class="newsletter-modal-content">
-            <!-- Close button -->
             <button class="acc-modal-close" id="nlModalClose" aria-label="Close">
                 <i class="fas fa-times"></i>
             </button>
@@ -257,9 +363,7 @@ function getOrCreateNewsletterModal() {
             <!-- Left sidebar -->
             <div class="nl-sidebar">
                 <div class="nl-sidebar-brand">
-                    <div class="nl-sidebar-icon">
-                        <i class="fas fa-newspaper"></i>
-                    </div>
+                    <div class="nl-sidebar-icon"><i class="fas fa-newspaper"></i></div>
                     <div class="nl-sidebar-title">News &amp;<br>Events</div>
                     <div class="nl-sidebar-sub">Acer Books</div>
                 </div>
@@ -268,11 +372,12 @@ function getOrCreateNewsletterModal() {
                         <i class="fas fa-layer-group"></i> All News
                     </div>
                     <div class="nl-nav-item" id="nlNavLatest">
-                        <i class="fas fa-star"></i> Latest
+                        <i class="fas fa-star"></i> Latest Issue
                     </div>
                 </nav>
-                <button class="nl-sidebar-viewall" id="nlViewAllBtn">
-                    View all news <i class="fas fa-arrow-right"></i>
+                <!-- Subscribe / Unsubscribe button -->
+                <button class="nl-subscribe-btn" id="nlSubscribeBtn">
+                    <i class="fas fa-envelope"></i> Subscribe to Newsletter
                 </button>
             </div>
 
@@ -285,134 +390,215 @@ function getOrCreateNewsletterModal() {
     `;
     document.body.appendChild(modal);
 
-    // Close on backdrop click
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) _closeNewsletterModal();
-    });
-    // Close button
+    modal.addEventListener('click', e => { if (e.target === modal) _closeNewsletterModal(); });
     document.getElementById('nlModalClose')?.addEventListener('click', _closeNewsletterModal);
-    // View-all button
-    document.getElementById('nlViewAllBtn')?.addEventListener('click', () => {
-        _closeNewsletterModal();
-        navigateTo('/news');
-    });
 
     return modal;
 }
 
+// ── render helpers ────────────────────────────────────────────────────────────
+
+/** Format a news item title/summary for the current language. */
+function _nlText(item, field) {
+    const lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
+    const v = item[field];
+    if (!v) return '';
+    if (typeof v === 'object') return v[lang] || v.en || '';
+    return v;
+}
+
+function _nlDate(item) {
+    if (item.display_date) return item.display_date;
+    const d = item.event_date || item.created_at;
+    return d ? new Date(d).toLocaleDateString('en-CA', { year:'numeric', month:'long', day:'numeric' }) : '';
+}
+
 /**
- * Render news items into the #nlNewsList container.
- * @param {Array}  items   – array of news objects
- * @param {boolean} latestOnly – highlight the first item
+ * Render the first item as a proper newsletter "issue" card;
+ * subsequent items as compact list rows.
  */
-function _renderNlItems(items, latestOnly = false) {
+function _renderNlItems(items) {
     const list = document.getElementById('nlNewsList');
     if (!list) return;
-
     if (!items.length) {
         list.innerHTML = '<p class="acc-empty">No news available yet. Check back soon!</p>';
         return;
     }
 
-    list.innerHTML = items.map((item, idx) => {
-        const lang  = (typeof currentLang !== 'undefined') ? currentLang : 'en';
-        const title = (item.title && typeof item.title === 'object')
-            ? (item.title[lang] || item.title.en || '')
-            : (item.title || 'Untitled');
-        const summary = (item.summary && typeof item.summary === 'object')
-            ? (item.summary[lang] || item.summary.en || '')
-            : (item.summary || '');
-        const displayDate = item.display_date ||
-            (item.event_date
-                ? new Date(item.event_date).toLocaleDateString('en-CA', { year:'numeric', month:'short', day:'numeric' })
-                : (item.created_at
-                    ? new Date(item.created_at).toLocaleDateString('en-CA', { year:'numeric', month:'short', day:'numeric' })
-                    : ''));
-        const coverStyle = item.image
-            ? `background-image:url('${item.image}');background-size:cover;background-position:center;`
-            : `background:linear-gradient(135deg,#4a0000 0%,#8b0000 100%);`;
-        const isLatest = latestOnly && idx === 0;
+    const [featured, ...rest] = items;
 
-        return `
-            <div class="nl-news-item${isLatest ? ' nl-news-item--featured' : ''}"
-                 data-news-id="${item.id}"
-                 role="button" tabindex="0"
-                 aria-label="Read: ${title}">
-                <div class="nl-news-thumb" style="${coverStyle}">
-                    ${!item.image ? '<i class="fas fa-newspaper" style="color:rgba(255,255,255,0.3);font-size:1.4rem;"></i>' : ''}
-                </div>
-                <div class="nl-news-info">
-                    ${isLatest ? '<span class="nl-badge">Latest</span>' : ''}
-                    <div class="nl-news-date">
-                        <i class="fas fa-calendar-alt"></i> ${displayDate}
+    const featuredTitle   = _nlText(featured, 'title');
+    const featuredSummary = _nlText(featured, 'summary');
+    const featuredDate    = _nlDate(featured);
+    const featuredCover   = featured.image || '';
+
+    // Newsletter issue card
+    let html = `
+        <article class="nl-issue-card" data-news-id="${featured.id}" role="button" tabindex="0"
+                 aria-label="Read: ${featuredTitle}">
+            <div class="nl-issue-header">
+                <span class="nl-issue-label"><i class="fas fa-circle"></i> LATEST ISSUE</span>
+                <span class="nl-issue-date"><i class="fas fa-calendar-alt"></i> ${featuredDate}</span>
+            </div>
+            ${featuredCover
+                ? `<div class="nl-issue-hero" style="background-image:url('${featuredCover}');"></div>`
+                : `<div class="nl-issue-hero nl-issue-hero--placeholder"><i class="fas fa-newspaper"></i></div>`}
+            <div class="nl-issue-body">
+                <h2 class="nl-issue-title">${featuredTitle}</h2>
+                <p class="nl-issue-summary">${featuredSummary}</p>
+                <span class="nl-issue-cta">Read the full story <i class="fas fa-arrow-right"></i></span>
+            </div>
+        </article>`;
+
+    // Compact list for remaining items
+    if (rest.length) {
+        html += `<div class="nl-compact-list">`;
+        rest.forEach(item => {
+            const t = _nlText(item, 'title');
+            const s = _nlText(item, 'summary');
+            const d = _nlDate(item);
+            const cover = item.image || '';
+            html += `
+                <div class="nl-news-item" data-news-id="${item.id}" role="button" tabindex="0" aria-label="Read: ${t}">
+                    <div class="nl-news-thumb" style="${cover
+                        ? `background-image:url('${cover}');background-size:cover;background-position:center;`
+                        : 'background:linear-gradient(135deg,#4a0000,#8b0000);display:flex;align-items:center;justify-content:center;'}">
+                        ${!cover ? '<i class="fas fa-newspaper" style="color:rgba(255,255,255,0.3);font-size:1.1rem;"></i>' : ''}
                     </div>
-                    <div class="nl-news-title">${title}</div>
-                    <div class="nl-news-summary">${summary.substring(0, 110)}${summary.length > 110 ? '…' : ''}</div>
-                </div>
-                <div class="nl-news-arrow"><i class="fas fa-chevron-right"></i></div>
-            </div>`;
-    }).join('');
+                    <div class="nl-news-info">
+                        <div class="nl-news-date"><i class="fas fa-calendar-alt"></i> ${d}</div>
+                        <div class="nl-news-title">${t}</div>
+                        <div class="nl-news-summary">${s.substring(0, 90)}${s.length > 90 ? '…' : ''}</div>
+                    </div>
+                    <div class="nl-news-arrow"><i class="fas fa-chevron-right"></i></div>
+                </div>`;
+        });
+        html += `</div>`;
+    }
 
-    // Attach click + keyboard navigation
-    list.querySelectorAll('.nl-news-item').forEach(card => {
-        const go = () => {
-            _closeNewsletterModal();
-            navigateTo(`/news/${card.dataset.newsId}`);
-        };
+    list.innerHTML = html;
+
+    // Attach navigation to all clickable items
+    list.querySelectorAll('[data-news-id]').forEach(card => {
+        const go = () => { _closeNewsletterModal(); navigateTo(`/news/${card.dataset.newsId}`); };
         card.addEventListener('click', go);
         card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') go(); });
     });
 }
 
+// ── open newsletter ───────────────────────────────────────────────────────────
+
 if (newsletterLink) {
     newsletterLink.addEventListener('click', async (e) => {
         e.preventDefault();
-        const modal = getOrCreateNewsletterModal();
-
-        try {
-            // Sort published items newest-first
-            const published = (newsItems || [])
-                .filter(n => n.status === 'published' || !n.status)
-                .sort((a, b) => {
-                    const da = a.event_date ? new Date(a.event_date) : 0;
-                    const db = b.event_date ? new Date(b.event_date) : 0;
-                    return db - da;
-                });
-
-            _renderNlItems(published.slice(0, 5), true);
-
-            // Sidebar nav tab behaviour
-            const navAll    = document.getElementById('nlNavAll');
-            const navLatest = document.getElementById('nlNavLatest');
-            const titleEl   = document.getElementById('nlBodyTitle');
-
-            navAll?.addEventListener('click', () => {
-                navAll.classList.add('active');
-                navLatest?.classList.remove('active');
-                if (titleEl) titleEl.textContent = 'Latest Updates';
-                _renderNlItems(published.slice(0, 5), true);
-            });
-            navLatest?.addEventListener('click', () => {
-                navLatest.classList.add('active');
-                navAll?.classList.remove('active');
-                if (titleEl) titleEl.textContent = 'Most Recent';
-                _renderNlItems(published.slice(0, 1), true);
-            });
-
-        } catch (err) {
-            console.error('Error loading newsletter:', err);
-            const list = document.getElementById('nlNewsList');
-            if (list) list.innerHTML = '<p class="acc-empty" style="color:#ff0000;">Error loading news. Please try again.</p>';
-        }
-
+        const modal = _getOrCreateNewsletterModal();
         modal.classList.add('active');
         modal.style.display = 'flex';
+
+        // Sort published items newest-first
+        const published = (newsItems || [])
+            .filter(n => n.status === 'published' || !n.status)
+            .sort((a, b) => (new Date(b.event_date || 0)) - (new Date(a.event_date || 0)));
+
+        try {
+            _renderNlItems(published.slice(0, 5));
+        } catch (err) {
+            console.error('renderNlItems error:', err);
+        }
+
+        // ── Nav tabs ──
+        const navAll    = document.getElementById('nlNavAll');
+        const navLatest = document.getElementById('nlNavLatest');
+        const titleEl   = document.getElementById('nlBodyTitle');
+
+        // Clone to remove stale listeners from previous opens
+        if (navAll) {
+            const fresh = navAll.cloneNode(true);
+            navAll.replaceWith(fresh);
+            fresh.addEventListener('click', () => {
+                fresh.classList.add('active');
+                document.getElementById('nlNavLatest')?.classList.remove('active');
+                if (titleEl) titleEl.textContent = 'Latest Updates';
+                _renderNlItems(published.slice(0, 5));
+            });
+        }
+        if (navLatest) {
+            const fresh = navLatest.cloneNode(true);
+            navLatest.replaceWith(fresh);
+            fresh.addEventListener('click', () => {
+                fresh.classList.add('active');
+                document.getElementById('nlNavAll')?.classList.remove('active');
+                if (titleEl) titleEl.textContent = 'Latest Issue';
+                _renderNlItems(published.slice(0, 1));
+            });
+        }
+
+        // ── Subscribe button ──
+        const subBtn = document.getElementById('nlSubscribeBtn');
+        if (subBtn) {
+            const freshBtn = subBtn.cloneNode(true);
+            subBtn.replaceWith(freshBtn);
+
+            const { currentUser } = await import('./auth.js');
+
+            if (!currentUser) {
+                freshBtn.className = 'nl-subscribe-btn';
+                freshBtn.innerHTML = `<i class="fas fa-envelope"></i> Login to Subscribe`;
+                freshBtn.addEventListener('click', () => {
+                    _closeNewsletterModal();
+                    openLoginModal('user');
+                });
+            } else {
+                const status = await getSubscriptionStatus(currentUser.id);
+                const isActive = status?.status === 'active';
+                _updateSubscribeBtn(isActive);
+
+                // Re-fetch the now-fresh button
+                const btn2 = document.getElementById('nlSubscribeBtn');
+                btn2?.addEventListener('click', async () => {
+                    const { currentUser: u } = await import('./auth.js');
+                    const st = await getSubscriptionStatus(u.id);
+                    if (st?.status === 'active') {
+                        // Open unsubscribe survey
+                        const unsubM = _getOrCreateUnsubModal();
+                        // Wire up confirm button each time (fresh)
+                        const oldConfirm = document.getElementById('unsubConfirmBtn');
+                        if (oldConfirm) {
+                            const newConfirm = oldConfirm.cloneNode(true);
+                            oldConfirm.replaceWith(newConfirm);
+                            newConfirm.addEventListener('click', _doUnsubscribe);
+                        }
+                        // Reset survey state
+                        document.querySelectorAll('input[name="unsubReason"]').forEach(r => r.checked = false);
+                        const ta = document.getElementById('unsubOtherText');
+                        if (ta) { ta.value = ''; ta.style.display = 'none'; }
+                        const msg = document.getElementById('unsubMsg');
+                        if (msg) { msg.textContent = ''; msg.className = 'acc-msg'; }
+                        unsubM.classList.add('active');
+                        unsubM.style.display = 'flex';
+                    } else {
+                        // Subscribe
+                        btn2.disabled = true;
+                        btn2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                        try {
+                            await subscribeUser(u.id, u.email);
+                            _updateSubscribeBtn(true);
+                        } catch (err) {
+                            console.error('Subscribe error:', err);
+                            _updateSubscribeBtn(false);
+                        } finally {
+                            btn2.disabled = false;
+                        }
+                    }
+                });
+            }
+        }
     });
 }
 
-// Backdrop click handled inside getOrCreateNewsletterModal; also allow Escape key
+// Global Escape key to close newsletter modal
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') _closeNewsletterModal();
+    if (e.key === 'Escape') { _closeNewsletterModal(); _closeUnsubModal(); }
 });
 
 // Regular login
