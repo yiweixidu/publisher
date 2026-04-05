@@ -255,52 +255,31 @@ function _getOrCreateUnsubModal() {
             <div class="unsub-header">
                 <div class="unsub-icon"><i class="fas fa-heart-broken"></i></div>
                 <h3 class="unsub-title">Sorry to see you go</h3>
-                <p class="unsub-sub">Help us improve — why are you leaving?<br><em>(optional)</em></p>
+                <p class="unsub-sub">Help us improve — why are you leaving? <em>(optional)</em></p>
             </div>
             <div class="unsub-reasons">
-                <label class="unsub-reason-row">
-                    <input type="radio" name="unsubReason" value="Too many emails">
-                    <span>Too many emails</span>
-                </label>
-                <label class="unsub-reason-row">
-                    <input type="radio" name="unsubReason" value="Content not relevant">
-                    <span>Content not relevant to me</span>
-                </label>
-                <label class="unsub-reason-row">
-                    <input type="radio" name="unsubReason" value="Didn't sign up">
-                    <span>I didn't sign up for this</span>
-                </label>
-                <label class="unsub-reason-row">
-                    <input type="radio" name="unsubReason" value="Other">
-                    <span>Other</span>
-                </label>
+                <label class="unsub-reason-row"><input type="radio" name="unsubReason" value="Too many emails"><span>Too many emails</span></label>
+                <label class="unsub-reason-row"><input type="radio" name="unsubReason" value="Content not relevant"><span>Content not relevant to me</span></label>
+                <label class="unsub-reason-row"><input type="radio" name="unsubReason" value="Didn't sign up"><span>I didn't sign up for this</span></label>
+                <label class="unsub-reason-row"><input type="radio" name="unsubReason" value="Other"><span>Other</span></label>
             </div>
-            <textarea id="unsubOtherText" class="unsub-other-input" placeholder="Tell us more (optional)…" rows="2"></textarea>
+            <textarea id="unsubOtherText" class="unsub-other-input" placeholder="Tell us more (optional)…" rows="2" style="display:none;"></textarea>
             <div class="unsub-actions">
-                <button class="btn-primary unsub-keep-btn" id="unsubKeepBtn">
-                    <i class="fas fa-heart"></i> Keep my subscription
-                </button>
-                <button class="btn-outline-red unsub-confirm-btn" id="unsubConfirmBtn">
-                    Unsubscribe
-                </button>
+                <button class="btn-primary unsub-keep-btn" id="unsubKeepBtn"><i class="fas fa-heart"></i> Keep my subscription</button>
+                <button class="btn-outline-red unsub-confirm-btn" id="unsubConfirmBtn">Unsubscribe</button>
             </div>
             <div id="unsubMsg" class="acc-msg" style="text-align:center;margin-top:0.5rem;"></div>
-        </div>
-    `;
+        </div>`;
     document.body.appendChild(m);
-
     m.addEventListener('click', e => { if (e.target === m) _closeUnsubModal(); });
     document.getElementById('unsubModalClose')?.addEventListener('click', _closeUnsubModal);
     document.getElementById('unsubKeepBtn')?.addEventListener('click', _closeUnsubModal);
-
-    // Show/hide textarea for "Other"
-    m.querySelectorAll('input[name="unsubReason"]').forEach(radio => {
-        radio.addEventListener('change', () => {
+    m.querySelectorAll('input[name="unsubReason"]').forEach(r => {
+        r.addEventListener('change', () => {
             const ta = document.getElementById('unsubOtherText');
-            if (ta) ta.style.display = radio.value === 'Other' ? 'block' : 'none';
+            if (ta) ta.style.display = r.value === 'Other' ? 'block' : 'none';
         });
     });
-
     return m;
 }
 
@@ -311,33 +290,24 @@ async function _doUnsubscribe() {
     try {
         const selected = document.querySelector('input[name="unsubReason"]:checked');
         let reason = selected?.value || '';
-        if (reason === 'Other') {
-            const ta = document.getElementById('unsubOtherText');
-            reason = ta?.value.trim() || 'Other';
-        }
+        if (reason === 'Other') { const ta = document.getElementById('unsubOtherText'); reason = ta?.value.trim() || 'Other'; }
         const { currentUser } = await import('./auth.js');
         if (!currentUser) throw new Error('Not logged in');
         await unsubscribeUser(currentUser.id, reason);
         if (msg) { msg.textContent = 'You have been unsubscribed.'; msg.className = 'acc-msg success'; }
-        setTimeout(() => {
-            _closeUnsubModal();
-            _updateSubscribeBtn(false);
-        }, 1600);
+        setTimeout(() => { _closeUnsubModal(); _updateSubscribeBtn(false); }, 1600);
     } catch (err) {
         if (msg) { msg.textContent = 'Error: ' + err.message; msg.className = 'acc-msg error'; }
         if (btn) { btn.disabled = false; btn.innerHTML = 'Unsubscribe'; }
     }
 }
 
-// ── subscribe button state ────────────────────────────────────────────────────
-
 function _updateSubscribeBtn(isSubscribed) {
     const btn = document.getElementById('nlSubscribeBtn');
     if (!btn) return;
     if (isSubscribed) {
         btn.className = 'nl-subscribe-btn nl-subscribe-btn--active';
-        btn.innerHTML = `<i class="fas fa-check-circle"></i> Subscribed
-            <span class="nl-unsub-hint">click to unsubscribe</span>`;
+        btn.innerHTML = `<i class="fas fa-check-circle"></i> Subscribed<span class="nl-unsub-hint">click to unsubscribe</span>`;
     } else {
         btn.className = 'nl-subscribe-btn';
         btn.innerHTML = `<i class="fas fa-envelope"></i> Subscribe to Newsletter`;
@@ -349,7 +319,6 @@ function _updateSubscribeBtn(isSubscribed) {
 function _getOrCreateNewsletterModal() {
     let modal = document.getElementById('newsletterModal');
     if (modal) return modal;
-
     modal = document.createElement('div');
     modal.id = 'newsletterModal';
     modal.className = 'login-overlay';
@@ -359,8 +328,6 @@ function _getOrCreateNewsletterModal() {
             <button class="acc-modal-close" id="nlModalClose" aria-label="Close">
                 <i class="fas fa-times"></i>
             </button>
-
-            <!-- Left sidebar -->
             <div class="nl-sidebar">
                 <div class="nl-sidebar-brand">
                     <div class="nl-sidebar-icon"><i class="fas fa-newspaper"></i></div>
@@ -368,37 +335,26 @@ function _getOrCreateNewsletterModal() {
                     <div class="nl-sidebar-sub">Acer Books</div>
                 </div>
                 <nav class="nl-sidebar-nav">
-                    <div class="nl-nav-item active" id="nlNavAll">
-                        <i class="fas fa-layer-group"></i> All News
-                    </div>
-                    <div class="nl-nav-item" id="nlNavLatest">
-                        <i class="fas fa-star"></i> Latest Issue
-                    </div>
+                    <div class="nl-nav-item active" id="nlNavAll"><i class="fas fa-layer-group"></i> All News</div>
+                    <div class="nl-nav-item" id="nlNavLatest"><i class="fas fa-star"></i> Latest Issue</div>
                 </nav>
-                <!-- Subscribe / Unsubscribe button -->
                 <button class="nl-subscribe-btn" id="nlSubscribeBtn">
                     <i class="fas fa-envelope"></i> Subscribe to Newsletter
                 </button>
             </div>
-
-            <!-- Right content -->
             <div class="nl-body">
                 <p class="acc-section-title" id="nlBodyTitle">Latest Updates</p>
                 <div id="nlNewsList" class="nl-news-list"></div>
             </div>
-        </div>
-    `;
+        </div>`;
     document.body.appendChild(modal);
-
     modal.addEventListener('click', e => { if (e.target === modal) _closeNewsletterModal(); });
     document.getElementById('nlModalClose')?.addEventListener('click', _closeNewsletterModal);
-
     return modal;
 }
 
 // ── render helpers ────────────────────────────────────────────────────────────
 
-/** Format a news item title/summary for the current language. */
 function _nlText(item, field) {
     const lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
     const v = item[field];
@@ -413,44 +369,33 @@ function _nlDate(item) {
     return d ? new Date(d).toLocaleDateString('en-CA', { year:'numeric', month:'long', day:'numeric' }) : '';
 }
 
-/**
- * Render the first item as a proper newsletter "issue" card;
- * subsequent items as compact list rows.
- */
 function _renderNlItems(items) {
     const list = document.getElementById('nlNewsList');
     if (!list) return;
-    if (!items.length) {
-        list.innerHTML = '<p class="acc-empty">No news available yet. Check back soon!</p>';
-        return;
-    }
+    if (!items.length) { list.innerHTML = '<p class="acc-empty">No news available yet.</p>'; return; }
 
     const [featured, ...rest] = items;
+    const fTitle   = _nlText(featured, 'title');
+    const fSummary = _nlText(featured, 'summary');
+    const fDate    = _nlDate(featured);
+    const fCover   = featured.image || '';
 
-    const featuredTitle   = _nlText(featured, 'title');
-    const featuredSummary = _nlText(featured, 'summary');
-    const featuredDate    = _nlDate(featured);
-    const featuredCover   = featured.image || '';
-
-    // Newsletter issue card
     let html = `
-        <article class="nl-issue-card" data-news-id="${featured.id}" role="button" tabindex="0"
-                 aria-label="Read: ${featuredTitle}">
+        <article class="nl-issue-card" data-news-id="${featured.id}" role="button" tabindex="0">
             <div class="nl-issue-header">
                 <span class="nl-issue-label"><i class="fas fa-circle"></i> LATEST ISSUE</span>
-                <span class="nl-issue-date"><i class="fas fa-calendar-alt"></i> ${featuredDate}</span>
+                <span class="nl-issue-date"><i class="fas fa-calendar-alt"></i> ${fDate}</span>
             </div>
-            ${featuredCover
-                ? `<div class="nl-issue-hero" style="background-image:url('${featuredCover}');"></div>`
+            ${fCover
+                ? `<div class="nl-issue-hero" style="background-image:url('${fCover}');"></div>`
                 : `<div class="nl-issue-hero nl-issue-hero--placeholder"><i class="fas fa-newspaper"></i></div>`}
             <div class="nl-issue-body">
-                <h2 class="nl-issue-title">${featuredTitle}</h2>
-                <p class="nl-issue-summary">${featuredSummary}</p>
+                <h2 class="nl-issue-title">${fTitle}</h2>
+                <p class="nl-issue-summary">${fSummary}</p>
                 <span class="nl-issue-cta">Read the full story <i class="fas fa-arrow-right"></i></span>
             </div>
         </article>`;
 
-    // Compact list for remaining items
     if (rest.length) {
         html += `<div class="nl-compact-list">`;
         rest.forEach(item => {
@@ -459,7 +404,7 @@ function _renderNlItems(items) {
             const d = _nlDate(item);
             const cover = item.image || '';
             html += `
-                <div class="nl-news-item" data-news-id="${item.id}" role="button" tabindex="0" aria-label="Read: ${t}">
+                <div class="nl-news-item" data-news-id="${item.id}" role="button" tabindex="0">
                     <div class="nl-news-thumb" style="${cover
                         ? `background-image:url('${cover}');background-size:cover;background-position:center;`
                         : 'background:linear-gradient(135deg,#4a0000,#8b0000);display:flex;align-items:center;justify-content:center;'}">
@@ -468,7 +413,7 @@ function _renderNlItems(items) {
                     <div class="nl-news-info">
                         <div class="nl-news-date"><i class="fas fa-calendar-alt"></i> ${d}</div>
                         <div class="nl-news-title">${t}</div>
-                        <div class="nl-news-summary">${s.substring(0, 90)}${s.length > 90 ? '…' : ''}</div>
+                        <div class="nl-news-summary">${s.substring(0,90)}${s.length>90?'…':''}</div>
                     </div>
                     <div class="nl-news-arrow"><i class="fas fa-chevron-right"></i></div>
                 </div>`;
@@ -477,12 +422,10 @@ function _renderNlItems(items) {
     }
 
     list.innerHTML = html;
-
-    // Attach navigation to all clickable items
     list.querySelectorAll('[data-news-id]').forEach(card => {
         const go = () => { _closeNewsletterModal(); navigateTo(`/news/${card.dataset.newsId}`); };
         card.addEventListener('click', go);
-        card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') go(); });
+        card.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') go(); });
     });
 }
 
@@ -495,89 +438,63 @@ if (newsletterLink) {
         modal.classList.add('active');
         modal.style.display = 'flex';
 
-        // Sort published items newest-first
         const published = (newsItems || [])
             .filter(n => n.status === 'published' || !n.status)
             .sort((a, b) => (new Date(b.event_date || 0)) - (new Date(a.event_date || 0)));
 
-        try {
-            _renderNlItems(published.slice(0, 5));
-        } catch (err) {
-            console.error('renderNlItems error:', err);
-        }
+        try { _renderNlItems(published.slice(0, 5)); } catch (err) { console.error(err); }
 
-        // ── Nav tabs ──
-        const navAll    = document.getElementById('nlNavAll');
+        // Nav tabs — re-clone to remove stale listeners
+        const navAll = document.getElementById('nlNavAll');
         const navLatest = document.getElementById('nlNavLatest');
-        const titleEl   = document.getElementById('nlBodyTitle');
-
-        // Clone to remove stale listeners from previous opens
+        const titleEl = document.getElementById('nlBodyTitle');
         if (navAll) {
-            const fresh = navAll.cloneNode(true);
-            navAll.replaceWith(fresh);
-            fresh.addEventListener('click', () => {
-                fresh.classList.add('active');
+            const f = navAll.cloneNode(true); navAll.replaceWith(f);
+            f.classList.add('active');
+            f.addEventListener('click', () => {
+                f.classList.add('active');
                 document.getElementById('nlNavLatest')?.classList.remove('active');
                 if (titleEl) titleEl.textContent = 'Latest Updates';
                 _renderNlItems(published.slice(0, 5));
             });
         }
         if (navLatest) {
-            const fresh = navLatest.cloneNode(true);
-            navLatest.replaceWith(fresh);
-            fresh.addEventListener('click', () => {
-                fresh.classList.add('active');
+            const f = navLatest.cloneNode(true); navLatest.replaceWith(f);
+            f.addEventListener('click', () => {
+                f.classList.add('active');
                 document.getElementById('nlNavAll')?.classList.remove('active');
                 if (titleEl) titleEl.textContent = 'Latest Issue';
                 _renderNlItems(published.slice(0, 1));
             });
         }
 
-        // ── Subscribe button ──
+        // Subscribe button
         const subBtn = document.getElementById('nlSubscribeBtn');
         if (subBtn) {
-            const freshBtn = subBtn.cloneNode(true);
-            subBtn.replaceWith(freshBtn);
-
+            const freshBtn = subBtn.cloneNode(true); subBtn.replaceWith(freshBtn);
             const { currentUser } = await import('./auth.js');
-
             if (!currentUser) {
                 freshBtn.className = 'nl-subscribe-btn';
                 freshBtn.innerHTML = `<i class="fas fa-envelope"></i> Login to Subscribe`;
-                freshBtn.addEventListener('click', () => {
-                    _closeNewsletterModal();
-                    openLoginModal('user');
-                });
+                freshBtn.addEventListener('click', () => { _closeNewsletterModal(); openLoginModal('user'); });
             } else {
                 const status = await getSubscriptionStatus(currentUser.id);
-                const isActive = status?.status === 'active';
-                _updateSubscribeBtn(isActive);
-
-                // Re-fetch the now-fresh button
+                _updateSubscribeBtn(status?.status === 'active');
                 const btn2 = document.getElementById('nlSubscribeBtn');
                 btn2?.addEventListener('click', async () => {
                     const { currentUser: u } = await import('./auth.js');
                     const st = await getSubscriptionStatus(u.id);
                     if (st?.status === 'active') {
-                        // Open unsubscribe survey
                         const unsubM = _getOrCreateUnsubModal();
-                        // Wire up confirm button each time (fresh)
-                        const oldConfirm = document.getElementById('unsubConfirmBtn');
-                        if (oldConfirm) {
-                            const newConfirm = oldConfirm.cloneNode(true);
-                            oldConfirm.replaceWith(newConfirm);
-                            newConfirm.addEventListener('click', _doUnsubscribe);
-                        }
-                        // Reset survey state
+                        const oldC = document.getElementById('unsubConfirmBtn');
+                        if (oldC) { const newC = oldC.cloneNode(true); oldC.replaceWith(newC); newC.addEventListener('click', _doUnsubscribe); }
                         document.querySelectorAll('input[name="unsubReason"]').forEach(r => r.checked = false);
                         const ta = document.getElementById('unsubOtherText');
-                        if (ta) { ta.value = ''; ta.style.display = 'none'; }
+                        if (ta) { ta.value=''; ta.style.display='none'; }
                         const msg = document.getElementById('unsubMsg');
-                        if (msg) { msg.textContent = ''; msg.className = 'acc-msg'; }
-                        unsubM.classList.add('active');
-                        unsubM.style.display = 'flex';
+                        if (msg) { msg.textContent=''; msg.className='acc-msg'; }
+                        unsubM.classList.add('active'); unsubM.style.display='flex';
                     } else {
-                        // Subscribe
                         btn2.disabled = true;
                         btn2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                         try {
@@ -586,9 +503,7 @@ if (newsletterLink) {
                         } catch (err) {
                             console.error('Subscribe error:', err);
                             _updateSubscribeBtn(false);
-                        } finally {
-                            btn2.disabled = false;
-                        }
+                        } finally { btn2.disabled = false; }
                     }
                 });
             }
@@ -596,9 +511,19 @@ if (newsletterLink) {
     });
 }
 
-// Global Escape key to close newsletter modal
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { _closeNewsletterModal(); _closeUnsubModal(); }
+});
+
+loginClose?.addEventListener('click', () => {
+    loginOverlay?.classList.remove('active');
+    resetLoginModalLinks();
+});
+loginOverlay?.addEventListener('click', e => {
+    if (e.target === loginOverlay) {
+        loginOverlay.classList.remove('active');
+        resetLoginModalLinks();
+    }
 });
 
 // Regular login
@@ -709,6 +634,20 @@ signupBtn?.addEventListener('click', doSignup);
     document.getElementById(id)?.addEventListener('keydown', e => {
         if (e.key === 'Enter') doSignup();
     });
+});
+
+signupClose?.addEventListener('click', () => signupOverlay?.classList.remove('active'));
+signupOverlay?.addEventListener('click', e => { if (e.target === signupOverlay) signupOverlay.classList.remove('active'); });
+
+goToSignupLink?.addEventListener('click', e => {
+    e.preventDefault();
+    loginOverlay?.classList.remove('active');
+    signupOverlay?.classList.add('active');
+});
+goToLoginLink?.addEventListener('click', e => {
+    e.preventDefault();
+    signupOverlay?.classList.remove('active');
+    openLoginModal('user');
 });
 
 // Cart operations
