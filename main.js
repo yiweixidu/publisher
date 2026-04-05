@@ -217,176 +217,202 @@ if (navNews) {
 }
 
 /* ============================================
-   ✅ 修复 3: Newsletter 功能 - Modal版本
+   Newsletter Modal — redesigned to match the
+   user profile modal (two-panel: sidebar + body)
    ============================================ */
 
 const newsletterLink = document.getElementById('newsletterLink');
 
+/** Close the newsletter modal helper */
+function _closeNewsletterModal() {
+    const modal = document.getElementById('newsletterModal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+    }
+}
+
 /**
- * 创建或获取 Newsletter Modal
+ * Build or retrieve the newsletter modal shell.
+ * The inner structure mirrors the account modal layout:
+ *   .newsletter-modal-content
+ *     .nl-sidebar   (dark crimson, branding + stat pills)
+ *     .nl-body      (scrollable news list)
  */
 function getOrCreateNewsletterModal() {
     let modal = document.getElementById('newsletterModal');
-    
-    if (!modal) {
-        // 如果不存在，创建一个新的modal
-        modal = document.createElement('div');
-        modal.id = 'newsletterModal';
-        modal.className = 'modal-overlay';
-        modal.style.display = 'none';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width: 600px;">
-                <span class="modal-close" onclick="document.getElementById('newsletterModal').classList.remove('active'); document.getElementById('newsletterModal').style.display = 'none';">
-                    <i class="fas fa-times"></i>
-                </span>
-                <div id="newsletterModalContent"></div>
+    if (modal) return modal;
+
+    modal = document.createElement('div');
+    modal.id = 'newsletterModal';
+    modal.className = 'login-overlay';          // reuse the same backdrop class
+    modal.style.display = 'none';
+    modal.innerHTML = `
+        <div class="newsletter-modal-content">
+            <!-- Close button -->
+            <button class="acc-modal-close" id="nlModalClose" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <!-- Left sidebar -->
+            <div class="nl-sidebar">
+                <div class="nl-sidebar-brand">
+                    <div class="nl-sidebar-icon">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <div class="nl-sidebar-title">News &amp;<br>Events</div>
+                    <div class="nl-sidebar-sub">Acer Books</div>
+                </div>
+                <nav class="nl-sidebar-nav">
+                    <div class="nl-nav-item active" id="nlNavAll">
+                        <i class="fas fa-layer-group"></i> All News
+                    </div>
+                    <div class="nl-nav-item" id="nlNavLatest">
+                        <i class="fas fa-star"></i> Latest
+                    </div>
+                </nav>
+                <button class="nl-sidebar-viewall" id="nlViewAllBtn">
+                    View all news <i class="fas fa-arrow-right"></i>
+                </button>
             </div>
-        `;
-        document.body.appendChild(modal);
-    }
-    
+
+            <!-- Right content -->
+            <div class="nl-body">
+                <p class="acc-section-title" id="nlBodyTitle">Latest Updates</p>
+                <div id="nlNewsList" class="nl-news-list"></div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) _closeNewsletterModal();
+    });
+    // Close button
+    document.getElementById('nlModalClose')?.addEventListener('click', _closeNewsletterModal);
+    // View-all button
+    document.getElementById('nlViewAllBtn')?.addEventListener('click', () => {
+        _closeNewsletterModal();
+        navigateTo('/news');
+    });
+
     return modal;
+}
+
+/**
+ * Render news items into the #nlNewsList container.
+ * @param {Array}  items   – array of news objects
+ * @param {boolean} latestOnly – highlight the first item
+ */
+function _renderNlItems(items, latestOnly = false) {
+    const list = document.getElementById('nlNewsList');
+    if (!list) return;
+
+    if (!items.length) {
+        list.innerHTML = '<p class="acc-empty">No news available yet. Check back soon!</p>';
+        return;
+    }
+
+    list.innerHTML = items.map((item, idx) => {
+        const lang  = (typeof currentLang !== 'undefined') ? currentLang : 'en';
+        const title = (item.title && typeof item.title === 'object')
+            ? (item.title[lang] || item.title.en || '')
+            : (item.title || 'Untitled');
+        const summary = (item.summary && typeof item.summary === 'object')
+            ? (item.summary[lang] || item.summary.en || '')
+            : (item.summary || '');
+        const displayDate = item.display_date ||
+            (item.event_date
+                ? new Date(item.event_date).toLocaleDateString('en-CA', { year:'numeric', month:'short', day:'numeric' })
+                : (item.created_at
+                    ? new Date(item.created_at).toLocaleDateString('en-CA', { year:'numeric', month:'short', day:'numeric' })
+                    : ''));
+        const coverStyle = item.image
+            ? `background-image:url('${item.image}');background-size:cover;background-position:center;`
+            : `background:linear-gradient(135deg,#4a0000 0%,#8b0000 100%);`;
+        const isLatest = latestOnly && idx === 0;
+
+        return `
+            <div class="nl-news-item${isLatest ? ' nl-news-item--featured' : ''}"
+                 data-news-id="${item.id}"
+                 role="button" tabindex="0"
+                 aria-label="Read: ${title}">
+                <div class="nl-news-thumb" style="${coverStyle}">
+                    ${!item.image ? '<i class="fas fa-newspaper" style="color:rgba(255,255,255,0.3);font-size:1.4rem;"></i>' : ''}
+                </div>
+                <div class="nl-news-info">
+                    ${isLatest ? '<span class="nl-badge">Latest</span>' : ''}
+                    <div class="nl-news-date">
+                        <i class="fas fa-calendar-alt"></i> ${displayDate}
+                    </div>
+                    <div class="nl-news-title">${title}</div>
+                    <div class="nl-news-summary">${summary.substring(0, 110)}${summary.length > 110 ? '…' : ''}</div>
+                </div>
+                <div class="nl-news-arrow"><i class="fas fa-chevron-right"></i></div>
+            </div>`;
+    }).join('');
+
+    // Attach click + keyboard navigation
+    list.querySelectorAll('.nl-news-item').forEach(card => {
+        const go = () => {
+            _closeNewsletterModal();
+            navigateTo(`/news/${card.dataset.newsId}`);
+        };
+        card.addEventListener('click', go);
+        card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') go(); });
+    });
 }
 
 if (newsletterLink) {
     newsletterLink.addEventListener('click', async (e) => {
         e.preventDefault();
-        
+        const modal = getOrCreateNewsletterModal();
+
         try {
-            // 获取最新的新闻
-            const latestNews = newsItems && newsItems.length > 0 ? newsItems.slice(0, 3) : [];
-            
-            if (latestNews.length === 0) {
-                // 如果没有新闻，显示提示
-                const modal = getOrCreateNewsletterModal();
-                const content = document.getElementById('newsletterModalContent');
-                if (content) {
-                    content.innerHTML = `
-                        <h3 style="font-family: 'Lora', serif; font-size: 1.5rem; margin-bottom: 1rem; color: #ff0000;">
-                            📰 Latest News & Updates
-                        </h3>
-                        <p style="text-align: center; color: #666; padding: 2rem 0;">
-                            No news available yet. Please check back soon!
-                        </p>
-                        <button class="btn-primary" style="width: 100%; margin-top: 1rem;"
-                                onclick="document.getElementById('newsletterModal').classList.remove('active'); document.getElementById('newsletterModal').style.display = 'none';">
-                            Close
-                        </button>
-                    `;
-                }
-                modal.classList.add('active');
-                modal.style.display = 'flex';
-                return;
-            }
-            
-            // 创建modal内容
-            let html = `
-                <h3 style="font-family: 'Lora', serif; font-size: 1.5rem; margin-bottom: 1.5rem; color: #ff0000;">
-                    📰 Latest News & Updates
-                </h3>
-            `;
-            
-            latestNews.forEach((item, index) => {
-                const date = new Date(item.created_at).toLocaleDateString('en-CA', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
+            // Sort published items newest-first
+            const published = (newsItems || [])
+                .filter(n => n.status === 'published' || !n.status)
+                .sort((a, b) => {
+                    const da = a.event_date ? new Date(a.event_date) : 0;
+                    const db = b.event_date ? new Date(b.event_date) : 0;
+                    return db - da;
                 });
-                const title = item.title?.en || item.title || 'Untitled';
-                const summary = item.summary?.en || item.summary || 'No summary available';
-                
-                // 添加视觉层级
-                const bgColor = index === 0 ? '#fff0f0' : '#f9f9f9';
-                const borderColor = index === 0 ? '#ff0000' : '#e0e0e0';
-                const isBold = index === 0 ? 'font-weight: 700;' : 'font-weight: 600;';
-                
-                html += `
-                    <div style="
-                        text-align: left;
-                        margin-bottom: 1.2rem;
-                        padding: 1.2rem;
-                        background: ${bgColor};
-                        border: 2px solid ${borderColor};
-                        border-radius: 8px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    "
-                         onmouseover="this.style.backgroundColor='#ffe6e6'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,0,0,0.1)'"
-                         onmouseout="this.style.backgroundColor='${bgColor}'; this.style.transform='translateY(0)'; this.style.boxShadow='none'"
-                         onclick="
-                            document.getElementById('newsletterModal').classList.remove('active');
-                            document.getElementById('newsletterModal').style.display = 'none';
-                            navigateTo('/news/${item.id}');
-                         ">
-                        ${index === 0 ? '<div style="color: #ff0000; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.3rem;">🔴 Latest News</div>' : ''}
-                        <div style="font-weight: 600; color: #ff0000; font-size: 0.8rem; margin-bottom: 0.3rem;">
-                            📅 ${date}
-                        </div>
-                        <div style="${isBold} font-size: 1rem; margin-bottom: 0.5rem; color: #333;">
-                            ${title}
-                        </div>
-                        <div style="color: #666; font-size: 0.9rem; line-height: 1.5;">
-                            ${summary.substring(0, 120)}${summary.length > 120 ? '...' : ''}
-                        </div>
-                        <div style="margin-top: 0.8rem; color: #ff0000; font-size: 0.85rem; font-weight: 500;">
-                            Read More →
-                        </div>
-                    </div>
-                `;
+
+            _renderNlItems(published.slice(0, 5), true);
+
+            // Sidebar nav tab behaviour
+            const navAll    = document.getElementById('nlNavAll');
+            const navLatest = document.getElementById('nlNavLatest');
+            const titleEl   = document.getElementById('nlBodyTitle');
+
+            navAll?.addEventListener('click', () => {
+                navAll.classList.add('active');
+                navLatest?.classList.remove('active');
+                if (titleEl) titleEl.textContent = 'Latest Updates';
+                _renderNlItems(published.slice(0, 5), true);
             });
-            
-            // 添加查看全部新闻按钮
-            html += `
-                <button class="btn-primary" style="width: 100%; margin-top: 1.5rem;"
-                        onclick="
-                            document.getElementById('newsletterModal').classList.remove('active');
-                            document.getElementById('newsletterModal').style.display = 'none';
-                            navigateTo('/news');
-                        ">
-                    View All News & Events →
-                </button>
-            `;
-            
-            // 显示modal
-            const modal = getOrCreateNewsletterModal();
-            const content = document.getElementById('newsletterModalContent');
-            if (content) {
-                content.innerHTML = html;
-            }
-            modal.classList.add('active');
-            modal.style.display = 'flex';
-            
+            navLatest?.addEventListener('click', () => {
+                navLatest.classList.add('active');
+                navAll?.classList.remove('active');
+                if (titleEl) titleEl.textContent = 'Most Recent';
+                _renderNlItems(published.slice(0, 1), true);
+            });
+
         } catch (err) {
             console.error('Error loading newsletter:', err);
-            const modal = getOrCreateNewsletterModal();
-            const content = document.getElementById('newsletterModalContent');
-            if (content) {
-                content.innerHTML = `
-                    <h3 style="font-family: 'Lora', serif; font-size: 1.5rem; margin-bottom: 1rem; color: #ff0000;">
-                        📰 Latest News & Updates
-                    </h3>
-                    <p style="text-align: center; color: #ff0000; padding: 2rem 0;">
-                        Error loading news. Please try again later.
-                    </p>
-                    <button class="btn-primary" style="width: 100%; margin-top: 1rem;"
-                            onclick="document.getElementById('newsletterModal').classList.remove('active'); document.getElementById('newsletterModal').style.display = 'none';">
-                        Close
-                    </button>
-                `;
-            }
-            modal.classList.add('active');
-            modal.style.display = 'flex';
+            const list = document.getElementById('nlNewsList');
+            if (list) list.innerHTML = '<p class="acc-empty" style="color:#ff0000;">Error loading news. Please try again.</p>';
         }
+
+        modal.classList.add('active');
+        modal.style.display = 'flex';
     });
 }
 
-// 点击modal外部关闭
-document.addEventListener('click', (e) => {
-    const modal = document.getElementById('newsletterModal');
-    if (modal && e.target === modal) {
-        modal.classList.remove('active');
-        modal.style.display = 'none';
-    }
+// Backdrop click handled inside getOrCreateNewsletterModal; also allow Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') _closeNewsletterModal();
 });
 
 // Regular login
