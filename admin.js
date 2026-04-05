@@ -667,7 +667,7 @@ export async function renderAdminNewsList() {
             try {
                 const { currentAccessToken } = await import('./auth.js');
                 const { sendNewsletterEmail }  = await import('./newsletter.js');
-                const sent = await sendNewsletterEmail(id, currentAccessToken);
+                const sent = await sendNewsletterEmail(id);
                 showToast(`Newsletter sent to ${sent} subscriber${sent !== 1 ? 's' : ''}! 📨`);
             } catch (err) {
                 console.error('Send newsletter error:', err);
