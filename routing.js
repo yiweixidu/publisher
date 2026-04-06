@@ -6,22 +6,60 @@ import { showAdminBooksPage, showAdminNewsPage, showAdminUsersPage, showAdminCom
 import { BASE_PATH } from './constants.js';
 import { adminMode } from './auth.js';
 
+// ── Pinyin helper (lazy-loaded from CDN) ────────────────────────────────────
+let _pinyinFn = null;
+async function _getPinyin(str) {
+    if (!_pinyinFn) {
+        try {
+            const mod = await import('https://esm.sh/pinyin-pro@3');
+            _pinyinFn = mod.pinyin;
+        } catch(e) {
+            console.warn('pinyin-pro load failed:', e);
+            _pinyinFn = () => '';
+        }
+    }
+    return _pinyinFn(str, { toneType: 'none', type: 'array' }).join('-');
+}
+
 // ── Slug helper ─────────────────────────────────────────────────────────────
-// Converts a book's English title into a clean URL slug.
-// Handles mixed Chinese/English titles, e.g.:
+// Converts a book title into a clean URL slug.
+//
+// Mixed Chinese/English:
 //   "野花·繁星: Wild Flowers & Bright Stars"  →  "wild-flowers-bright-stars"
-//   "自惜身薄祜——红楼奸雄贾雨村: Jia Yucun Character Analysis"  →  "jia-yucun-character-analysis"
+//   "自惜身薄祜——红楼奸雄贾雨村: Jia Yucun"   →  "jia-yucun"
+//
+// Chinese-only (no English segment):
+//   "从北极到南极"   →  "cong-bei-ji-dao-nan-ji"
+//   "荒原·情歌"      →  "huang-yuan-qing-ge"
 export function toSlug(title) {
     if (!title) return 'book';
-    return title
-        .replace(/[\u3000-\u9fff\uac00-\ud7af\uf900-\ufaff]/g, ' ') // strip CJK
-        .replace(/[：:·•—–()\[\]《》「」『』【】]/g, ' ')             // strip delimiters
-        .replace(/[^a-zA-Z0-9\s-]/g, ' ')                             // strip remaining non-ascii
+    const cleaned = title.replace(/[：:·•—–()\[\]《》「」『』【】]/g, ' ').trim();
+    const latinPart = cleaned
+        .replace(/[\u3000-\u9fff\uac00-\ud7af\uf900-\ufaff]/g, ' ')
+        .replace(/[^a-zA-Z0-9\s-]/g, ' ')
         .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
-        .trim() || 'book';
+        .replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').trim();
+    return latinPart || 'book'; // sync fallback; toSlugAsync used for actual URLs
+}
+
+// Async version — resolves Chinese-only titles to pinyin slugs.
+// Used by handleRoute for pushState / replaceState.
+export async function toSlugAsync(title) {
+    if (!title) return 'book';
+    const cleaned = title.replace(/[：:·•—–()\[\]《》「」『』【】]/g, ' ').trim();
+    const latinPart = cleaned
+        .replace(/[\u3000-\u9fff\uac00-\ud7af\uf900-\ufaff]/g, ' ')
+        .replace(/[^a-zA-Z0-9\s-]/g, ' ')
+        .toLowerCase()
+        .replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').trim();
+    if (latinPart) return latinPart;
+    // Pure/mostly Chinese → convert to pinyin
+    const cjkOnly = cleaned.replace(/[^\u3000-\u9fff\uac00-\ud7af\uf900-\ufaff]/g, '');
+    if (!cjkOnly) return 'book';
+    try {
+        const py = await _getPinyin(cjkOnly);
+        return py.toLowerCase().replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').trim() || 'book';
+    } catch(e) { return 'book'; }
 }
 
 // ── Navigation ──────────────────────────────────────────────────────────────
@@ -76,15 +114,21 @@ export async function handleRoute() {
     } else if (path.startsWith('book/')) {
         const segment = path.split('book/')[1];
 
-        // 1. Slug match — primary (e.g. /book/jia-yucun-character-analysis)
-        let book = books.find(b => toSlug(b.title) === segment);
-        // 2. ID fallback — legacy links or 404.html redirect (e.g. /book/b6)
-        if (!book) book = books.find(b => b.id === segment);
+        // Build async slug map for all books (handles Chinese-only titles via pinyin)
+        const slugMap = await Promise.all(books.map(async b => ({ book: b, slug: await toSlugAsync(b.title) })));
 
+        // 1. Async slug match — supports pinyin slugs for Chinese-only titles
+        let entry = slugMap.find(e => e.slug === segment);
+        // 2. Sync slug fallback (existing behaviour for mixed titles)
+        if (!entry) entry = slugMap.find(e => toSlug(e.book.title) === segment);
+        // 3. ID fallback — legacy links or 404.html redirect (e.g. /book/b6)
+        if (!entry) entry = slugMap.find(e => e.book.id === segment);
+
+        const book = entry?.book;
         if (book) {
             detailPage.style.display = 'block';
-            // Silently canonicalise the URL to the slug form
-            const slug = toSlug(book.title);
+            // Canonicalise URL to the async slug (pinyin for Chinese-only titles)
+            const slug = entry.slug;
             const canonical = BASE_PATH.replace(/\/+$/, '') + '/book/' + slug;
             if (window.location.pathname !== canonical) {
                 history.replaceState(null, '', canonical);

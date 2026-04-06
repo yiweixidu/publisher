@@ -4,7 +4,7 @@ import { books, newsItems, loadBooks, loadNews, saveBooks, saveNews } from './da
 import { langPack, currentLang, setLanguage as i18nSetLanguage } from './i18n.js';
 import { addToCart } from './cart.js';
 import { renderReviews, renderDetailReviews } from './review.js';
-import { navigateTo, toSlug } from './routing.js';
+import { navigateTo, toSlug, toSlugAsync } from './routing.js';
 import { renderCartModal } from './cart.js';
 
 // DOM elements
@@ -436,7 +436,7 @@ export async function renderAllBooks() {
                     row.addEventListener('click', (e) => {
                         if (e.target.closest('.wishlist-icon-btn')) return;
                         const book = books.find(b => b.id === row.dataset.id);
-                        if (book) navigateTo(`/book/${toSlug(book.title)}`);
+                        if (book) { toSlugAsync(book.title).then(s => navigateTo(`/book/${s}`)); }
                     });
                 });
             } else {
@@ -446,7 +446,7 @@ export async function renderAllBooks() {
                     card.addEventListener('click', e => {
                         if (e.target.closest('.fmt-toggle') || e.target.closest('.wishlist-icon-btn')) return;
                         const book = books.find(b => b.id === card.dataset.id);
-                        if (book) navigateTo(`/book/${toSlug(book.title)}`);
+                        if (book) { toSlugAsync(book.title).then(s => navigateTo(`/book/${s}`)); }
                     });
                 });
                 attachFormatToggleEvents(booksGridAll);
