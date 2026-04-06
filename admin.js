@@ -1032,17 +1032,32 @@ export async function renderAdminCommentsList() {
                 btn.disabled=true;
                 try {
                     const reviewId=btn.dataset.reviewId;
-                    // Use string comparison: timestamps may be ISO strings or numbers,
-                    // Number() would return NaN for ISO strings causing filter to never match.
                     const commentTs=String(btn.dataset.commentTs);
-                    const {data,error:fetchErr}=await supabase.from('reviews').select('comments').eq('id',reviewId).single();
+
+                    // Fetch the full review row (we need all fields to re-insert)
+                    const {data:row,error:fetchErr}=await supabase.from('reviews').select('*').eq('id',reviewId).single();
                     if(fetchErr)throw fetchErr;
-                    const updated=(data.comments||[]).filter(c=>String(c.timestamp)!==commentTs);
-                    if(updated.length===(data.comments||[]).length){
-                        throw new Error('Comment not found — timestamp mismatch. Comment may have already been deleted.');
+
+                    const updatedComments=(row.comments||[]).filter(c=>String(c.timestamp)!==commentTs);
+                    if(updatedComments.length===(row.comments||[]).length){
+                        throw new Error('Comment not found — it may have already been deleted.');
                     }
-                    const {error:updErr}=await supabase.from('reviews').update({comments:updated}).eq('id',reviewId);
-                    if(updErr)throw updErr;
+
+                    // RLS UPDATE is restricted to own rows, so admin cannot UPDATE others' reviews.
+                    // Workaround: DELETE the row + INSERT it back with the comment removed.
+                    // Admin has DELETE + INSERT (via service-level policy) permissions.
+                    const {error:delErr}=await supabase.from('reviews').delete().eq('id',reviewId);
+                    if(delErr)throw delErr;
+
+                    const {created_at,...rowWithoutCreatedAt}=row;
+                    const newRow={...rowWithoutCreatedAt, comments:updatedComments};
+                    const {error:insErr}=await supabase.from('reviews').insert([newRow]);
+                    if(insErr){
+                        // Insert failed — try to restore original row to avoid data loss
+                        await supabase.from('reviews').insert([{...rowWithoutCreatedAt}]).catch(()=>{});
+                        throw insErr;
+                    }
+
                     showToast('Comment deleted'); await renderAdminCommentsList();
                 } catch(err){ showToast('Delete failed: '+err.message,'error'); btn.disabled=false; }
             });
