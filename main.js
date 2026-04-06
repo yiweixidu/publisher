@@ -1141,6 +1141,11 @@ async function init() {
 
 init();
 
+// Browser back / forward buttons
+window.addEventListener('popstate', () => {
+    handleRoute();
+});
+
 // Fix for session persistence after leaving page (bfcache)
 window.addEventListener('pageshow', async (e) => {
     if (e.persisted) {
