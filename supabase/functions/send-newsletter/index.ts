@@ -1,3 +1,4 @@
+// @ts-nocheck
 // supabase/functions/send-newsletter/index.ts
 //
 // Deploy:  supabase functions deploy send-newsletter
@@ -8,7 +9,7 @@
 //
 // Find service_role key: Supabase Dashboard → Project Settings → API → service_role (secret)
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from '@supabase/supabase-js';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',

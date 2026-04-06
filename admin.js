@@ -1026,16 +1026,21 @@ export async function renderAdminCommentsList() {
                 catch(err){ showToast('Delete failed: '+err.message,'error'); btn.disabled=false; }
             });
         });
-        // FIX: Number() for type-safe timestamp comparison
         listEl.querySelectorAll('.acc-del-comment').forEach(btn=>{
             btn.addEventListener('click',async()=>{
                 if(!confirm('Delete this comment?')) return;
                 btn.disabled=true;
                 try {
-                    const reviewId=btn.dataset.reviewId, commentTs=Number(btn.dataset.commentTs);
+                    const reviewId=btn.dataset.reviewId;
+                    // Use string comparison: timestamps may be ISO strings or numbers,
+                    // Number() would return NaN for ISO strings causing filter to never match.
+                    const commentTs=String(btn.dataset.commentTs);
                     const {data,error:fetchErr}=await supabase.from('reviews').select('comments').eq('id',reviewId).single();
                     if(fetchErr)throw fetchErr;
-                    const updated=(data.comments||[]).filter(c=>Number(c.timestamp)!==commentTs);
+                    const updated=(data.comments||[]).filter(c=>String(c.timestamp)!==commentTs);
+                    if(updated.length===(data.comments||[]).length){
+                        throw new Error('Comment not found — timestamp mismatch. Comment may have already been deleted.');
+                    }
                     const {error:updErr}=await supabase.from('reviews').update({comments:updated}).eq('id',reviewId);
                     if(updErr)throw updErr;
                     showToast('Comment deleted'); await renderAdminCommentsList();
