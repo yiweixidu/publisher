@@ -258,11 +258,12 @@ async function generateReviewCardCanvas(review, book) {
 async function getReviewShareUrl(review, book) {
     const imgPath = `reviews/${review.id}.png`;
 
-    // Check if PNG already cached (simple HEAD — no auth required)
+    // Check if PNG already cached.
+    // Supabase public Storage does not support HEAD — use GET with range:0 instead.
     try {
         const publicImgUrl = `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${OG_BUCKET}/reviews/${review.id}.png`;
-        const check = await fetch(publicImgUrl, { method: 'HEAD' });
-        if (check.ok) {
+        const check = await fetch(publicImgUrl, { method: 'GET', headers: { Range: 'bytes=0-0' } });
+        if (check.ok || check.status === 206) {
             return `${OG_FUNCTION_URL}?rid=${review.id}`;
         }
     } catch(_) { /* proceed to generate */ }
