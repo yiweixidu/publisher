@@ -149,7 +149,9 @@ async function attachEventsToContainer(container, bookId, currentLang, currentUs
             const contentDiv = reviewDiv.querySelector('.wechat-review-content');
             const oldText = contentDiv.innerText;
             // 替换为编辑框
+            const currentReview = reviews.find(r => r.id === reviewId);
             const editHtml = `
+                ${renderStarSelector(currentReview?.rating || 0)}
                 <textarea class="edit-textarea" id="edit-review-${reviewId}">${escapeHtml(oldText)}</textarea>
                 <div class="edit-actions">
                     <button class="save-review-edit btn-post" data-review-id="${reviewId}">Save</button>
@@ -157,6 +159,7 @@ async function attachEventsToContainer(container, bookId, currentLang, currentUs
                 </div>
             `;
             contentDiv.innerHTML = editHtml;
+            bindStarSelector(contentDiv.querySelector('.star-selector'));
             // 保存
             const saveBtn = contentDiv.querySelector('.save-review-edit');
             const cancelBtn = contentDiv.querySelector('.cancel-review-edit');
@@ -166,6 +169,8 @@ async function attachEventsToContainer(container, bookId, currentLang, currentUs
                 const review = reviews.find(r => r.id === reviewId);
                 if (review) {
                     review.text = newText;
+                    const newRating = parseInt(contentDiv.querySelector('.star-selector')?.dataset.rating) || null;
+                    review.rating = newRating;
                     await updateReview(review);
                     await loadReviews();
                     if (container === modalReviews) {
@@ -275,6 +280,9 @@ async function attachEventsToContainer(container, bookId, currentLang, currentUs
         });
     });
 
+    // Bind star selector for the new review form
+    bindStarSelector(container.querySelector('.review-form .star-selector'));
+
     // 提交新书评
     const submitReview = container.querySelector('.review-submit');
     if (submitReview && currentUser) {
@@ -285,6 +293,7 @@ async function attachEventsToContainer(container, bookId, currentLang, currentUs
             const textarea = container.querySelector('.review-textarea');
             const text = textarea?.value.trim();
             if (!text) return;
+            const rating = parseInt(container.querySelector('.review-form .star-selector')?.dataset.rating) || null;
             const displayName = await getUserDisplayName(currentUser.id);
             const newReview = {
                 id: 'rev_' + Date.now() + Math.random().toString(36).substr(2, 6),
@@ -292,6 +301,7 @@ async function attachEventsToContainer(container, bookId, currentLang, currentUs
                 user_id: currentUser.id,
                 username: displayName,
                 text: text,
+                rating: rating,
                 timestamp: new Date().toISOString(),
                 likes: [],
                 comments: []
@@ -363,6 +373,7 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
                             ` : ''}
                         </div>
                     </div>
+                    ${renderStars(r.rating)}
                     <div class="wechat-review-content" id="review-text-${r.id}">${escapeHtml(r.text)}</div>
                     <div class="wechat-comment-section" id="comments-${r.id}">
         `;
@@ -429,6 +440,7 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
                         <span class="review-form-username">${escapeHtml(currentDisplayName)}</span>
                     </div>
                 </div>
+                ${renderStarSelector(0)}
                 <textarea class="review-textarea" placeholder="Write a review..." rows="3"></textarea>
                 <div class="review-submit-wrapper">
                     <button class="review-submit btn-post">Post review</button>
@@ -451,6 +463,56 @@ function escapeHtml(str) {
         return m;
     }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
         return c;
+    });
+}
+
+// ── Star rating helpers ──────────────────────────────────────────────────────
+const STAR_LABELS = ['', 'Disappointing', 'Fair', 'Good', 'Great', 'Excellent'];
+
+// Read-only star display (rating 0 = hidden)
+function renderStars(rating) {
+    if (!rating || rating < 1) return '';
+    const r = Math.min(5, Math.max(1, Math.round(rating)));
+    let html = `<div class="review-stars" title="${r}/5 — ${STAR_LABELS[r]}">`;
+    for (let i = 1; i <= 5; i++) {
+        html += `<span class="star ${i <= r ? 'filled' : 'empty'}">${i <= r ? '&#9733;' : '&#9734;'}</span>`;
+    }
+    html += `</div>`;
+    return html;
+}
+
+// Interactive star selector for forms
+function renderStarSelector(currentRating = 0) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+        const filled = i <= currentRating;
+        stars += `<span class="star-pick${filled ? ' filled' : ''}" data-val="${i}">${filled ? '&#9733;' : '&#9734;'}</span>`;
+    }
+    return `<div class="star-selector" data-rating="${currentRating}">
+        ${stars}
+        <span class="star-hint">${STAR_LABELS[currentRating] || 'Select rating (optional)'}</span>
+    </div>`;
+}
+
+// Bind hover + click events on a .star-selector element
+function bindStarSelector(el) {
+    if (!el) return;
+    const picks = el.querySelectorAll('.star-pick');
+    const hint  = el.querySelector('.star-hint');
+    function paint(val, persist) {
+        picks.forEach(p => {
+            const v = parseInt(p.dataset.val);
+            const on = v <= val;
+            p.innerHTML = on ? '&#9733;' : '&#9734;';
+            p.classList.toggle('filled', on);
+        });
+        if (hint) hint.textContent = STAR_LABELS[val] || 'Select rating (optional)';
+        if (persist) el.dataset.rating = val;
+    }
+    picks.forEach(p => {
+        p.addEventListener('mouseenter', () => paint(parseInt(p.dataset.val), false));
+        p.addEventListener('mouseleave', () => paint(parseInt(el.dataset.rating) || 0, false));
+        p.addEventListener('click',      () => paint(parseInt(p.dataset.val), true));
     });
 }
 

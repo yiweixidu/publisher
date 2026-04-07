@@ -2676,3 +2676,46 @@ select.checkout-input {
     .aur-actions { width:100%; justify-content:flex-end; }
     .acc-comments-block { padding-left:1rem; }
 }
+/* ════════════════════════════════════════════════
+   Star rating — review display & interactive form
+   ════════════════════════════════════════════════ */
+
+/* Read-only stars shown on each review */
+.review-stars {
+    display: flex;
+    gap: 1px;
+    margin: 3px 0 6px 0;
+}
+.review-stars .star {
+    font-size: 15px;
+    line-height: 1;
+}
+.review-stars .star.filled { color: #ff0000; }
+.review-stars .star.empty  { color: #ddd; }
+
+/* Interactive star selector in forms */
+.star-selector {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 6px 0 10px 0;
+    cursor: pointer;
+    user-select: none;
+}
+.star-pick {
+    font-size: 22px;
+    color: #ddd;
+    line-height: 1;
+    transition: color 0.08s, transform 0.08s;
+}
+.star-pick.filled { color: #ff0000; }
+.star-pick:hover  { color: #ff0000; transform: scale(1.15); }
+.star-hint {
+    font-size: 12px;
+    color: #aaa;
+    margin-left: 8px;
+    min-width: 140px;
+}
+
+/* Stars inside admin comment cards */
+.admin-comment-card .review-stars { margin: 2px 0 4px; }
