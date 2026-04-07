@@ -252,67 +252,10 @@ async function generateReviewCardCanvas(review, book) {
 }
 
 /**
- * Check Storage for a cached card, generate + upload if missing.
- * Returns the Supabase Edge Function URL for this review (used as share URL).
+ * Returns the Edge Function URL for sharing this review.
+ * Image generation is handled server-side by the Edge Function — no client upload needed.
  */
 async function getReviewShareUrl(review, book) {
-    const imgPath = `reviews/${review.id}.png`;
-
-    // Check if PNG already cached.
-    // Supabase Storage bug: returns HTTP 400 with body {"statusCode":"404"} for missing files.
-    // So we must parse the body, not rely on check.ok.
-    try {
-        const publicImgUrl = `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${OG_BUCKET}/reviews/${review.id}.png`;
-        const check = await fetch(publicImgUrl, { method: 'GET' });
-        if (check.ok) {
-            return `${OG_FUNCTION_URL}?rid=${review.id}`; // file exists
-        }
-        // Parse body to distinguish "not found" from a real error
-        const body = await check.json().catch(() => ({}));
-        const notFound = body.error === 'not_found' || body.statusCode === '404' || String(body.statusCode) === '404';
-        if (!notFound) {
-            // Unexpected error — skip upload, just return function URL
-            console.warn('Storage check unexpected response:', check.status, body);
-            return `${OG_FUNCTION_URL}?rid=${review.id}`;
-        }
-        // notFound === true → proceed to generate and upload
-    } catch(_) { /* proceed to generate */ }
-
-    // Generate
-    if (!book) return `${OG_FUNCTION_URL}?rid=${review.id}`;
-    try {
-        const canvas = await generateReviewCardCanvas(review, book);
-        let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        if (!blob) {
-            // Canvas tainted by cross-origin cover — retry without cover
-            console.warn('Canvas tainted (CORS). Retrying without cover.');
-            const canvas2 = await generateReviewCardCanvas(review, { ...book, cover: null });
-            blob = await new Promise(resolve => canvas2.toBlob(resolve, 'image/png'));
-            if (!blob) throw new Error('toBlob returned null even without cover');
-        }
-        // Use direct fetch with user JWT (same pattern as admin.js uploadFile)
-        // This bypasses Supabase JS client RLS quirks
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) throw new Error('No session token');
-        const uploadUrl = `${SUPABASE_PROJECT_URL}/storage/v1/object/${OG_BUCKET}/${imgPath}`;
-        const res = await fetch(uploadUrl, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-                'Content-Type': 'image/png',
-                'x-upsert': 'true'
-            },
-            body: blob
-        });
-        if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`Upload ${res.status}: ${errText}`);
-        }
-        console.log('OG card uploaded OK:', imgPath);
-    } catch(err) {
-        console.warn('Card upload failed (non-fatal):', err.message);
-    }
-
     return `${OG_FUNCTION_URL}?rid=${review.id}`;
 }
 
