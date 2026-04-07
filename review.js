@@ -26,6 +26,262 @@ async function getUserDisplayName(userId) {
     }
 }
 
+// ── Review card image generation ────────────────────────────────────────────
+const SUPABASE_PROJECT_URL = 'https://asjiiftlxyihlayydfju.supabase.co';
+const OG_BUCKET            = 'og-images';
+const OG_FUNCTION_URL      = `${SUPABASE_PROJECT_URL}/functions/v1/og-card`;
+
+/** Load an <img> element, resolve after load or timeout (3 s). */
+function loadImage(img, src) {
+    return new Promise(resolve => {
+        img.onload  = resolve;
+        img.onerror = resolve;
+        setTimeout(resolve, 3000);
+        img.src = src;
+    });
+}
+
+/** Wrap text in canvas — handles CJK (no-space) and Latin (space-split) text. */
+function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 99) {
+    const cjkRatio = (text.match(/[　-鿿가-힯]/g) || []).length / Math.max(text.length, 1);
+    const lines = [];
+    let line = '';
+    const chars = cjkRatio > 0.3 ? [...text] : text.split(/(\s+)/);
+    for (const token of chars) {
+        const test = line + token;
+        if (ctx.measureText(test).width > maxWidth && line) {
+            lines.push(line);
+            line = token.trim ? token.trim() : token;
+            if (lines.length >= maxLines - 1) { line += '…'; break; }
+        } else { line = test; }
+    }
+    if (line) lines.push(line);
+    lines.slice(0, maxLines).forEach((l, i) => ctx.fillText(l, x, y + i * lineHeight));
+    return Math.min(lines.length, maxLines);
+}
+
+/** Draw rounded rectangle (polyfill for older browsers). */
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+/** Draw read-only star row on canvas. */
+function drawStars(ctx, x, y, rating, size) {
+    const filled = Math.round(Math.max(1, Math.min(5, rating)));
+    ctx.font = `${size}px Arial`;
+    for (let i = 1; i <= 5; i++) {
+        ctx.fillStyle = i <= filled ? '#ff0000' : '#dddddd';
+        ctx.fillText(i <= filled ? '★' : '☆', x + (i - 1) * (size + 4), y);
+    }
+}
+
+/**
+ * Draw the 1200×630 review share card onto a Canvas element and return it.
+ * All drawing is synchronous after image loads finish.
+ */
+async function generateReviewCardCanvas(review, book) {
+    const W = 1200, H = 630, LEFT = 400;
+    const canvas = document.createElement('canvas');
+    canvas.width  = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    const FONTS = '"PingFang SC","Microsoft YaHei","Noto Sans SC",Georgia,serif';
+    const RED   = '#ff0000';
+    const DARK  = '#1a1a1a';
+    const GRAY  = '#888888';
+    const MID   = '#444444';
+
+    // ── White background ──────────────────────────────────────────────────────
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Left panel dark bg ────────────────────────────────────────────────────
+    ctx.fillStyle = '#140000';
+    ctx.fillRect(0, 0, LEFT, H);
+
+    // ── Book cover ────────────────────────────────────────────────────────────
+    if (book?.cover) {
+        const src = book.cover.startsWith('http') ? book.cover
+                  : `https://acerbooks.ca${book.cover.startsWith('/') ? '' : '/'}${book.cover}`;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await loadImage(img, src);
+        if (img.naturalHeight > 0) {
+            const maxW = 340, maxH = 520;
+            let cw = img.naturalWidth, ch = img.naturalHeight;
+            if (cw / ch > maxW / maxH) { cw = maxW; ch = maxW * img.naturalHeight / img.naturalWidth; }
+            else                        { ch = maxH; cw = maxH * img.naturalWidth / img.naturalHeight; }
+            ctx.drawImage(img, (LEFT - cw) / 2, (H - ch) / 2, cw, ch);
+        }
+    }
+
+    // ── 4 px red divider ──────────────────────────────────────────────────────
+    ctx.fillStyle = RED;
+    ctx.fillRect(LEFT - 4, 0, 4, H);
+
+    // ── Right panel ───────────────────────────────────────────────────────────
+    const RX = LEFT + 40;   // right panel left margin
+    const RW = W - RX - 40; // usable width
+
+    // Brand row — logo image
+    const logo = new Image();
+    logo.crossOrigin = 'anonymous';
+    await loadImage(logo, 'https://acerbooks.ca/zhijian/Image_20260305124426_25_399.png');
+    if (logo.naturalHeight > 0) ctx.drawImage(logo, RX, 24, 44, 44);
+
+    ctx.fillStyle = DARK;
+    ctx.font = `bold 20px ${FONTS}`;
+    ctx.fillText('ACER BOOKS', RX + 54, 52);
+
+    // "READER REVIEW" pill badge (right side)
+    ctx.fillStyle = RED;
+    roundRect(ctx, W - 240, 26, 200, 34, 5);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold 14px Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('READER REVIEW', W - 140, 48);
+    ctx.textAlign = 'left';
+
+    // Separator line
+    ctx.strokeStyle = '#eeeeee';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(RX, 82); ctx.lineTo(W - 40, 82); ctx.stroke();
+
+    // Book title
+    let curY = 130;
+    ctx.fillStyle = DARK;
+    ctx.font = `bold 30px ${FONTS}`;
+    const titleLines = wrapText(ctx, book?.title || '', RX, curY, RW, 38, 2);
+    curY += titleLines * 38 + 8;
+
+    // Author
+    ctx.fillStyle = GRAY;
+    ctx.font = `italic 17px ${FONTS}`;
+    ctx.fillText(`by ${book?.author || ''}`, RX, curY);
+    curY += 32;
+
+    // Stars (if rated)
+    if (review.rating) {
+        drawStars(ctx, RX, curY, review.rating, 22);
+        curY += 36;
+    }
+
+    // Red left-bar accent
+    ctx.fillStyle = RED;
+    ctx.fillRect(RX, curY, 4, 3);
+    curY += 18;
+
+    // Review excerpt (italic, dark gray)
+    ctx.fillStyle = MID;
+    ctx.font = `italic 18px ${FONTS}`;
+    const excerpt = `"${review.text.substring(0, 220)}${review.text.length > 220 ? '…' : ''}"`;
+    const exLines = wrapText(ctx, excerpt, RX, curY, RW, 30, 4);
+    curY += exLines * 30 + 20;
+
+    // Reviewer avatar circle
+    const avatarX = RX, avatarY = Math.min(curY + 8, H - 95);
+    ctx.fillStyle = RED;
+    ctx.beginPath(); ctx.arc(avatarX + 18, avatarY + 18, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold 16px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText((review.username || '?').charAt(0).toUpperCase(), avatarX + 18, avatarY + 23);
+    ctx.textAlign = 'left';
+
+    // Reviewer name + date
+    ctx.fillStyle = DARK;
+    ctx.font = `bold 15px ${FONTS}`;
+    ctx.fillText(review.username || '', avatarX + 44, avatarY + 14);
+    ctx.fillStyle = GRAY;
+    ctx.font = `13px Arial`;
+    const dateStr = new Date(review.timestamp).toLocaleDateString('en-CA', {year:'numeric', month:'short', day:'numeric'});
+    ctx.fillText(dateStr, avatarX + 44, avatarY + 32);
+
+    // acerbooks.ca branding (bottom right)
+    ctx.fillStyle = RED;
+    ctx.font = `bold 15px Arial`;
+    ctx.textAlign = 'right';
+    ctx.fillText('acerbooks.ca', W - 40, H - 20);
+    ctx.textAlign = 'left';
+
+    // ── WeChat 1:1 safe-zone stripe ───────────────────────────────────────────
+    // WeChat crops the center 630×630 (x:285–915). To ensure the review identity
+    // is always visible, draw a subtle branded stripe across that zone.
+    // This stripe sits at vertical center (y:280–350) and is always within the crop.
+    ctx.save();
+    ctx.globalAlpha = 0.88;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(285, 280, 630, 70);
+    ctx.globalAlpha = 1;
+    // Red left accent
+    ctx.fillStyle = RED;
+    ctx.fillRect(285, 280, 5, 70);
+    // Book title (truncated) in stripe
+    ctx.fillStyle = DARK;
+    ctx.font = `bold 20px ${FONTS}`;
+    const stripeTitle = (book?.title || '').length > 28
+        ? (book?.title || '').substring(0, 28) + '…'
+        : (book?.title || '');
+    ctx.fillText(stripeTitle, 300, 309);
+    // Reviewer + "REVIEW" label
+    ctx.fillStyle = GRAY;
+    ctx.font = `14px Arial`;
+    ctx.fillText(`${review.username || ''} · Reader Review · acerbooks.ca`, 300, 335);
+    // Stars in stripe (if rated)
+    if (review.rating) {
+        ctx.font = '18px Arial';
+        for (let i = 1; i <= 5; i++) {
+            ctx.fillStyle = i <= review.rating ? RED : '#cccccc';
+            ctx.fillText(i <= review.rating ? '★' : '☆', 295 + (i - 1) * 24, 358);
+        }
+    }
+    ctx.restore();
+
+    return canvas;
+}
+
+/**
+ * Check Storage for a cached card, generate + upload if missing.
+ * Returns the Supabase Edge Function URL for this review (used as share URL).
+ */
+async function getReviewShareUrl(review, book) {
+    const imgPath = `reviews/${review.id}.png`;
+
+    // Check if PNG already cached (simple HEAD — no auth required)
+    try {
+        const publicImgUrl = `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${OG_BUCKET}/reviews/${review.id}.png`;
+        const check = await fetch(publicImgUrl, { method: 'HEAD' });
+        if (check.ok) {
+            return `${OG_FUNCTION_URL}?rid=${review.id}`;
+        }
+    } catch(_) { /* proceed to generate */ }
+
+    // Generate
+    if (!book) return `${OG_FUNCTION_URL}?rid=${review.id}`;
+    try {
+        const canvas = await generateReviewCardCanvas(review, book);
+        const blob   = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        await supabase.storage
+            .from(OG_BUCKET)
+            .upload(imgPath, blob, { contentType: 'image/png', upsert: true });
+    } catch(err) {
+        console.warn('Card upload failed (non-fatal):', err.message);
+    }
+
+    return `${OG_FUNCTION_URL}?rid=${review.id}`;
+}
+
 // 自定义分享弹窗
 function showShareModal(reviewId, reviewText, reviewUsername, shareUrl) {
     // 移除已有的弹窗
@@ -110,12 +366,36 @@ async function attachEventsToContainer(container, bookId, currentLang, currentUs
 
     // 分享按钮 (自定义弹窗)
     container.querySelectorAll('.wechat-share-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const reviewId = btn.dataset.reviewId;
-            const review = reviews.find(r => r.id === reviewId);
+            const review   = reviews.find(r => r.id === reviewId);
             if (!review) return;
-            const shareUrl = window.location.href.split('#')[0] + '#review-' + reviewId;
+
+            // Show spinner while generating card
+            const icon = btn.querySelector('i');
+            const origClass = icon?.className || 'fas fa-share-alt';
+            if (icon) icon.className = 'fas fa-spinner fa-spin';
+            btn.disabled = true;
+
+            let shareUrl;
+            try {
+                const { books: allBooks } = await import('./data.js');
+                const book = allBooks.find(b => b.id === review.book_id);
+                shareUrl = await getReviewShareUrl(review, book);
+            } catch(err) {
+                console.warn('getReviewShareUrl failed:', err);
+                // Fallback: plain anchor URL
+                const { toSlugAsync } = await import('./routing.js');
+                const { books: allBooks } = await import('./data.js');
+                const book = allBooks.find(b => b.id === review.book_id);
+                const slug = book ? await toSlugAsync(book.title) : 'book';
+                shareUrl = `${window.location.origin}/book/${slug}#review-${reviewId}`;
+            } finally {
+                if (icon) icon.className = origClass;
+                btn.disabled = false;
+            }
+
             showShareModal(reviewId, review.text, review.username, shareUrl);
         });
     });
