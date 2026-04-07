@@ -282,21 +282,33 @@ async function getReviewShareUrl(review, book) {
     if (!book) return `${OG_FUNCTION_URL}?rid=${review.id}`;
     try {
         const canvas = await generateReviewCardCanvas(review, book);
-        const blob   = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         if (!blob) {
-            // Canvas was tainted by a cross-origin cover image — retry without cover
-            console.warn('Canvas tainted (CORS on cover). Retrying without cover image.');
+            // Canvas tainted by cross-origin cover — retry without cover
+            console.warn('Canvas tainted (CORS). Retrying without cover.');
             const canvas2 = await generateReviewCardCanvas(review, { ...book, cover: null });
-            const blob2   = await new Promise(resolve => canvas2.toBlob(resolve, 'image/png'));
-            if (!blob2) throw new Error('toBlob returned null even without cover');
-            await supabase.storage
-                .from(OG_BUCKET)
-                .upload(imgPath, blob2, { contentType: 'image/png', upsert: true });
-        } else {
-            await supabase.storage
-                .from(OG_BUCKET)
-                .upload(imgPath, blob, { contentType: 'image/png', upsert: true });
+            blob = await new Promise(resolve => canvas2.toBlob(resolve, 'image/png'));
+            if (!blob) throw new Error('toBlob returned null even without cover');
         }
+        // Use direct fetch with user JWT (same pattern as admin.js uploadFile)
+        // This bypasses Supabase JS client RLS quirks
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error('No session token');
+        const uploadUrl = `${SUPABASE_PROJECT_URL}/storage/v1/object/${OG_BUCKET}/${imgPath}`;
+        const res = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'image/png',
+                'x-upsert': 'true'
+            },
+            body: blob
+        });
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Upload ${res.status}: ${errText}`);
+        }
+        console.log('OG card uploaded OK:', imgPath);
     } catch(err) {
         console.warn('Card upload failed (non-fatal):', err.message);
     }
