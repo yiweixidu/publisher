@@ -258,14 +258,11 @@ async function generateReviewCardCanvas(review, book) {
 async function getReviewShareUrl(review, book) {
     const imgPath = `reviews/${review.id}.png`;
 
-    // Check if PNG already cached.
-    // Supabase public Storage does not support HEAD — use GET with range:0 instead.
+    // Check if PNG already cached — plain GET, 200=exists, 404=missing.
     try {
         const publicImgUrl = `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${OG_BUCKET}/reviews/${review.id}.png`;
-        const check = await fetch(publicImgUrl, { method: 'GET', headers: { Range: 'bytes=0-0' } });
-        if (check.ok || check.status === 206) {
-            return `${OG_FUNCTION_URL}?rid=${review.id}`;
-        }
+        const check = await fetch(publicImgUrl, { method: 'GET' });
+        if (check.ok) return `${OG_FUNCTION_URL}?rid=${review.id}`;
     } catch(_) { /* proceed to generate */ }
 
     // Generate
@@ -273,9 +270,20 @@ async function getReviewShareUrl(review, book) {
     try {
         const canvas = await generateReviewCardCanvas(review, book);
         const blob   = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        await supabase.storage
-            .from(OG_BUCKET)
-            .upload(imgPath, blob, { contentType: 'image/png', upsert: true });
+        if (!blob) {
+            // Canvas was tainted by a cross-origin cover image — retry without cover
+            console.warn('Canvas tainted (CORS on cover). Retrying without cover image.');
+            const canvas2 = await generateReviewCardCanvas(review, { ...book, cover: null });
+            const blob2   = await new Promise(resolve => canvas2.toBlob(resolve, 'image/png'));
+            if (!blob2) throw new Error('toBlob returned null even without cover');
+            await supabase.storage
+                .from(OG_BUCKET)
+                .upload(imgPath, blob2, { contentType: 'image/png', upsert: true });
+        } else {
+            await supabase.storage
+                .from(OG_BUCKET)
+                .upload(imgPath, blob, { contentType: 'image/png', upsert: true });
+        }
     } catch(err) {
         console.warn('Card upload failed (non-fatal):', err.message);
     }
