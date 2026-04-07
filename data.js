@@ -127,10 +127,15 @@ export async function insertReview(review) {
 }
 
 export async function updateReview(review) {
-    // Update an existing review row (e.g. add a comment) — respects RLS UPDATE policy
+    // Update an existing review row — respects RLS UPDATE policy (own rows only)
     const { error } = await supabase
         .from('reviews')
-        .update({ comments: review.comments, likes: review.likes })
+        .update({
+            text:     review.text,
+            comments: review.comments,
+            likes:    review.likes,
+            rating:   review.rating ?? null
+        })
         .eq('id', review.id);
     if (error) throw error;
     const idx = reviews.findIndex(r => r.id === review.id);
