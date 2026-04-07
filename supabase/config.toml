@@ -1,0 +1,2 @@
+[functions.og-card]
+verify_jwt = false

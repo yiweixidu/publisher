@@ -1,26 +1,22 @@
 // @ts-nocheck
-// supabase/functions/og-card/index.ts  v2 — server-side PNG generation
-//
-// Deploy:  supabase functions deploy og-card
-//
-// Secrets needed:
-//   supabase secrets set SERVICE_ROLE_KEY=<your service_role key>
-//   (SUPABASE_URL and SUPABASE_ANON_KEY are injected automatically)
-//
-// Routes:
-//   ?rid=rev_xxx           → HTML with OG tags + redirect to book page
-//   ?rid=rev_xxx&mode=img  → 1200×630 PNG (generated server-side, cached in Storage)
-//
-// Uses service role for all DB + Storage ops → bypasses RLS entirely.
-// No client-side Canvas, no frontend upload, no RLS issues.
-
+// supabase/functions/og-card/index.ts  v3 — uses @resvg/resvg-wasm (Deno-compatible)
 import { createClient } from '@supabase/supabase-js';
-import { Resvg }        from 'npm:@resvg/resvg-js';
+import { initWasm, Resvg } from 'npm:@resvg/resvg-wasm';
 
 const CORS = {
     'Access-Control-Allow-Origin':  '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+let wasmInited = false;
+async function ensureWasm() {
+    if (wasmInited) return;
+    // Fetch the WASM binary from the npm package's own CDN path
+    const wasmUrl = 'https://unpkg.com/@resvg/resvg-wasm@2.6.2/index_bg.wasm';
+    const wasmRes = await fetch(wasmUrl);
+    await initWasm(wasmRes);
+    wasmInited = true;
+}
 
 function toSlugSimple(title) {
     if (!title) return 'book';
@@ -34,14 +30,12 @@ function toSlugSimple(title) {
 function esc(s)    { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escSvg(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
 
-// Split text into SVG <tspan> lines
-function svgWrap(text, x, y, maxChars, maxLines, lineH) {
+function svgWrap(text, x, maxChars, maxLines, lineH) {
     const tokens = text.match(/[\u3000-\u9fff\uac00-\ud7af]|[^\u3000-\u9fff\uac00-\ud7af\s]+|\s+/g) || [];
     const lines = []; let line = '';
     for (const t of tokens) {
         if ((line + t).trimEnd().length > maxChars && line.trim()) {
-            lines.push(line.trim());
-            line = t.trim ? t.trim() : t;
+            lines.push(line.trim()); line = t.trim();
             if (lines.length >= maxLines - 1) { line += '…'; break; }
         } else { line += t; }
     }
@@ -59,24 +53,22 @@ function starsSvg(rating, x, y) {
 }
 
 function buildSvg(review, book, coverDataUrl) {
-    const titleWrap   = svgWrap(book?.title||'', 440, 0, 22, 2, 40);
-    const titleLines  = (titleWrap.match(/<tspan/g)||[]).length;
+    const titleWrap  = svgWrap(book?.title||'Book Review', 440, 22, 2, 40);
+    const titleLines = (titleWrap.match(/<tspan/g)||[]).length;
     const excerptText = `"${(review.text||'').replace(/\s+/g,' ').substring(0,220)}${(review.text||'').length>220?'…':''}"`;
-    const excerptWrap = svgWrap(excerptText, 440, 0, 37, 4, 30);
+    const excerptWrap = svgWrap(excerptText, 452, 37, 4, 30);
 
     const authorY  = 128 + titleLines * 40 + 8;
     const starsY   = authorY + 36;
-    const excerptY = starsY + (review.rating ? 42 : 12);
-    const avatarY  = 552;
+    const excerptY = starsY + (review.rating ? 44 : 14);
+    const avatarY  = 556;
 
     const coverImg = coverDataUrl
-        ? `<image href="${coverDataUrl}" x="16" y="16" width="368" height="598" preserveAspectRatio="xMidYMid meet" clip-path="url(#coverClip)"/>`
-        : `<text x="200" y="330" font-size="80" font-family="serif" fill="#c8a882" text-anchor="middle">📖</text>`;
+        ? `<image href="${coverDataUrl}" x="16" y="16" width="368" height="598" preserveAspectRatio="xMidYMid meet"/>`
+        : `<rect x="16" y="16" width="368" height="598" rx="6" fill="#2d0000"/>
+           <text x="200" y="340" font-size="60" font-family="serif" fill="#c8a882" text-anchor="middle">BOOK</text>`;
 
     return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630">
-<defs>
-  <clipPath id="coverClip"><rect x="16" y="16" width="368" height="598" rx="6"/></clipPath>
-</defs>
 <rect width="1200" height="630" fill="#ffffff"/>
 <rect width="400" height="630" fill="#140000"/>
 ${coverImg}
@@ -87,15 +79,15 @@ ${coverImg}
 <rect x="956" y="22" width="204" height="32" rx="4" fill="#ff0000"/>
 <text x="1058" y="43" font-size="12" font-family="Arial,sans-serif" fill="#ffffff" text-anchor="middle" font-weight="bold">READER REVIEW</text>
 <line x1="430" y1="74" x2="1170" y2="74" stroke="#eeeeee" stroke-width="1"/>
-<text x="440" y="128" font-size="28" font-family="'PingFang SC','Microsoft YaHei',Georgia,serif" fill="#1a1a1a" font-weight="bold">${titleWrap}</text>
+<text x="440" y="128" font-size="28" font-family="Georgia,serif" fill="#1a1a1a" font-weight="bold">${titleWrap}</text>
 <text x="440" y="${authorY}" font-size="16" font-family="Georgia,serif" fill="#888888" font-style="italic">by ${escSvg(book?.author||'')}</text>
 ${review.rating ? starsSvg(review.rating, 440, starsY) : ''}
-<rect x="440" y="${excerptY - 18}" width="4" height="16" fill="#ff0000"/>
+<rect x="440" y="${excerptY - 16}" width="4" height="14" fill="#ff0000"/>
 <text x="452" y="${excerptY}" font-size="17" font-family="Georgia,serif" fill="#444444" font-style="italic">${excerptWrap}</text>
 <circle cx="450" cy="${avatarY}" r="20" fill="#ff0000"/>
 <text x="450" y="${avatarY+6}" font-size="15" font-family="Arial,sans-serif" fill="#ffffff" text-anchor="middle" font-weight="bold">${escSvg((review.username||'?').charAt(0).toUpperCase())}</text>
-<text x="480" y="${avatarY-6}" font-size="14" font-family="Arial,sans-serif" fill="#1a1a1a" font-weight="bold">${escSvg(review.username||'')}</text>
-<text x="480" y="${avatarY+12}" font-size="12" font-family="Arial,sans-serif" fill="#888888">${escSvg(new Date(review.timestamp).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'}))}</text>
+<text x="480" y="${avatarY-5}" font-size="14" font-family="Arial,sans-serif" fill="#1a1a1a" font-weight="bold">${escSvg(review.username||'')}</text>
+<text x="480" y="${avatarY+13}" font-size="12" font-family="Arial,sans-serif" fill="#888888">${escSvg(new Date(review.timestamp).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'}))}</text>
 <text x="1170" y="616" font-size="14" font-family="Arial,sans-serif" fill="#ff0000" text-anchor="end" font-weight="bold">acerbooks.ca</text>
 </svg>`;
 }
@@ -116,7 +108,8 @@ Deno.serve(async (req) => {
 
         const { data: review } = await sb.from('reviews')
             .select('id,book_id,username,text,rating,timestamp').eq('id',rid).maybeSingle();
-        if (!review) return new Response('<html><body><a href="'+SITE+'">Go home</a></body></html>',
+        if (!review) return new Response(
+            `<html><body>Not found. <a href="${SITE}">Go home</a></body></html>`,
             {status:200,headers:{...CORS,'Content-Type':'text/html'}});
 
         const { data: book } = await sb.from('books')
@@ -130,17 +123,21 @@ Deno.serve(async (req) => {
         if (mode === 'img') {
             const imgPath = `reviews/${rid}.png`;
 
-            // Try cache first
-            const { data: cached } = await sb.storage.from('og-images').download(imgPath).catch(()=>({data:null}));
+            // Check cache
+            const { data: cached } = await sb.storage.from('og-images')
+                .download(imgPath).catch(()=>({data:null}));
             if (cached) {
                 const buf = await cached.arrayBuffer();
-                return new Response(buf, { headers:{...CORS,'Content-Type':'image/png','Cache-Control':'public,max-age=86400'} });
+                return new Response(buf, {
+                    headers:{...CORS,'Content-Type':'image/png','Cache-Control':'public,max-age=86400'}
+                });
             }
 
-            // Fetch cover server-side (no CORS)
+            // Fetch cover server-side
             let coverDataUrl = null;
             if (book?.cover) {
-                const src = book.cover.startsWith('http') ? book.cover : `${SITE}${book.cover.startsWith('/')?'':'/'}${book.cover}`;
+                const src = book.cover.startsWith('http') ? book.cover
+                    : `${SITE}${book.cover.startsWith('/')?'':'/'}${book.cover}`;
                 try {
                     const r = await fetch(src);
                     if (r.ok) {
@@ -151,15 +148,19 @@ Deno.serve(async (req) => {
                 } catch(_){}
             }
 
-            const svg  = buildSvg(review, book, coverDataUrl);
+            // SVG → PNG via resvg-wasm
+            await ensureWasm();
+            const svg   = buildSvg(review, book, coverDataUrl);
             const resvg = new Resvg(svg, { fitTo:{mode:'width',value:1200} });
             const png   = resvg.render().asPng();
 
-            // Cache in Storage (service role = no RLS)
+            // Cache (service role bypasses RLS)
             await sb.storage.from('og-images').upload(imgPath, png,
-                {contentType:'image/png',upsert:true}).catch(e=>console.warn('cache warn:',e.message));
+                {contentType:'image/png',upsert:true}).catch(e=>console.warn('cache:',e.message));
 
-            return new Response(png, { headers:{...CORS,'Content-Type':'image/png','Cache-Control':'public,max-age=86400'} });
+            return new Response(png, {
+                headers:{...CORS,'Content-Type':'image/png','Cache-Control':'public,max-age=86400'}
+            });
         }
 
         // ── HTML mode ─────────────────────────────────────────────────────────
@@ -190,7 +191,11 @@ Deno.serve(async (req) => {
 <script>window.location.replace('${canonicalUrl.replace(/'/g,"\\'")}');</script>
 </body></html>`;
 
-        return new Response(html, { status:200, headers:{...CORS,'Content-Type':'text/html;charset=utf-8','Cache-Control':'public,max-age=3600,stale-while-revalidate=86400'} });
+        return new Response(html, {
+            status:200,
+            headers:{...CORS,'Content-Type':'text/html;charset=utf-8',
+                'Cache-Control':'public,max-age=3600,stale-while-revalidate=86400'}
+        });
 
     } catch(err) {
         console.error('og-card fatal:', err);
