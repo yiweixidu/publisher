@@ -258,11 +258,24 @@ async function generateReviewCardCanvas(review, book) {
 async function getReviewShareUrl(review, book) {
     const imgPath = `reviews/${review.id}.png`;
 
-    // Check if PNG already cached — plain GET, 200=exists, 404=missing.
+    // Check if PNG already cached.
+    // Supabase Storage bug: returns HTTP 400 with body {"statusCode":"404"} for missing files.
+    // So we must parse the body, not rely on check.ok.
     try {
         const publicImgUrl = `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${OG_BUCKET}/reviews/${review.id}.png`;
         const check = await fetch(publicImgUrl, { method: 'GET' });
-        if (check.ok) return `${OG_FUNCTION_URL}?rid=${review.id}`;
+        if (check.ok) {
+            return `${OG_FUNCTION_URL}?rid=${review.id}`; // file exists
+        }
+        // Parse body to distinguish "not found" from a real error
+        const body = await check.json().catch(() => ({}));
+        const notFound = body.error === 'not_found' || body.statusCode === '404' || String(body.statusCode) === '404';
+        if (!notFound) {
+            // Unexpected error — skip upload, just return function URL
+            console.warn('Storage check unexpected response:', check.status, body);
+            return `${OG_FUNCTION_URL}?rid=${review.id}`;
+        }
+        // notFound === true → proceed to generate and upload
     } catch(_) { /* proceed to generate */ }
 
     // Generate
