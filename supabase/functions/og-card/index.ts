@@ -74,12 +74,14 @@ function buildSvg(review, book, coverDataUrl) {
     const titleText = colonIdx > 0
         ? rawTitle.substring(colonIdx + 1).trim()  // "From the Arctic to the Antarctic"
         : rawTitle;                                  // fallback: full title
-    const authorText  = `by ${book?.author || ''}`;
+    // Strip CJK chars from author since we only have Latin font
+    const rawAuthor = book?.author || '';
+    const authorText = `by ${rawAuthor.replace(/[　-鿿가-힯豈-﫿]/g, '').trim()}`;
     const excerptText = `"${(review.text||'').replace(/\s+/g,' ').substring(0,180)}${(review.text||'').length>180?'…':''}"`;
     const dateText    = new Date(review.timestamp).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'});
     const initial     = (review.username||'?').charAt(0).toUpperCase();
 
-    const titleWrap   = svgWrap(titleText,  RX, 20, 2, 44);
+    const titleWrap   = svgWrap(titleText,  RX, 30, 2, 44);
     const titleLines  = (titleWrap.match(/<tspan/g)||[]).length;
     const excerptWrap = svgWrap(excerptText, RX+12, 34, 4, 32);
 
@@ -98,10 +100,12 @@ function buildSvg(review, book, coverDataUrl) {
     return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630">
 <!-- Background -->
 <rect width="1200" height="630" fill="#ffffff"/>
-<!-- Left: cover panel (no clipPath — resvg-wasm has limited clipPath support) -->
+<!-- Left: dark bg always shown -->
+<rect x="0" y="0" width="400" height="630" fill="#140000"/>
+<!-- Cover image (drawn over dark bg, resvg-wasm renders image elements directly) -->
 ${coverImg}
-<!-- Cover overlay to clip right edge -->
-<rect x="400" y="0" width="800" height="630" fill="#ffffff"/>
+<!-- White overlay to clip cover overflow into right panel -->
+<rect x="404" y="0" width="796" height="630" fill="#ffffff"/>
 <!-- Red divider -->
 <rect x="400" y="0" width="4" height="630" fill="#ff0000"/>
 <!-- Right: white panel -->
