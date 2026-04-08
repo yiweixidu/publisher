@@ -92,8 +92,9 @@ function buildSvg(review, book, coverDataUrl) {
     const excerptY = accentY + 20;
     const avatarCY = 572;
 
+    // resvg-wasm requires xlink:href (not href) for base64 embedded images
     const coverImg = coverDataUrl
-        ? `<image href="${coverDataUrl}" x="0" y="0" width="400" height="630" preserveAspectRatio="xMidYMid slice"/>`
+        ? `<image xlink:href="${coverDataUrl}" x="0" y="0" width="400" height="630" preserveAspectRatio="xMidYMid slice"/>`
         : `<rect x="0" y="0" width="400" height="630" fill="#1a0000"/>
            <text x="200" y="340" font-size="32" font-family="${F}" fill="#c8a882" text-anchor="middle">ACER BOOKS</text>`;
 
