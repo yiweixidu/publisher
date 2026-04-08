@@ -92,24 +92,14 @@ function buildSvg(review, book, coverDataUrl) {
     const excerptY = accentY + 20;
     const avatarCY = 572;
 
-    // Cover image — converted to PNG so resvg-wasm can render it
-    const coverImg = coverDataUrl
-        ? `<image xlink:href="${coverDataUrl}" x="0" y="0" width="400" height="630" preserveAspectRatio="xMidYMid slice"/>`
-        : `<rect x="0" y="0" width="400" height="630" fill="#1a0000"/>
-<text x="200" y="340" font-size="28" font-family="${F}" fill="#c8a882" text-anchor="middle">ACER BOOKS</text>`;
-
     return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630">
 <!-- Background -->
 <rect width="1200" height="630" fill="#ffffff"/>
-<!-- Left: dark bg -->
+<!-- Left: dark bg (cover will be composited onto this after SVG render) -->
 <rect x="0" y="0" width="400" height="630" fill="#140000"/>
-<!-- Cover image (PNG) -->
-${coverImg}
-<!-- White overlay clips any overflow -->
-<rect x="404" y="0" width="796" height="630" fill="#ffffff"/>
 <!-- Red divider -->
 <rect x="400" y="0" width="4" height="630" fill="#ff0000"/>
-<!-- Right: white panel -->
+<!-- White right panel bg -->
 <rect x="404" y="0" width="796" height="630" fill="#ffffff"/>
 <!-- Top bar: logo + badge -->
 <rect x="450" y="28" width="38" height="38" rx="5" fill="#ff0000"/>
@@ -173,8 +163,8 @@ Deno.serve(async (req) => {
                     headers:{...CORS,'Content-Type':'image/png','Cache-Control':'public,max-age=86400'}
                 });
             }
-            // Fetch cover server-side and convert to PNG (resvg-wasm only supports PNG)
-            let coverDataUrl=null;
+            // Fetch cover server-side — keep raw bytes for imagescript compositing
+            let coverBytes: Uint8Array | null = null;
             if (book?.cover) {
                 const coverUrl = book.cover.startsWith('http')
                     ? book.cover
@@ -182,42 +172,43 @@ Deno.serve(async (req) => {
                 try {
                     const r=await fetch(coverUrl);
                     if (r.ok) {
-                        const ab=await r.arrayBuffer();
-                        const bytes=new Uint8Array(ab);
-                        const ct = r.headers.get('content-type')||'image/jpeg';
-                        let pngBytes = bytes;
-                        // Convert JPEG to PNG so resvg-wasm can render it
-                        if (ct.includes('jpeg') || ct.includes('jpg') || coverUrl.toLowerCase().match(/\.jpe?g$/)) {
-                            try {
-                                const { Image } = await import('https://deno.land/x/imagescript@1.2.15/mod.ts');
-                                const img = await Image.decode(bytes);
-                                pngBytes = await img.encode(); // PNG by default
-                                console.log('Cover converted JPEG->PNG:', pngBytes.byteLength, 'bytes');
-                            } catch(convErr) {
-                                console.warn('JPEG->PNG conversion failed:', convErr.message, '— using original');
-                                pngBytes = bytes;
-                            }
-                        }
-                        let b64='';
-                        for(let i=0;i<pngBytes.length;i+=32768)
-                            b64+=btoa(String.fromCharCode(...pngBytes.subarray(i,i+32768)));
-                        coverDataUrl=`data:image/png;base64,${b64}`;
-                        console.log('Cover loaded:', coverUrl, ab.byteLength, 'bytes');
+                        coverBytes = new Uint8Array(await r.arrayBuffer());
+                        console.log('Cover loaded:', coverUrl, coverBytes.byteLength, 'bytes');
                     } else {
                         console.warn('Cover fetch failed:', r.status, coverUrl);
                     }
                 } catch(e){ console.warn('Cover error:', e.message); }
             }
-            // Generate
+            // Step 1: Render SVG (text + layout only, no cover image)
             await init();
-            const svg   = buildSvg(review, book, coverDataUrl);
+            const svg   = buildSvg(review, book, null);
             const resvg = new Resvg(svg, {
                 fitTo: {mode:'width', value:1200},
                 font:  fontBuffers.length>0
                     ? {fontBuffers, loadSystemFonts:false}
                     : {loadSystemFonts:true}
             });
-            const png = resvg.render().asPng();
+            let png: Uint8Array = resvg.render().asPng();
+
+            // Step 2: Composite cover onto left panel using imagescript
+            if (coverBytes) {
+                try {
+                    const { Image } = await import('https://deno.land/x/imagescript@1.2.15/mod.ts');
+                    const coverImg = await Image.decode(coverBytes);
+                    // Scale to fill 400×630, crop center
+                    const scale = Math.max(400 / coverImg.width, 630 / coverImg.height);
+                    coverImg.resize(Math.round(coverImg.width * scale), Math.round(coverImg.height * scale));
+                    const cx = Math.max(0, Math.round((coverImg.width  - 400) / 2));
+                    const cy = Math.max(0, Math.round((coverImg.height - 630) / 2));
+                    const cropped = coverImg.crop(cx, cy, 400, 630);
+                    const baseImg = await Image.decode(png);
+                    baseImg.composite(cropped, 0, 0);
+                    png = await baseImg.encode(1); // PNG
+                    console.log('Cover composited onto card');
+                } catch(compErr) {
+                    console.warn('Cover compositing failed:', compErr.message);
+                }
+            }
             // Cache
             await sb.storage.from('og-images').upload(imgPath,png,
                 {contentType:'image/png',upsert:true}).catch(e=>console.warn('cache:',e.message));
