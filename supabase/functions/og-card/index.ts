@@ -35,7 +35,10 @@ function toSlugSimple(title) {
         .toLowerCase().replace(/\s+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').trim()||'book';
 }
 
-function esc(s)    { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s)    {
+    // Only escape HTML-unsafe ASCII chars — never touch multibyte UTF-8 sequences
+    return String(s||'').replace(/[&"<>]/g, c => ({'&':'&amp;','"':'&quot;','<':'&lt;','>':'&gt;'}[c]));
+}
 function escSvg(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
 
 function svgWrap(text, x, maxChars, maxLines, lineH) {
