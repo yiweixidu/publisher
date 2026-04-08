@@ -39,6 +39,11 @@ function esc(s)    {
     // Only escape HTML-unsafe ASCII chars — never touch multibyte UTF-8 sequences
     return String(s||'').replace(/[&"<>]/g, c => ({'&':'&amp;','"':'&quot;','<':'&lt;','>':'&gt;'}[c]));
 }
+// Convert all non-ASCII chars to HTML numeric entities — guarantees correct display regardless of charset
+function htmlEnt(s) {
+    return String(s||'').replace(/[&"<>]/g, c => ({'&':'&amp;','"':'&quot;','<':'&lt;','>':'&gt;'}[c]))
+        .replace(/[^\x00-\x7F]/g, c => `&#${c.codePointAt(0)};`);
+}
 function escSvg(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
 
 function svgWrap(text, x, maxChars, maxLines, lineH) {
@@ -226,23 +231,19 @@ Deno.serve(async (req) => {
         const ogTitle  = `${rawTitle} — Reader Review | Acer Books`;
         const ogDesc   = `${rawUser} reviewed "${rawTitle}": ${rawText.substring(0,200)}`;
         const stars=review.rating?'★'.repeat(review.rating)+'☆'.repeat(5-review.rating)+'  ':'';
-        // Build HTML with proper UTF-8 — use JSON.stringify for safe attribute values
-        const safeTitle = JSON.stringify(ogTitle).slice(1,-1).replace(/"/g,'&quot;');
-        const safeDesc  = JSON.stringify(ogDesc).slice(1,-1).replace(/"/g,'&quot;');
-        const safeStars = stars.replace(/"/g,'&quot;');
         const html=`<!DOCTYPE html><html lang="en"><head>
-<meta charset="UTF-8"><title>${ogTitle}</title>
+<meta charset="UTF-8"><title>${htmlEnt(ogTitle)}</title>
 <meta property="og:type" content="article">
 <meta property="og:url" content="${esc(canonicalUrl)}">
-<meta property="og:title" content="${safeTitle}">
-<meta property="og:description" content="${safeStars}${safeDesc}">
+<meta property="og:title" content="${htmlEnt(ogTitle)}">
+<meta property="og:description" content="${htmlEnt(stars+ogDesc)}">
 <meta property="og:image" content="${esc(imgFnUrl)}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:site_name" content="Acer Books">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${safeTitle}">
-<meta name="twitter:description" content="${safeStars}${safeDesc}">
+<meta name="twitter:title" content="${htmlEnt(ogTitle)}">
+<meta name="twitter:description" content="${htmlEnt(stars+ogDesc)}">
 <meta name="twitter:image" content="${esc(imgFnUrl)}">
 <link rel="canonical" href="${esc(canonicalUrl)}">
 <meta http-equiv="refresh" content="0;url=${esc(canonicalUrl)}">
