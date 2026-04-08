@@ -81,7 +81,7 @@ function buildSvg(review, book, coverDataUrl) {
     const dateText    = new Date(review.timestamp).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'});
     const initial     = (review.username||'?').charAt(0).toUpperCase();
 
-    const titleWrap   = svgWrap(titleText,  RX, 30, 2, 44);
+    const titleWrap   = svgWrap(titleText,  RX, 38, 2, 44);
     const titleLines  = (titleWrap.match(/<tspan/g)||[]).length;
     const excerptWrap = svgWrap(excerptText, RX+12, 34, 4, 32);
 
