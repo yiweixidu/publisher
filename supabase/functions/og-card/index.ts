@@ -92,20 +92,20 @@ function buildSvg(review, book, coverDataUrl) {
     const excerptY = accentY + 20;
     const avatarCY = 572;
 
-    // resvg-wasm requires xlink:href (not href) for base64 embedded images
+    // Cover image — converted to PNG so resvg-wasm can render it
     const coverImg = coverDataUrl
         ? `<image xlink:href="${coverDataUrl}" x="0" y="0" width="400" height="630" preserveAspectRatio="xMidYMid slice"/>`
         : `<rect x="0" y="0" width="400" height="630" fill="#1a0000"/>
-           <text x="200" y="340" font-size="32" font-family="${F}" fill="#c8a882" text-anchor="middle">ACER BOOKS</text>`;
+<text x="200" y="340" font-size="28" font-family="${F}" fill="#c8a882" text-anchor="middle">ACER BOOKS</text>`;
 
     return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630">
 <!-- Background -->
 <rect width="1200" height="630" fill="#ffffff"/>
-<!-- Left: dark bg always shown -->
+<!-- Left: dark bg -->
 <rect x="0" y="0" width="400" height="630" fill="#140000"/>
-<!-- Cover image (drawn over dark bg, resvg-wasm renders image elements directly) -->
+<!-- Cover image (PNG) -->
 ${coverImg}
-<!-- White overlay to clip cover overflow into right panel -->
+<!-- White overlay clips any overflow -->
 <rect x="404" y="0" width="796" height="630" fill="#ffffff"/>
 <!-- Red divider -->
 <rect x="400" y="0" width="4" height="630" fill="#ff0000"/>
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
                     headers:{...CORS,'Content-Type':'image/png','Cache-Control':'public,max-age=86400'}
                 });
             }
-            // Fetch cover server-side
+            // Fetch cover server-side and convert to PNG (resvg-wasm only supports PNG)
             let coverDataUrl=null;
             if (book?.cover) {
                 const coverUrl = book.cover.startsWith('http')
@@ -184,10 +184,24 @@ Deno.serve(async (req) => {
                     if (r.ok) {
                         const ab=await r.arrayBuffer();
                         const bytes=new Uint8Array(ab);
+                        const ct = r.headers.get('content-type')||'image/jpeg';
+                        let pngBytes = bytes;
+                        // Convert JPEG to PNG so resvg-wasm can render it
+                        if (ct.includes('jpeg') || ct.includes('jpg') || coverUrl.toLowerCase().match(/\.jpe?g$/)) {
+                            try {
+                                const { Image } = await import('https://deno.land/x/imagescript@1.2.15/mod.ts');
+                                const img = await Image.decode(bytes);
+                                pngBytes = await img.encode(); // PNG by default
+                                console.log('Cover converted JPEG->PNG:', pngBytes.byteLength, 'bytes');
+                            } catch(convErr) {
+                                console.warn('JPEG->PNG conversion failed:', convErr.message, '— using original');
+                                pngBytes = bytes;
+                            }
+                        }
                         let b64='';
-                        for(let i=0;i<bytes.length;i+=32768)
-                            b64+=btoa(String.fromCharCode(...bytes.subarray(i,i+32768)));
-                        coverDataUrl=`data:${r.headers.get('content-type')||'image/jpeg'};base64,${b64}`;
+                        for(let i=0;i<pngBytes.length;i+=32768)
+                            b64+=btoa(String.fromCharCode(...pngBytes.subarray(i,i+32768)));
+                        coverDataUrl=`data:image/png;base64,${b64}`;
                         console.log('Cover loaded:', coverUrl, ab.byteLength, 'bytes');
                     } else {
                         console.warn('Cover fetch failed:', r.status, coverUrl);
