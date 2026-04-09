@@ -551,11 +551,22 @@ window.addEventListener('userLogin', async () => {
     if (adminMode) {
         await handleRoute();
     }
+
+    const cartModal = document.getElementById('cartModal');
+    if (cartModal && cartModal.classList.contains('active')) {
+        const { renderCartModal } = await import('./cart.js');
+        await renderCartModal();
+    }
 });
 
 // After logout: refresh UI
 window.addEventListener('userLogout', async () => {
     updateAdminToggleVisibility();
+    const cartModal = document.getElementById('cartModal');
+    if (cartModal && cartModal.classList.contains('active')) {
+        const { renderCartModal } = await import('./cart.js');
+        await renderCartModal();
+    }
 });
 
 // Password toggles
