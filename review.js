@@ -279,7 +279,7 @@ function showShareModal(reviewId, reviewText, reviewUsername, shareUrl, bookTitl
                         <i class="fab fa-facebook-f"></i> Facebook
                     </button>
                     <button class="share-option" data-platform="twitter">
-                        <i class="fab fa-x-twitter"></i> X
+                        <i class="fab fa-twitter"></i> X
                     </button>
                     <button class="share-option" data-platform="email">
                         <i class="fas fa-envelope"></i> Email
