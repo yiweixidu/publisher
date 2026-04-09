@@ -1,25 +1,52 @@
+// ============================================
 // auth.js
+// Publisher E-commerce Platform
+// ============================================
+// Authors:
+//   Lewei Rong            — All existing auth logic
+//                           (login, logout, signup,
+//                            session management, admin
+//                            nav wiring, inactivity timer)
+//   Ana-Laurya Lefrancois — MANAGE ORDERS nav link
+//                           wiring (Card 8)
+// ============================================
+
 import { langPack } from './i18n.js';
 import { currentLang } from './i18n.js';
 import { navigateTo } from './routing.js';
 import { supabase } from './supabaseClient.js';
 import { getUserRole } from './data.js';
 
-// State variables
+// ============================================
+// STATE
+// Author: Lewei Rong
+// ============================================
+
 export let currentUser = null;
 export let isAdminUser = false;
 export let adminMode = false;
 let authListener = null;
 
+// Access token stored here so admin.js and data.js can use it for
+// raw fetch calls that bypass the Supabase JS client RLS quirks
 export let currentAccessToken = null;
 
-// DOM elements
-const adminSwitch = document.getElementById('adminSwitch');
-const loginOverlay = document.getElementById('loginOverlay');
-const loginError = document.getElementById('loginError');
-const userSection = document.getElementById('userSection');
+// ============================================
+// DOM ELEMENTS
+// Author: Lewei Rong
+// ============================================
 
-// Helper: update admin switch appearance
+const adminSwitch  = document.getElementById('adminSwitch');
+const loginOverlay = document.getElementById('loginOverlay');
+const loginError   = document.getElementById('loginError');
+const userSection  = document.getElementById('userSection');
+
+// ============================================
+// HELPERS
+// Author: Lewei Rong
+// ============================================
+
+// Toggles the admin switch visual state to match adminMode
 function updateAdminSwitch() {
     if (adminSwitch) {
         if (adminMode) {
@@ -30,15 +57,15 @@ function updateAdminSwitch() {
     }
 }
 
-// Reset login modal links to normal (user) mode
+// Restores forgot password and signup links to visible — called after admin login modal closes
 export function resetLoginModalLinks() {
-    const forgotLink = document.getElementById('forgotPasswordLink');
-    const signupLink = document.getElementById('goToSignupLink');
+    const forgotLink  = document.getElementById('forgotPasswordLink');
+    const signupLink  = document.getElementById('goToSignupLink');
     if (forgotLink) forgotLink.style.display = 'block';
     if (signupLink) signupLink.style.display = 'block';
 }
 
-// Open login modal with specified source ('user' or 'admin')
+// Opens login modal — hides forgot/signup links when source is 'admin'
 export function openLoginModal(source = 'user') {
     const forgotLink = document.getElementById('forgotPasswordLink');
     const signupLink = document.getElementById('goToSignupLink');
@@ -54,14 +81,19 @@ export function openLoginModal(source = 'user') {
     loginOverlay?.classList.add('active');
 }
 
-// Helper: update UI based on user login state
+// ============================================
+// USER UI
+// Author: Lewei Rong
+// Renders the user section in the navbar based on login state
+// ============================================
+
 export async function updateUserUI() {
     if (currentUser) {
         if (isAdminUser) {
             userSection.innerHTML = '';
             return;
         }
-        // Get display name from profiles or use email
+        // Resolve display name — profiles table takes priority over metadata
         let displayName = currentUser.email.split('@')[0];
         try {
             const { data: profile } = await supabase
@@ -93,7 +125,12 @@ export async function updateUserUI() {
     }
 }
 
-// ---------- Authentication ----------
+// ============================================
+// AUTHENTICATION
+// Author: Lewei Rong
+// ============================================
+
+// Signs in with email/password — sets user, role, and admin mode
 export async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
@@ -113,6 +150,7 @@ export async function login(email, password) {
     return true;
 }
 
+// Signs out and resets all auth state — caller decides where to redirect
 export async function logout() {
     const { error } = await supabase.auth.signOut();
     if (error) console.error(error);
@@ -123,9 +161,9 @@ export async function logout() {
     updateAdminSwitch();
     updateUserUI();
     window.dispatchEvent(new CustomEvent('userLogout'));
-    // Note: no automatic redirect here – caller decides
 }
 
+// Creates a new user account with display name stored in metadata
 export async function signup(email, password, displayName) {
     const siteUrl = window.location.origin + '/';
     const { data, error } = await supabase.auth.signUp({
@@ -140,6 +178,7 @@ export async function signup(email, password, displayName) {
     return true;
 }
 
+// Sends a password reset email — redirects to acerbooks.ca after reset
 export async function resetPassword(email) {
     const siteUrl = 'https://acerbooks.ca/';
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -148,7 +187,12 @@ export async function resetPassword(email) {
     if (error) throw error;
 }
 
-// Initialize session from Supabase
+// ============================================
+// SESSION INIT
+// Author: Lewei Rong
+// Restores session on page load and binds Supabase auth state listener
+// ============================================
+
 export async function initAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
@@ -167,6 +211,7 @@ export async function initAuth() {
         updateUserUI();
     }
 
+    // Unsubscribe stale listener before re-binding — prevents duplicate handlers
     if (authListener) authListener.unsubscribe();
     authListener = supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN') {
@@ -181,6 +226,7 @@ export async function initAuth() {
             currentUser = session.user;
             currentAccessToken = session.access_token;
             updateUserUI();
+            // Delay dispatch so account modal has time to open
             setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('openPasswordRecovery'));
             }, 400);
@@ -196,93 +242,96 @@ export async function initAuth() {
     });
 }
 
-// ---------- Admin Nav Link ----------
+// ============================================
+// ADMIN NAV LINK WIRING
+// Author: Lewei Rong
+// Ana-Laurya Lefrancois added MANAGE ORDERS binding (Card 8)
+// ============================================
+
+// Shows admin nav links when in admin mode, hides them otherwise.
+// Uses cloneNode to remove stale listeners before re-binding each button.
 export function updateAdminNavLink() {
-    const nav = document.getElementById('navLinks');
+    const nav               = document.getElementById('navLinks');
     const adminNavContainer = document.getElementById('adminNavContainer');
-    
     if (!nav || !adminNavContainer) return;
-    
+
     if (adminMode) {
-        // ========== Admin模式：显示admin导航，隐藏普通导航 ==========
         nav.classList.add('admin-nav-active');
         adminNavContainer.style.display = 'flex';
-        
-        // ========== 为新按钮添加事件监听 ==========
-        
-        // MANAGE BOOKS 按钮
+
+        // MANAGE BOOKS
         const booksLink = document.getElementById('adminManageBooksLink');
         if (booksLink) {
             booksLink.replaceWith(booksLink.cloneNode(true));
-            const newBooksLink = document.getElementById('adminManageBooksLink');
-            if (newBooksLink) {
-                newBooksLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    navigateTo('/admin/books');
-                });
-            }
+            document.getElementById('adminManageBooksLink')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo('/admin/books');
+            });
         }
-        
-        // MANAGE NEWS 按钮
+
+        // MANAGE NEWS
         const newsLink = document.getElementById('adminManageNewsLink');
         if (newsLink) {
             newsLink.replaceWith(newsLink.cloneNode(true));
-            const newNewsLink = document.getElementById('adminManageNewsLink');
-            if (newNewsLink) {
-                newNewsLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    navigateTo('/admin/news');
-                });
-            }
+            document.getElementById('adminManageNewsLink')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo('/admin/news');
+            });
         }
-        
-        // MANAGE USERS 按钮 (新增)
-        const manageUsersLink = document.getElementById('adminManageUsersLink');
-        if (manageUsersLink) {
-            manageUsersLink.replaceWith(manageUsersLink.cloneNode(true));
-            const newManageUsersLink = document.getElementById('adminManageUsersLink');
-            if (newManageUsersLink) {
-                newManageUsersLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    navigateTo('/admin/users');
-                });
-            }
+
+        // MANAGE USERS
+        const usersLink = document.getElementById('adminManageUsersLink');
+        if (usersLink) {
+            usersLink.replaceWith(usersLink.cloneNode(true));
+            document.getElementById('adminManageUsersLink')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo('/admin/users');
+            });
         }
-        
-        // MANAGE COMMENTS 按钮 (新增)
-        const manageCommentsLink = document.getElementById('adminManageCommentsLink');
-        if (manageCommentsLink) {
-            manageCommentsLink.replaceWith(manageCommentsLink.cloneNode(true));
-            const newManageCommentsLink = document.getElementById('adminManageCommentsLink');
-            if (newManageCommentsLink) {
-                newManageCommentsLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    navigateTo('/admin/comments');
-                });
-            }
+
+        // MANAGE COMMENTS
+        const commentsLink = document.getElementById('adminManageCommentsLink');
+        if (commentsLink) {
+            commentsLink.replaceWith(commentsLink.cloneNode(true));
+            document.getElementById('adminManageCommentsLink')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo('/admin/comments');
+            });
         }
-        
-        // LOGOUT 按钮 (新增)
-        const adminLogoutBtn = document.getElementById('adminLogoutBtn');
-        if (adminLogoutBtn) {
-            adminLogoutBtn.replaceWith(adminLogoutBtn.cloneNode(true));
-            const newLogoutBtn = document.getElementById('adminLogoutBtn');
-            if (newLogoutBtn) {
-                newLogoutBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    toggleAdminMode();
-                });
-            }
+
+        // MANAGE ORDERS — Ana-Laurya Lefrancois (Card 8)
+        // Same clone + rebind pattern as all other admin nav links above
+        const ordersLink = document.getElementById('adminManageOrdersLink');
+        if (ordersLink) {
+            ordersLink.replaceWith(ordersLink.cloneNode(true));
+            document.getElementById('adminManageOrdersLink')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo('/admin/orders');
+            });
         }
-        
+
+        // LOGOUT
+        const logoutBtn = document.getElementById('adminLogoutBtn');
+        if (logoutBtn) {
+            logoutBtn.replaceWith(logoutBtn.cloneNode(true));
+            document.getElementById('adminLogoutBtn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleAdminMode();
+            });
+        }
+
     } else {
-        // ========== 普通模式：隐藏admin导航，显示普通导航 ==========
+        // Regular user mode — hide admin nav, show user nav
         nav.classList.remove('admin-nav-active');
         adminNavContainer.style.display = 'none';
     }
 }
 
-// ---------- Helper to open login modal (used by admin toggle) ----------
+// ============================================
+// ADMIN MODE TOGGLE
+// Author: Lewei Rong
+// ============================================
+
 export function openAdminLoginModal() {
     openLoginModal('admin');
 }
@@ -292,15 +341,15 @@ export function closeAdminLoginModal() {
     resetLoginModalLinks();
 }
 
+// Toggles admin mode on/off — logs out first in all cases for clean state
 export function toggleAdminMode() {
     if (adminMode) {
-        // Turn OFF admin mode: logout and go to homepage
+        // Turn OFF — logout and go to homepage
         logout().then(() => {
             window.location.href = '/';
         });
     } else {
-        // Turn ON admin mode: if a user is logged in, logout first (without redirect),
-        // then show the admin login modal.
+        // Turn ON — logout any existing user session first, then show admin login
         if (currentUser) {
             logout().then(() => {
                 openAdminLoginModal();
@@ -311,7 +360,12 @@ export function toggleAdminMode() {
     }
 }
 
-// ---------- Inactivity timer ----------
+// ============================================
+// INACTIVITY TIMER
+// Author: Lewei Rong
+// Auto-logs out admin after 5 minutes of inactivity
+// ============================================
+
 let adminInactivityTimer = null;
 let inactivityEventsBound = false;
 
@@ -324,6 +378,7 @@ export function bindInactivityEvents() {
     });
 }
 
+// Resets the inactivity timer on every user interaction — only active in admin mode
 function resetAdminInactivityTimer() {
     if (adminInactivityTimer) {
         clearTimeout(adminInactivityTimer);
