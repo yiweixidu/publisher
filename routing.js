@@ -1,12 +1,29 @@
+// ============================================
 // routing.js
+// Publisher E-commerce Platform
+// ============================================
+// Authors:
+//   Lewei Rong            — All existing routing logic
+//                           (slug helpers, navigateTo,
+//                            handleRoute, all admin routes)
+//   Ana-Laurya Lefrancois — /admin/orders route (Card 8)
+//                           + adminOrdersPage hide (Card 8)
+// ============================================
+
 import { newsItems } from './data.js';
 import { books } from './data.js';
 import { renderBooks, renderAllBooks, renderBookDetail, renderNews, renderAllNews, renderNewsDetail, resetMetaTags, updateMetaTags } from './ui.js';
-import { showAdminBooksPage, showAdminNewsPage, showAdminUsersPage, showAdminCommentsPage } from './admin.js';
+// Ana-Laurya Lefrancois added showAdminOrdersPage import (Card 8)
+import { showAdminBooksPage, showAdminNewsPage, showAdminUsersPage, showAdminCommentsPage, showAdminOrdersPage } from './admin.js';
 import { BASE_PATH } from './constants.js';
 import { adminMode } from './auth.js';
 
-// ── Pinyin helper (lazy-loaded from CDN) ────────────────────────────────────
+// ============================================
+// PINYIN HELPER
+// Author: Lewei Rong
+// Lazy-loaded from CDN — used for Chinese-only title slugs
+// ============================================
+
 let _pinyinFn = null;
 async function _getPinyin(str) {
     if (!_pinyinFn) {
@@ -21,16 +38,14 @@ async function _getPinyin(str) {
     return _pinyinFn(str, { toneType: 'none', type: 'array' }).join('-');
 }
 
-// ── Slug helper ─────────────────────────────────────────────────────────────
-// Converts a book title into a clean URL slug.
-//
-// Mixed Chinese/English:
-//   "野花·繁星: Wild Flowers & Bright Stars"  →  "wild-flowers-bright-stars"
-//   "自惜身薄祜——红楼奸雄贾雨村: Jia Yucun"   →  "jia-yucun"
-//
-// Chinese-only (no English segment):
-//   "从北极到南极"   →  "cong-bei-ji-dao-nan-ji"
-//   "荒原·情歌"      →  "huang-yuan-qing-ge"
+// ============================================
+// SLUG HELPERS
+// Author: Lewei Rong
+// Converts book titles to clean URL slugs.
+// Mixed Chinese/English → extracts Latin portion.
+// Chinese-only → converts to pinyin (async version only).
+// ============================================
+
 export function toSlug(title) {
     if (!title) return 'book';
     const cleaned = title.replace(/[：:·•—–()\[\]《》「」『』【】]/g, ' ').trim();
@@ -39,11 +54,10 @@ export function toSlug(title) {
         .replace(/[^a-zA-Z0-9\s-]/g, ' ')
         .toLowerCase()
         .replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').trim();
-    return latinPart || 'book'; // sync fallback; toSlugAsync used for actual URLs
+    return latinPart || 'book';
 }
 
-// Async version — resolves Chinese-only titles to pinyin slugs.
-// Used by handleRoute for pushState / replaceState.
+// Async version — resolves Chinese-only titles to pinyin slugs
 export async function toSlugAsync(title) {
     if (!title) return 'book';
     const cleaned = title.replace(/[：:·•—–()\[\]《》「」『』【】]/g, ' ').trim();
@@ -62,7 +76,12 @@ export async function toSlugAsync(title) {
     } catch(e) { return 'book'; }
 }
 
-// ── Navigation ──────────────────────────────────────────────────────────────
+// ============================================
+// NAVIGATION
+// Author: Lewei Rong
+// Pushes a new history entry and calls handleRoute()
+// ============================================
+
 export function navigateTo(path) {
     const base = BASE_PATH.replace(/\/+$/, '');
     const cleanPath = path.replace(/^\/+/, '');
@@ -72,32 +91,41 @@ export function navigateTo(path) {
     handleRoute();
 }
 
-// ── Route handler ───────────────────────────────────────────────────────────
+// ============================================
+// ROUTE HANDLER
+// Author: Lewei Rong
+// Ana-Laurya Lefrancois added:
+//   - adminOrdersPage to hide-all list (Card 8)
+//   - /admin/orders route (Card 8)
+// ============================================
+
 export async function handleRoute() {
     let path = window.location.pathname.replace(/\/+/g, '/');
     const basePattern = new RegExp('^' + BASE_PATH.replace(/\/+$/, '') + '/?');
     path = path.replace(basePattern, '') || '/';
 
-    const mainContent    = document.getElementById('mainContent');
-    const booksPage      = document.getElementById('booksPage');
-    const detailPage     = document.getElementById('bookDetailPage');
-    const newsListPage   = document.getElementById('newsListPage');
-    const newsDetailPage = document.getElementById('newsDetailPage');
-    const adminBooksPage = document.getElementById('adminBooksPage');
-    const adminNewsPage  = document.getElementById('adminNewsPage');
+    const mainContent       = document.getElementById('mainContent');
+    const booksPage         = document.getElementById('booksPage');
+    const detailPage        = document.getElementById('bookDetailPage');
+    const newsListPage      = document.getElementById('newsListPage');
+    const newsDetailPage    = document.getElementById('newsDetailPage');
+    const adminBooksPage    = document.getElementById('adminBooksPage');
+    const adminNewsPage     = document.getElementById('adminNewsPage');
     const adminUsersPage    = document.getElementById('adminUsersPage');
     const adminCommentsPage = document.getElementById('adminCommentsPage');
+    const adminOrdersPage   = document.getElementById('adminOrdersPage'); // Ana-Laurya — Card 8
 
-    // Hide all
-    mainContent.style.display = 'none';
-    booksPage.style.display   = 'none';
-    detailPage.style.display  = 'none';
+    // Hide all pages before showing the matched route
+    mainContent.style.display    = 'none';
+    booksPage.style.display      = 'none';
+    detailPage.style.display     = 'none';
     if (newsListPage)       newsListPage.style.display       = 'none';
     if (newsDetailPage)     newsDetailPage.style.display     = 'none';
     if (adminBooksPage)     adminBooksPage.style.display     = 'none';
     if (adminNewsPage)      adminNewsPage.style.display      = 'none';
     if (adminUsersPage)     adminUsersPage.style.display     = 'none';
     if (adminCommentsPage)  adminCommentsPage.style.display  = 'none';
+    if (adminOrdersPage)    adminOrdersPage.style.display    = 'none'; // Ana-Laurya — Card 8
 
     if (path === '/' || path === '') {
         mainContent.style.display = 'block';
@@ -114,20 +142,20 @@ export async function handleRoute() {
     } else if (path.startsWith('book/')) {
         const segment = path.split('book/')[1];
 
-        // Build async slug map for all books (handles Chinese-only titles via pinyin)
+        // Build async slug map — handles Chinese-only titles via pinyin
         const slugMap = await Promise.all(books.map(async b => ({ book: b, slug: await toSlugAsync(b.title) })));
 
-        // 1. Async slug match — supports pinyin slugs for Chinese-only titles
+        // 1. Async slug match
         let entry = slugMap.find(e => e.slug === segment);
-        // 2. Sync slug fallback (existing behaviour for mixed titles)
+        // 2. Sync slug fallback (mixed titles)
         if (!entry) entry = slugMap.find(e => toSlug(e.book.title) === segment);
-        // 3. ID fallback — legacy links or 404.html redirect (e.g. /book/b6)
+        // 3. ID fallback — legacy links or 404.html redirect
         if (!entry) entry = slugMap.find(e => e.book.id === segment);
 
         const book = entry?.book;
         if (book) {
             detailPage.style.display = 'block';
-            // Canonicalise URL to the async slug (pinyin for Chinese-only titles)
+            // Canonicalise URL to async slug
             const slug = entry.slug;
             const canonical = BASE_PATH.replace(/\/+$/, '') + '/book/' + slug;
             if (window.location.pathname !== canonical) {
@@ -166,7 +194,7 @@ export async function handleRoute() {
 
     } else if (path === 'admin/books') {
         if (!adminMode) {
-            // Not in admin mode — silently rewrite URL to home without pushing a history entry
+            // Not admin — silently redirect to home without pushing history
             history.replaceState(null, '', BASE_PATH);
             mainContent.style.display = 'block';
             await Promise.all([renderBooks(), renderNews()]);
@@ -178,29 +206,23 @@ export async function handleRoute() {
         document.title = 'Manage Books | Acer Books';
 
     } else if (path === 'admin/news') {
-    if (!adminMode) {
-        history.replaceState(null, '', BASE_PATH);
-        mainContent.style.display = 'block';
-        await Promise.all([renderBooks(), renderNews()]);
-        resetMetaTags();
+        if (!adminMode) {
+            history.replaceState(null, '', BASE_PATH);
+            mainContent.style.display = 'block';
+            await Promise.all([renderBooks(), renderNews()]);
+            resetMetaTags();
+            window.dispatchEvent(new CustomEvent('routeChanged'));
+            return;
+        }
+        // Show admin news page and hide main content
+        const adminNewsPage = document.getElementById('adminNewsPage');
+        if (adminNewsPage) adminNewsPage.style.display = 'block';
+        const mainContent = document.getElementById('mainContent');
+        if (mainContent) mainContent.style.display = 'none';
+        showAdminNewsPage();
+        document.title = 'Manage News | Acer Books';
         window.dispatchEvent(new CustomEvent('routeChanged'));
-        return;
-    }
-    
-    // ✨ 显示admin news页面
-    const adminNewsPage = document.getElementById('adminNewsPage');
-    if (adminNewsPage) {
-        adminNewsPage.style.display = 'block';
-    }
-    
-    // ✨ 隐藏其他页面
-    const mainContent = document.getElementById('mainContent');
-    if (mainContent) mainContent.style.display = 'none';
-    
-    showAdminNewsPage();
-    document.title = 'Manage News | Acer Books';
-    window.dispatchEvent(new CustomEvent('routeChanged'));
- 
+
     } else if (path === 'admin/users') {
         if (!adminMode) {
             history.replaceState(null, '', BASE_PATH);
@@ -212,7 +234,7 @@ export async function handleRoute() {
         }
         showAdminUsersPage();
         document.title = 'Manage Users | Acer Books';
- 
+
     } else if (path === 'admin/comments') {
         if (!adminMode) {
             history.replaceState(null, '', BASE_PATH);
@@ -224,7 +246,22 @@ export async function handleRoute() {
         }
         showAdminCommentsPage();
         document.title = 'Manage Comments | Acer Books';
- 
+
+    // ── /admin/orders — Ana-Laurya Lefrancois (Card 8) ───────────────────────
+    // Same auth guard pattern as all other admin routes — redirects to home
+    // if not in admin mode. Calls showAdminOrdersPage() from admin.js.
+    } else if (path === 'admin/orders') {
+        if (!adminMode) {
+            history.replaceState(null, '', BASE_PATH);
+            mainContent.style.display = 'block';
+            await Promise.all([renderBooks(), renderNews()]);
+            resetMetaTags();
+            window.dispatchEvent(new CustomEvent('routeChanged'));
+            return;
+        }
+        showAdminOrdersPage();
+        document.title = 'Manage Orders | Acer Books';
+
     } else {
         navigateTo('/');
     }
