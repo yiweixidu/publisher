@@ -1443,3 +1443,61 @@ export async function renderAdminOrderList() {
         listEl.innerHTML = `<p class="acc-empty" style="color:#cc0000;">Error loading orders: ${_esc(err.message)}</p>`;
     }
 }
+
+// ============================================
+// CUSTOMER ORDER HISTORY HELPER
+// Author: Ana-Laurya Lefrancois — Card 11
+// ============================================
+
+/**
+ * Loads and renders order history for a specific customer
+ * inside an expandable panel in the admin users list.
+ * Called when admin clicks "Order History" on a user row.
+ * Uses loadOrders() from data.js — filters by customer_id client-side.
+ *
+ * @param {string} userId - UUID of the customer to look up.
+ * @param {HTMLElement} panel - The detail panel element to render into.
+ * @returns {Promise<void>}
+ */
+export async function renderCustomerOrderHistory(userId, panel) {
+    panel.innerHTML = '<p class="acc-loading"><i class="fas fa-spinner fa-spin"></i>&nbsp;Loading orders…</p>';
+    try {
+        await loadOrders();
+        // Filter orders belonging to this customer
+        const customerOrders = orders.filter(o => o.customer_id === userId);
+
+        if (!customerOrders.length) {
+            panel.innerHTML = '<p class="acc-empty">No orders found for this customer.</p>';
+            return;
+        }
+
+        // Sort most recent first
+        customerOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        panel.innerHTML = `
+            <div class="aor-detail-inner">
+                <strong style="display:block;margin-bottom:.5rem;">
+                    Order History (${customerOrders.length} order${customerOrders.length !== 1 ? 's' : ''})
+                </strong>
+                ${customerOrders.map(order => {
+                    const date = order.created_at
+                        ? new Date(order.created_at).toLocaleDateString('en-CA', {
+                            year: 'numeric', month: 'short', day: 'numeric'
+                          })
+                        : '—';
+                    return `
+                    <div class="aor-item-row" style="border-bottom:0.5px solid var(--color-border-tertiary);padding:.4rem 0;">
+                        <span class="aor-item-title">#${_esc(order.id.substring(0,8))}…</span>
+                        <span class="aor-item-qty">${date}</span>
+                        <span class="status-badge status-${order.status || 'pending'}" style="font-size:10px;">
+                            ${_esc(order.status || 'pending')}
+                        </span>
+                        <span class="aor-item-price">$${parseFloat(order.total || 0).toFixed(2)}</span>
+                    </div>`;
+                }).join('')}
+            </div>`;
+    } catch (err) {
+        console.error('renderCustomerOrderHistory error:', err);
+        panel.innerHTML = `<p class="acc-empty" style="color:#cc0000;">Error: ${_esc(err.message)}</p>`;
+    }
+}
