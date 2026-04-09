@@ -216,29 +216,22 @@ async function generateReviewCardCanvas(review, book) {
     ctx.textAlign = 'left';
 
     // ── WeChat 1:1 safe-zone stripe ───────────────────────────────────────────
-    // WeChat crops the center 630×630 (x:285–915). To ensure the review identity
-    // is always visible, draw a subtle branded stripe across that zone.
-    // This stripe sits at vertical center (y:280–350) and is always within the crop.
     ctx.save();
     ctx.globalAlpha = 0.88;
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(285, 280, 630, 70);
     ctx.globalAlpha = 1;
-    // Red left accent
     ctx.fillStyle = RED;
     ctx.fillRect(285, 280, 5, 70);
-    // Book title (truncated) in stripe
     ctx.fillStyle = DARK;
     ctx.font = `bold 20px ${FONTS}`;
     const stripeTitle = (book?.title || '').length > 28
         ? (book?.title || '').substring(0, 28) + '…'
         : (book?.title || '');
     ctx.fillText(stripeTitle, 300, 309);
-    // Reviewer + "REVIEW" label
     ctx.fillStyle = GRAY;
     ctx.font = `14px Arial`;
     ctx.fillText(`${review.username || ''} · Reader Review · acerbooks.ca`, 300, 335);
-    // Stars in stripe (if rated)
     if (review.rating) {
         ctx.font = '18px Arial';
         for (let i = 1; i <= 5; i++) {
@@ -253,17 +246,13 @@ async function generateReviewCardCanvas(review, book) {
 
 /**
  * Returns the Edge Function URL for sharing this review.
- * Image generation is handled server-side by the Edge Function — no client upload needed.
  */
 async function getReviewShareUrl(review, book) {
     return `${OG_FUNCTION_URL}?rid=${review.id}`;
 }
 
 // 自定义分享弹窗
-// shareUrl     = og-card URL  (FB / X — shows designed card)
-// canonicalUrl = acerbooks.ca book page URL (WeChat / Email — real book link)
 function showShareModal(reviewId, reviewText, reviewUsername, shareUrl, bookTitle, canonicalUrl) {
-    // 移除已有的弹窗
     const existingModal = document.getElementById('customShareModal');
     if (existingModal) existingModal.remove();
 
@@ -279,7 +268,7 @@ function showShareModal(reviewId, reviewText, reviewUsername, shareUrl, bookTitl
                         <i class="fab fa-facebook-f"></i> Facebook
                     </button>
                     <button class="share-option" data-platform="twitter">
-                        <i class="fab fa-twitter"></i> X
+                        <i class="fab fa-x-twitter"></i> X
                     </button>
                     <button class="share-option" data-platform="email">
                         <i class="fas fa-envelope"></i> Email
@@ -302,7 +291,6 @@ function showShareModal(reviewId, reviewText, reviewUsername, shareUrl, bookTitl
         if (e.target === overlay) modal.remove();
     });
 
-    // 处理各平台分享
     modal.querySelectorAll('.share-option').forEach(btn => {
         btn.addEventListener('click', () => {
             const platform = btn.dataset.platform;
@@ -311,17 +299,14 @@ function showShareModal(reviewId, reviewText, reviewUsername, shareUrl, bookTitl
 
             switch (platform) {
                 case 'facebook':
-                    // FB: og-card URL → shows designed card with cover + review
                     shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
                     window.open(shareLink, '_blank', 'width=600,height=400');
                     break;
                 case 'twitter':
-                    // X: og-card URL → X reads og tags and shows designed card
                     shareLink = `https://x.com/intent/post?url=${encodedUrl}`;
                     window.open(shareLink, '_blank', 'width=600,height=400');
                     break;
                 case 'email': {
-                    // Email: canonical book URL so recipient lands on acerbooks.ca
                     const wechatUrl = canonicalUrl || shareUrl;
                     const subject = encodeURIComponent(
                         `${bookTitle ? bookTitle + ' — ' : ''}Reader Review | Acer Books`
@@ -334,8 +319,6 @@ function showShareModal(reviewId, reviewText, reviewUsername, shareUrl, bookTitl
                     break;
                 }
                 case 'wechat':
-                    // WeChat: canonical book URL (acerbooks.ca/book/slug#review-id)
-                    // WeChat reads og tags from the book page and shows a link card
                     navigator.clipboard.writeText(canonicalUrl || shareUrl).then(() => {
                         alert('Link copied! Please open WeChat and paste to a chat or Moments.');
                     }).catch(() => {
@@ -348,259 +331,66 @@ function showShareModal(reviewId, reviewText, reviewUsername, shareUrl, bookTitl
     });
 }
 
-async function attachEventsToContainer(container, bookId, currentLang, currentUser) {
-    if (!container) return;
+// ---------- Star rating helpers ----------
+const STAR_LABELS = ['', 'Disappointing', 'Fair', 'Good', 'Great', 'Excellent'];
 
-    // 分享按钮 (自定义弹窗)
-    container.querySelectorAll('.wechat-share-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const reviewId = btn.dataset.reviewId;
-            const review   = reviews.find(r => r.id === reviewId);
-            if (!review) return;
-
-            // Show spinner while generating card
-            const icon = btn.querySelector('i');
-            const origClass = icon?.className || 'fas fa-share-alt';
-            if (icon) icon.className = 'fas fa-spinner fa-spin';
-            btn.disabled = true;
-
-            let shareUrl;
-            let canonicalUrl;
-            try {
-                const { books: allBooks } = await import('./data.js');
-                const book = allBooks.find(b => b.id === review.book_id);
-                shareUrl = await getReviewShareUrl(review, book);
-                // Canonical book page URL for WeChat / Email
-                const { toSlugAsync } = await import('./routing.js');
-                const slug = book ? await toSlugAsync(book.title) : 'book';
-                canonicalUrl = `${window.location.origin}/book/${slug}#review-${reviewId}`;
-            } catch(err) {
-                console.warn('getReviewShareUrl failed:', err);
-                // Fallback: use canonical URL for both
-                const { toSlugAsync } = await import('./routing.js');
-                const { books: allBooks } = await import('./data.js');
-                const book = allBooks.find(b => b.id === review.book_id);
-                const slug = book ? await toSlugAsync(book.title) : 'book';
-                canonicalUrl = `${window.location.origin}/book/${slug}#review-${reviewId}`;
-                shareUrl = canonicalUrl;
-            } finally {
-                if (icon) icon.className = origClass;
-                btn.disabled = false;
-            }
-
-            const { books: allBooks2 } = await import('./data.js');
-            const book2 = allBooks2.find(b => b.id === review.book_id);
-            showShareModal(reviewId, review.text, review.username, shareUrl, book2?.title || '', canonicalUrl);
-        });
-    });
-
-    // 删除书评
-    container.querySelectorAll('.delete-review-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (!confirm('Delete this review?')) return;
-            const reviewId = btn.dataset.reviewId;
-            const { error } = await supabase.from('reviews').delete().eq('id', reviewId);
-            if (error) {
-                alert('Delete failed: ' + error.message);
-                return;
-            }
-            await loadReviews();
-            if (container === modalReviews) {
-                await renderReviews(bookId, currentLang, currentUser);
-            } else {
-                await renderDetailReviews(bookId, currentLang, currentUser);
-            }
-        });
-    });
-
-    // 编辑书评
-    container.querySelectorAll('.edit-review-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const reviewId = btn.dataset.reviewId;
-            const reviewDiv = container.querySelector(`.wechat-review-item[data-review-id="${reviewId}"]`);
-            const contentDiv = reviewDiv.querySelector('.wechat-review-content');
-            const oldText = contentDiv.innerText;
-            // 替换为编辑框
-            const currentReview = reviews.find(r => r.id === reviewId);
-            const editHtml = `
-                ${renderStarSelector(currentReview?.rating || 0)}
-                <textarea class="edit-textarea" id="edit-review-${reviewId}">${escapeHtml(oldText)}</textarea>
-                <div class="edit-actions">
-                    <button class="save-review-edit btn-post" data-review-id="${reviewId}">Save</button>
-                    <button class="cancel-review-edit btn-outline-red" data-review-id="${reviewId}">Cancel</button>
-                </div>
-            `;
-            contentDiv.innerHTML = editHtml;
-            bindStarSelector(contentDiv.querySelector('.star-selector'));
-            // 保存
-            const saveBtn = contentDiv.querySelector('.save-review-edit');
-            const cancelBtn = contentDiv.querySelector('.cancel-review-edit');
-            saveBtn.addEventListener('click', async () => {
-                const newText = contentDiv.querySelector('textarea').value.trim();
-                if (!newText) return;
-                const review = reviews.find(r => r.id === reviewId);
-                if (review) {
-                    review.text = newText;
-                    const newRating = parseInt(contentDiv.querySelector('.star-selector')?.dataset.rating) || null;
-                    review.rating = newRating;
-                    await updateReview(review);
-                    await loadReviews();
-                    if (container === modalReviews) {
-                        await renderReviews(bookId, currentLang, currentUser);
-                    } else {
-                        await renderDetailReviews(bookId, currentLang, currentUser);
-                    }
-                }
-            });
-            cancelBtn.addEventListener('click', () => {
-                contentDiv.innerHTML = escapeHtml(oldText);
-            });
-        });
-    });
-
-    // 提交评论
-    container.querySelectorAll('.wechat-comment-submit').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (!currentUser) return;
-            const reviewId = btn.dataset.reviewId;
-            const input = container.querySelector(`.wechat-comment-input[data-review-id="${reviewId}"]`);
-            const text = input?.value.trim();
-            if (!text) return;
-            const review = reviews.find(r => r.id === reviewId);
-            if (review) {
-                const commenterName = await getUserDisplayName(currentUser.id);
-                const newComment = {
-                    _id: Date.now() + Math.random().toString(36),
-                    user_id: currentUser.id,
-                    username: commenterName,
-                    text: text,
-                    timestamp: new Date().toISOString()
-                };
-                review.comments.push(newComment);
-                await updateReview(review);
-                await loadReviews();
-                if (container === modalReviews) {
-                    await renderReviews(bookId, currentLang, currentUser);
-                } else {
-                    await renderDetailReviews(bookId, currentLang, currentUser);
-                }
-                if (input) input.value = '';
-            }
-        });
-    });
-
-    // 删除评论
-    container.querySelectorAll('.delete-comment-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (!confirm('Delete this comment?')) return;
-            const reviewId = btn.dataset.reviewId;
-            const commentTs = btn.dataset.commentTs;
-            const review = reviews.find(r => r.id === reviewId);
-            if (review) {
-                review.comments = review.comments.filter(c => c.timestamp != commentTs && c._id != commentTs);
-                await updateReview(review);
-                await loadReviews();
-                if (container === modalReviews) {
-                    await renderReviews(bookId, currentLang, currentUser);
-                } else {
-                    await renderDetailReviews(bookId, currentLang, currentUser);
-                }
-            }
-        });
-    });
-
-    // 编辑评论
-    container.querySelectorAll('.edit-comment-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const reviewId = btn.dataset.reviewId;
-            const commentTs = btn.dataset.commentTs;
-            const review = reviews.find(r => r.id === reviewId);
-            const comment = review?.comments.find(c => c.timestamp == commentTs || c._id == commentTs);
-            if (!comment) return;
-            const commentElem = btn.closest('.wechat-comment-item');
-            const textSpan = commentElem.querySelector('.wechat-comment-text');
-            const oldText = textSpan.innerText;
-            // 替换为编辑框
-            const editHtml = `
-                <textarea class="edit-textarea" style="width:100%">${escapeHtml(oldText)}</textarea>
-                <div class="edit-actions">
-                    <button class="save-comment-edit btn-post">Save</button>
-                    <button class="cancel-comment-edit btn-outline-red">Cancel</button>
-                </div>
-            `;
-            textSpan.innerHTML = editHtml;
-            const saveBtn = textSpan.querySelector('.save-comment-edit');
-            const cancelBtn = textSpan.querySelector('.cancel-comment-edit');
-            saveBtn.addEventListener('click', async () => {
-                const newText = textSpan.querySelector('textarea').value.trim();
-                if (!newText) return;
-                comment.text = newText;
-                await updateReview(review);
-                await loadReviews();
-                if (container === modalReviews) {
-                    await renderReviews(bookId, currentLang, currentUser);
-                } else {
-                    await renderDetailReviews(bookId, currentLang, currentUser);
-                }
-            });
-            cancelBtn.addEventListener('click', () => {
-                textSpan.innerHTML = escapeHtml(oldText);
-            });
-        });
-    });
-
-    // Bind star selector for the new review form
-    bindStarSelector(container.querySelector('.review-form .star-selector'));
-
-    // 提交新书评
-    const submitReview = container.querySelector('.review-submit');
-    if (submitReview && currentUser) {
-        // 避免重复绑定
-        submitReview.replaceWith(submitReview.cloneNode(true));
-        const newSubmit = container.querySelector('.review-submit');
-        newSubmit.addEventListener('click', async () => {
-            const textarea = container.querySelector('.review-textarea');
-            const text = textarea?.value.trim();
-            if (!text) return;
-            const rating = parseInt(container.querySelector('.review-form .star-selector')?.dataset.rating) || null;
-            const displayName = await getUserDisplayName(currentUser.id);
-            const newReview = {
-                id: 'rev_' + Date.now() + Math.random().toString(36).substr(2, 6),
-                book_id: bookId,
-                user_id: currentUser.id,
-                username: displayName,
-                text: text,
-                rating: rating,
-                timestamp: new Date().toISOString(),
-                likes: [],
-                comments: []
-            };
-            await insertReview(newReview);
-            await loadReviews();
-            if (container === modalReviews) {
-                await renderReviews(bookId, currentLang, currentUser);
-            } else {
-                await renderDetailReviews(bookId, currentLang, currentUser);
-            }
-            if (textarea) textarea.value = '';
-        });
+function renderStars(rating) {
+    if (!rating || rating < 1) return '';
+    const r = Math.min(5, Math.max(1, Math.round(rating)));
+    let html = `<div class="review-stars" title="${r}/5 — ${STAR_LABELS[r]}">`;
+    for (let i = 1; i <= 5; i++) {
+        html += `<span class="star ${i <= r ? 'filled' : 'empty'}">${i <= r ? '&#9733;' : '&#9734;'}</span>`;
     }
+    html += `</div>`;
+    return html;
+}
 
-    // 未登录时的“Login to review”按钮
-    container.querySelectorAll('.login-prompt-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openLoginModal('user');
+function renderStarSelector(currentRating = 0) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+        const filled = i <= currentRating;
+        stars += `<span class="star-pick${filled ? ' filled' : ''}" data-val="${i}">${filled ? '&#9733;' : '&#9734;'}</span>`;
+    }
+    return `<div class="star-selector" data-rating="${currentRating}">
+        ${stars}
+        <span class="star-hint">${STAR_LABELS[currentRating] || 'Select rating (optional)'}</span>
+    </div>`;
+}
+
+function bindStarSelector(el) {
+    if (!el) return;
+    const picks = el.querySelectorAll('.star-pick');
+    const hint  = el.querySelector('.star-hint');
+    function paint(val, persist) {
+        picks.forEach(p => {
+            const v = parseInt(p.dataset.val);
+            const on = v <= val;
+            p.innerHTML = on ? '&#9733;' : '&#9734;';
+            p.classList.toggle('filled', on);
         });
+        if (hint) hint.textContent = STAR_LABELS[val] || 'Select rating (optional)';
+        if (persist) el.dataset.rating = val;
+    }
+    picks.forEach(p => {
+        p.addEventListener('mouseenter', () => paint(parseInt(p.dataset.val), false));
+        p.addEventListener('mouseleave', () => paint(parseInt(el.dataset.rating) || 0, false));
+        p.addEventListener('click',      () => paint(parseInt(p.dataset.val), true));
     });
 }
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+        return c;
+    });
+}
+
+// ---------- Generate reviews HTML ----------
 function generateReviewsHTML(bookReviews, currentLang, currentUser) {
     let html = '<div class="wechat-review-list">';
 
@@ -653,7 +443,6 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
                     <div class="wechat-comment-section" id="comments-${r.id}">
         `;
 
-        // 显示现有评论
         for (const c of r.comments) {
             const commentDate = new Date(c.timestamp).toLocaleDateString(
                 currentLang === 'fr' ? 'fr-CA' : 'en-CA',
@@ -684,7 +473,6 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
             `;
         }
 
-        // 评论输入表单（仅登录用户可见）
         if (currentUser) {
             html += `
                 <div class="wechat-comment-form">
@@ -699,11 +487,9 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
             html += `<button class="btn-outline-red login-prompt-btn">${loginPromptText}</button>`;
         }
 
-        html += `</div></div>`; // 关闭 comment-section 和 content-area
-        html += `</div>`; // 关闭 wechat-review-item
+        html += `</div></div></div>`;
     }
 
-    // 新书评表单（仅登录用户可见）
     if (currentUser) {
         const currentDisplayName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
         const currentUserInitial = currentDisplayName.charAt(0).toUpperCase();
@@ -728,84 +514,289 @@ function generateReviewsHTML(bookReviews, currentLang, currentUser) {
     return html;
 }
 
-// Simple XSS escape helper
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-        return c;
-    });
-}
+// ---------- Core event attachment (with fixed Save button) ----------
+async function attachEventsToContainer(container, bookId, currentLang, currentUser) {
+    if (!container) return;
 
-// ── Star rating helpers ──────────────────────────────────────────────────────
-const STAR_LABELS = ['', 'Disappointing', 'Fair', 'Good', 'Great', 'Excellent'];
+    // Share button
+    container.querySelectorAll('.wechat-share-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const reviewId = btn.dataset.reviewId;
+            const review   = reviews.find(r => r.id === reviewId);
+            if (!review) return;
 
-// Read-only star display (rating 0 = hidden)
-function renderStars(rating) {
-    if (!rating || rating < 1) return '';
-    const r = Math.min(5, Math.max(1, Math.round(rating)));
-    let html = `<div class="review-stars" title="${r}/5 — ${STAR_LABELS[r]}">`;
-    for (let i = 1; i <= 5; i++) {
-        html += `<span class="star ${i <= r ? 'filled' : 'empty'}">${i <= r ? '&#9733;' : '&#9734;'}</span>`;
-    }
-    html += `</div>`;
-    return html;
-}
+            const icon = btn.querySelector('i');
+            const origClass = icon?.className || 'fas fa-share-alt';
+            if (icon) icon.className = 'fas fa-spinner fa-spin';
+            btn.disabled = true;
 
-// Interactive star selector for forms
-function renderStarSelector(currentRating = 0) {
-    let stars = '';
-    for (let i = 1; i <= 5; i++) {
-        const filled = i <= currentRating;
-        stars += `<span class="star-pick${filled ? ' filled' : ''}" data-val="${i}">${filled ? '&#9733;' : '&#9734;'}</span>`;
-    }
-    return `<div class="star-selector" data-rating="${currentRating}">
-        ${stars}
-        <span class="star-hint">${STAR_LABELS[currentRating] || 'Select rating (optional)'}</span>
-    </div>`;
-}
+            let shareUrl;
+            let canonicalUrl;
+            try {
+                const { books: allBooks } = await import('./data.js');
+                const book = allBooks.find(b => b.id === review.book_id);
+                shareUrl = await getReviewShareUrl(review, book);
+                const { toSlugAsync } = await import('./routing.js');
+                const slug = book ? await toSlugAsync(book.title) : 'book';
+                canonicalUrl = `${window.location.origin}/book/${slug}#review-${reviewId}`;
+            } catch(err) {
+                console.warn('getReviewShareUrl failed:', err);
+                const { toSlugAsync } = await import('./routing.js');
+                const { books: allBooks } = await import('./data.js');
+                const book = allBooks.find(b => b.id === review.book_id);
+                const slug = book ? await toSlugAsync(book.title) : 'book';
+                canonicalUrl = `${window.location.origin}/book/${slug}#review-${reviewId}`;
+                shareUrl = canonicalUrl;
+            } finally {
+                if (icon) icon.className = origClass;
+                btn.disabled = false;
+            }
 
-// Bind hover + click events on a .star-selector element
-function bindStarSelector(el) {
-    if (!el) return;
-    const picks = el.querySelectorAll('.star-pick');
-    const hint  = el.querySelector('.star-hint');
-    function paint(val, persist) {
-        picks.forEach(p => {
-            const v = parseInt(p.dataset.val);
-            const on = v <= val;
-            p.innerHTML = on ? '&#9733;' : '&#9734;';
-            p.classList.toggle('filled', on);
+            const { books: allBooks2 } = await import('./data.js');
+            const book2 = allBooks2.find(b => b.id === review.book_id);
+            showShareModal(reviewId, review.text, review.username, shareUrl, book2?.title || '', canonicalUrl);
         });
-        if (hint) hint.textContent = STAR_LABELS[val] || 'Select rating (optional)';
-        if (persist) el.dataset.rating = val;
+    });
+
+    // Delete review
+    container.querySelectorAll('.delete-review-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!confirm('Delete this review?')) return;
+            const reviewId = btn.dataset.reviewId;
+            const { error } = await supabase.from('reviews').delete().eq('id', reviewId);
+            if (error) {
+                alert('Delete failed: ' + error.message);
+                return;
+            }
+            await loadReviews();
+            if (container === modalReviews) {
+                await renderReviews(bookId, currentLang, currentUser);
+            } else {
+                await renderDetailReviews(bookId, currentLang, currentUser);
+            }
+        });
+    });
+
+    // Edit review - FIXED Save button
+    container.querySelectorAll('.edit-review-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const reviewId = btn.dataset.reviewId;
+            const reviewDiv = container.querySelector(`.wechat-review-item[data-review-id="${reviewId}"]`);
+            const contentDiv = reviewDiv.querySelector('.wechat-review-content');
+            const oldText = contentDiv.innerText;
+            const currentReview = reviews.find(r => r.id === reviewId);
+            const editHtml = `
+                ${renderStarSelector(currentReview?.rating || 0)}
+                <textarea class="edit-textarea" id="edit-review-${reviewId}">${escapeHtml(oldText)}</textarea>
+                <div class="edit-actions">
+                    <button class="save-review-edit btn-post" data-review-id="${reviewId}">Save</button>
+                    <button class="cancel-review-edit btn-outline-red" data-review-id="${reviewId}">Cancel</button>
+                </div>
+            `;
+            contentDiv.innerHTML = editHtml;
+            bindStarSelector(contentDiv.querySelector('.star-selector'));
+
+            const saveBtn = contentDiv.querySelector('.save-review-edit');
+            const cancelBtn = contentDiv.querySelector('.cancel-review-edit');
+
+            // Remove any previous listener to avoid duplicate
+            const newSaveBtn = saveBtn.cloneNode(true);
+            saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+            newSaveBtn.addEventListener('click', async () => {
+                console.log('Save button clicked for review', reviewId);
+                const newText = contentDiv.querySelector('textarea').value.trim();
+                if (!newText) {
+                    alert('Review text cannot be empty');
+                    return;
+                }
+                const review = reviews.find(r => r.id === reviewId);
+                if (!review) {
+                    console.error('Review not found in local array');
+                    alert('Review not found. Please refresh the page.');
+                    return;
+                }
+                review.text = newText;
+                const newRating = parseInt(contentDiv.querySelector('.star-selector')?.dataset.rating) || null;
+                review.rating = newRating;
+                try {
+                    console.log('Calling updateReview...');
+                    await updateReview(review);
+                    console.log('Update successful, reloading reviews...');
+                    await loadReviews();
+                    if (container === modalReviews) {
+                        await renderReviews(bookId, currentLang, currentUser);
+                    } else {
+                        await renderDetailReviews(bookId, currentLang, currentUser);
+                    }
+                } catch (err) {
+                    console.error('Update review error:', err);
+                    alert('Failed to update review: ' + err.message);
+                }
+            });
+
+            newCancelBtn.addEventListener('click', () => {
+                contentDiv.innerHTML = escapeHtml(oldText);
+            });
+        });
+    });
+
+    // Submit comment
+    container.querySelectorAll('.wechat-comment-submit').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!currentUser) return;
+            const reviewId = btn.dataset.reviewId;
+            const input = container.querySelector(`.wechat-comment-input[data-review-id="${reviewId}"]`);
+            const text = input?.value.trim();
+            if (!text) return;
+            const review = reviews.find(r => r.id === reviewId);
+            if (review) {
+                const commenterName = await getUserDisplayName(currentUser.id);
+                const newComment = {
+                    _id: Date.now() + Math.random().toString(36),
+                    user_id: currentUser.id,
+                    username: commenterName,
+                    text: text,
+                    timestamp: new Date().toISOString()
+                };
+                review.comments.push(newComment);
+                await updateReview(review);
+                await loadReviews();
+                if (container === modalReviews) {
+                    await renderReviews(bookId, currentLang, currentUser);
+                } else {
+                    await renderDetailReviews(bookId, currentLang, currentUser);
+                }
+                if (input) input.value = '';
+            }
+        });
+    });
+
+    // Delete comment
+    container.querySelectorAll('.delete-comment-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!confirm('Delete this comment?')) return;
+            const reviewId = btn.dataset.reviewId;
+            const commentTs = btn.dataset.commentTs;
+            const review = reviews.find(r => r.id === reviewId);
+            if (review) {
+                review.comments = review.comments.filter(c => c.timestamp != commentTs && c._id != commentTs);
+                await updateReview(review);
+                await loadReviews();
+                if (container === modalReviews) {
+                    await renderReviews(bookId, currentLang, currentUser);
+                } else {
+                    await renderDetailReviews(bookId, currentLang, currentUser);
+                }
+            }
+        });
+    });
+
+    // Edit comment
+    container.querySelectorAll('.edit-comment-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const reviewId = btn.dataset.reviewId;
+            const commentTs = btn.dataset.commentTs;
+            const review = reviews.find(r => r.id === reviewId);
+            const comment = review?.comments.find(c => c.timestamp == commentTs || c._id == commentTs);
+            if (!comment) return;
+            const commentElem = btn.closest('.wechat-comment-item');
+            const textSpan = commentElem.querySelector('.wechat-comment-text');
+            const oldText = textSpan.innerText;
+            const editHtml = `
+                <textarea class="edit-textarea" style="width:100%">${escapeHtml(oldText)}</textarea>
+                <div class="edit-actions">
+                    <button class="save-comment-edit btn-post">Save</button>
+                    <button class="cancel-comment-edit btn-outline-red">Cancel</button>
+                </div>
+            `;
+            textSpan.innerHTML = editHtml;
+            const saveBtn = textSpan.querySelector('.save-comment-edit');
+            const cancelBtn = textSpan.querySelector('.cancel-comment-edit');
+            saveBtn.addEventListener('click', async () => {
+                const newText = textSpan.querySelector('textarea').value.trim();
+                if (!newText) return;
+                comment.text = newText;
+                await updateReview(review);
+                await loadReviews();
+                if (container === modalReviews) {
+                    await renderReviews(bookId, currentLang, currentUser);
+                } else {
+                    await renderDetailReviews(bookId, currentLang, currentUser);
+                }
+            });
+            cancelBtn.addEventListener('click', () => {
+                textSpan.innerHTML = escapeHtml(oldText);
+            });
+        });
+    });
+
+    // New review form
+    bindStarSelector(container.querySelector('.review-form .star-selector'));
+    const submitReview = container.querySelector('.review-submit');
+    if (submitReview && currentUser) {
+        submitReview.replaceWith(submitReview.cloneNode(true));
+        const newSubmit = container.querySelector('.review-submit');
+        newSubmit.addEventListener('click', async () => {
+            const textarea = container.querySelector('.review-textarea');
+            const text = textarea?.value.trim();
+            if (!text) return;
+            const rating = parseInt(container.querySelector('.review-form .star-selector')?.dataset.rating) || null;
+            const displayName = await getUserDisplayName(currentUser.id);
+            const newReview = {
+                id: 'rev_' + Date.now() + Math.random().toString(36).substr(2, 6),
+                book_id: bookId,
+                user_id: currentUser.id,
+                username: displayName,
+                text: text,
+                rating: rating,
+                timestamp: new Date().toISOString(),
+                likes: [],
+                comments: []
+            };
+            await insertReview(newReview);
+            await loadReviews();
+            if (container === modalReviews) {
+                await renderReviews(bookId, currentLang, currentUser);
+            } else {
+                await renderDetailReviews(bookId, currentLang, currentUser);
+            }
+            if (textarea) textarea.value = '';
+        });
     }
-    picks.forEach(p => {
-        p.addEventListener('mouseenter', () => paint(parseInt(p.dataset.val), false));
-        p.addEventListener('mouseleave', () => paint(parseInt(el.dataset.rating) || 0, false));
-        p.addEventListener('click',      () => paint(parseInt(p.dataset.val), true));
+
+    container.querySelectorAll('.login-prompt-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openLoginModal('user');
+        });
     });
 }
 
+// ---------- Exported render functions ----------
 export async function renderReviews(bookId, currentLang, currentUser) {
-    await loadReviews();  // ensure fresh data
+    await loadReviews();
     if (!modalReviews) return;
     const bookReviews = reviews.filter(r => r.book_id === bookId);
     modalReviews.innerHTML = generateReviewsHTML(bookReviews, currentLang, currentUser);
-    attachEventsToContainer(modalReviews, bookId, currentLang, currentUser);
+    await attachEventsToContainer(modalReviews, bookId, currentLang, currentUser);
 }
 
 export async function renderDetailReviews(bookId, currentLang, currentUser) {
-    await loadReviews();  // ensure fresh data
+    await loadReviews();
     const detailReviews = document.getElementById('detailReviews');
     if (!detailReviews) return;
     const bookReviews = reviews.filter(r => r.book_id === bookId);
     detailReviews.innerHTML = generateReviewsHTML(bookReviews, currentLang, currentUser);
-    attachEventsToContainer(detailReviews, bookId, currentLang, currentUser);
+    await attachEventsToContainer(detailReviews, bookId, currentLang, currentUser);
 }
 
 export function checkHashForReview() {
