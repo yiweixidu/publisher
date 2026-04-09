@@ -2,8 +2,8 @@
 // supabase/functions/og-card/index.ts
 //
 // Routes:
-//   ?rid=xxx        → OG HTML page (crawlers) or 302 redirect (real browsers)
-//   ?rid=xxx&img=1  → Generated 1200×630 PNG card (satori + resvg-wasm)
+//   ?rid=xxx        → OG HTML (crawlers) or 302 redirect (real browsers)
+//   ?rid=xxx&img=1  → Generated 1200×630 PNG for Facebook og:image
 
 import { createClient }    from '@supabase/supabase-js';
 import satori               from 'npm:satori@0.10.14';
@@ -14,19 +14,22 @@ const CORS = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// ─── Module-level asset cache (warm across invocations in same worker) ────────
-let assetsReady  = false;
-let latinFont: ArrayBuffer;   // Inter 700 — Latin glyphs
-let cjkFont:   ArrayBuffer;   // Noto Sans SC 700 — Chinese glyphs
+// ─── Module-level asset cache ─────────────────────────────────────────────────
+let assetsReady = false;
+let latinFont: ArrayBuffer;
+let cjkFont:   ArrayBuffer;
+
+// jsDelivr paths for @fontsource — versioned for stability
+const LATIN_FONT_URL = 'https://cdn.jsdelivr.net/npm/@fontsource/inter@5/files/inter-latin-700-normal.woff2';
+const CJK_FONT_URL   = 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-sc@5/files/noto-sans-sc-chinese-simplified-700-normal.woff2';
+const WASM_URL       = 'https://cdn.jsdelivr.net/npm/@resvg/resvg-wasm@2.6.0/index_bg.wasm';
 
 async function ensureAssets() {
     if (assetsReady) return;
     await Promise.all([
-        initWasm(fetch('https://cdn.jsdelivr.net/npm/@resvg/resvg-wasm@2.6.0/index_bg.wasm')),
-        fetch('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.1.1/files/inter-latin-700-normal.woff2')
-            .then(r => r.arrayBuffer()).then(b => { latinFont = b; }),
-        fetch('https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-sc@5.1.0/files/noto-sans-sc-chinese-simplified-700-normal.woff2')
-            .then(r => r.arrayBuffer()).then(b => { cjkFont = b; }),
+        initWasm(fetch(WASM_URL)),
+        fetch(LATIN_FONT_URL).then(r => r.arrayBuffer()).then(b => { latinFont = b; }),
+        fetch(CJK_FONT_URL  ).then(r => r.arrayBuffer()).then(b => { cjkFont   = b; }),
     ]);
     assetsReady = true;
 }
@@ -57,8 +60,7 @@ function trunc(s: string, n: number) {
 }
 
 // ─── OG Image Generator ───────────────────────────────────────────────────────
-// Produces a 1200×630 PNG styled after the Twitter card layout:
-//   [cover photo | red stripe | branded text panel]
+// Layout: [cover 420px] [red stripe 6px] [text panel]
 async function generateImage(p: {
     title:    string;
     author:   string;
@@ -82,194 +84,83 @@ async function generateImage(p: {
         let bin = '';
         for (let i = 0; i < bytes.byteLength; i++) bin += String.fromCharCode(bytes[i]);
         coverData = `data:${mime};base64,${btoa(bin)}`;
-    } catch { /* fallback: solid bg */ }
+    } catch { /* solid background fallback */ }
 
     const node = {
         type: 'div',
         props: {
             style: {
-                display:    'flex',
-                width:      '1200px',
-                height:     '630px',
+                display: 'flex', width: '1200px', height: '630px',
                 background: '#ffffff',
                 fontFamily: '"Inter", "Noto Sans SC", sans-serif',
             },
             children: [
-                // ── Left: book cover ──────────────────────────────────────
+                // Cover
                 {
                     type: 'div',
                     props: {
                         style: {
-                            width:          '420px',
-                            height:         '630px',
-                            flexShrink:     0,
-                            overflow:       'hidden',
-                            background:     '#e8e2d9',
-                            display:        'flex',
-                            alignItems:     'center',
-                            justifyContent: 'center',
+                            width: '420px', height: '630px', flexShrink: 0,
+                            overflow: 'hidden', background: '#e8e2d9',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
                         },
                         children: coverData ? [{
                             type: 'img',
-                            props: {
-                                src:   coverData,
-                                style: { width: '420px', height: '630px', objectFit: 'cover' },
-                            }
+                            props: { src: coverData, style: { width: '420px', height: '630px', objectFit: 'cover' } }
                         }] : [],
                     }
                 },
-
-                // ── Red stripe ────────────────────────────────────────────
+                // Red stripe
                 {
                     type: 'div',
-                    props: {
-                        style: { width: '6px', height: '630px', background: '#cc0000', flexShrink: 0 },
-                    }
+                    props: { style: { width: '6px', height: '630px', background: '#cc0000', flexShrink: 0 } }
                 },
-
-                // ── Right: text panel ─────────────────────────────────────
+                // Text panel
                 {
                     type: 'div',
                     props: {
                         style: {
-                            flex:           1,
-                            display:        'flex',
-                            flexDirection:  'column',
+                            flex: 1, display: 'flex', flexDirection: 'column',
                             justifyContent: 'space-between',
-                            padding:        '44px 50px 40px 50px',
-                            background:     '#ffffff',
+                            padding: '44px 50px 40px 50px', background: '#ffffff',
                         },
                         children: [
-                            // Top content group
+                            // Top group
                             {
                                 type: 'div',
                                 props: {
                                     style: { display: 'flex', flexDirection: 'column' },
                                     children: [
-
                                         // Brand row
                                         {
                                             type: 'div',
                                             props: {
-                                                style: {
-                                                    display:        'flex',
-                                                    justifyContent: 'space-between',
-                                                    alignItems:     'center',
-                                                    marginBottom:   '30px',
-                                                },
+                                                style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
                                                 children: [
-                                                    {
-                                                        type: 'span',
-                                                        props: {
-                                                            style: {
-                                                                fontSize:      '12px',
-                                                                letterSpacing: '3px',
-                                                                color:         '#aaa',
-                                                                fontWeight:    700,
-                                                            },
-                                                            children: 'ACER BOOKS',
-                                                        }
-                                                    },
-                                                    {
-                                                        type: 'span',
-                                                        props: {
-                                                            style: {
-                                                                fontSize:      '10px',
-                                                                letterSpacing: '2px',
-                                                                color:         '#fff',
-                                                                background:    '#cc0000',
-                                                                padding:       '5px 11px',
-                                                                fontWeight:    700,
-                                                            },
-                                                            children: 'READER REVIEW',
-                                                        }
-                                                    },
+                                                    { type: 'span', props: { style: { fontSize: '12px', letterSpacing: '3px', color: '#aaa', fontWeight: 700 }, children: 'ACER BOOKS' } },
+                                                    { type: 'span', props: { style: { fontSize: '10px', letterSpacing: '2px', color: '#fff', background: '#cc0000', padding: '5px 11px', fontWeight: 700 }, children: 'READER REVIEW' } },
                                                 ]
                                             }
                                         },
-
                                         // Title
-                                        {
-                                            type: 'div',
-                                            props: {
-                                                style: {
-                                                    fontSize:     '26px',
-                                                    fontWeight:   700,
-                                                    color:        '#1a1a1a',
-                                                    lineHeight:   1.35,
-                                                    marginBottom: '10px',
-                                                },
-                                                children: trunc(p.title, 55),
-                                            }
-                                        },
-
+                                        { type: 'div', props: { style: { fontSize: '26px', fontWeight: 700, color: '#1a1a1a', lineHeight: 1.35, marginBottom: '10px' }, children: trunc(p.title, 55) } },
                                         // Author
+                                        { type: 'div', props: { style: { fontSize: '13px', color: '#999', marginBottom: '22px' }, children: p.author ? `by ${trunc(p.author, 70)}` : '' } },
+                                        // Stars
+                                        ...(stars ? [{ type: 'div', props: { style: { fontSize: '20px', color: '#cc0000', letterSpacing: '3px', marginBottom: '18px' }, children: stars } }] : []),
+                                        // Excerpt
                                         {
                                             type: 'div',
                                             props: {
-                                                style: {
-                                                    fontSize:     '13px',
-                                                    color:        '#999',
-                                                    marginBottom: '22px',
-                                                },
-                                                children: p.author ? `by ${trunc(p.author, 70)}` : '',
-                                            }
-                                        },
-
-                                        // Stars (conditional)
-                                        ...(stars ? [{
-                                            type: 'div',
-                                            props: {
-                                                style: {
-                                                    fontSize:      '20px',
-                                                    color:         '#cc0000',
-                                                    letterSpacing: '3px',
-                                                    marginBottom:  '18px',
-                                                },
-                                                children: stars,
-                                            }
-                                        }] : []),
-
-                                        // Excerpt with red left border
-                                        {
-                                            type: 'div',
-                                            props: {
-                                                style: {
-                                                    display:         'flex',
-                                                    borderLeftWidth: '3px',
-                                                    borderLeftStyle: 'solid',
-                                                    borderLeftColor: '#cc0000',
-                                                    paddingLeft:     '16px',
-                                                },
-                                                children: [{
-                                                    type: 'span',
-                                                    props: {
-                                                        style: {
-                                                            fontSize:   '14px',
-                                                            color:      '#555',
-                                                            lineHeight: 1.7,
-                                                        },
-                                                        children: trunc(p.excerpt, 140),
-                                                    }
-                                                }]
+                                                style: { display: 'flex', borderLeftWidth: '3px', borderLeftStyle: 'solid', borderLeftColor: '#cc0000', paddingLeft: '16px' },
+                                                children: [{ type: 'span', props: { style: { fontSize: '14px', color: '#555', lineHeight: 1.7 }, children: trunc(p.excerpt, 140) } }]
                                             }
                                         },
                                     ]
                                 }
                             },
-
-                            // Bottom: domain watermark
-                            {
-                                type: 'div',
-                                props: {
-                                    style: {
-                                        fontSize:      '12px',
-                                        color:         '#ccc',
-                                        letterSpacing: '1px',
-                                    },
-                                    children: 'acerbooks.ca',
-                                }
-                            },
+                            // Domain
+                            { type: 'div', props: { style: { fontSize: '12px', color: '#ccc', letterSpacing: '1px' }, children: 'acerbooks.ca' } },
                         ]
                     }
                 },
@@ -278,8 +169,7 @@ async function generateImage(p: {
     };
 
     const svg = await satori(node as any, {
-        width:  1200,
-        height: 630,
+        width: 1200, height: 630,
         fonts: [
             { name: 'Inter',        data: latinFont, weight: 700, style: 'normal' },
             { name: 'Noto Sans SC', data: cjkFont,   weight: 700, style: 'normal' },
@@ -319,30 +209,36 @@ Deno.serve(async (req) => {
         const slug         = toSlugSimple(book?.title || '');
         const shareUrl     = `${url.origin}${url.pathname}?rid=${rid}`;
         const canonicalUrl = `${SITE}/book/${slug}#review-${rid}`;
+        // Generated image URL (used only for og:image → Facebook)
         const imgUrl       = `${url.origin}${url.pathname}?rid=${rid}&img=1`;
 
-        // Absolute cover URL
+        // Absolute cover URL (used for twitter:image → X, unchanged from original)
         const rawCover = book?.cover || '';
         const coverUrl = rawCover.startsWith('http') ? rawCover
             : rawCover ? `${SITE}${rawCover.startsWith('/') ? '' : '/'}${rawCover}`
             : `${SITE}/zhijian/Image_20260305124426_25_399.png`;
 
-        // ── Route: PNG image ───────────────────────────────────────────────
+        // ── Route: PNG image for Facebook ──────────────────────────────────
         if (url.searchParams.has('img')) {
-            const png = await generateImage({
-                title:   book?.title  || 'Book Review',
-                author:  book?.author || '',
-                excerpt: (review.text || '').replace(/\s+/g, ' '),
-                coverUrl,
-                rating:  Number(review.rating) || 0,
-            });
-            return new Response(png, {
-                headers: {
-                    ...CORS,
-                    'Content-Type':  'image/png',
-                    'Cache-Control': 'public,max-age=86400',
-                }
-            });
+            try {
+                const png = await generateImage({
+                    title:   book?.title  || 'Book Review',
+                    author:  book?.author || '',
+                    excerpt: (review.text || '').replace(/\s+/g, ' '),
+                    coverUrl,
+                    rating:  Number(review.rating) || 0,
+                });
+                return new Response(png, {
+                    headers: { ...CORS, 'Content-Type': 'image/png', 'Cache-Control': 'public,max-age=86400' }
+                });
+            } catch (imgErr) {
+                // Image generation failed — redirect FB to the book cover so the card still has a photo
+                console.error('og-card image gen error:', imgErr);
+                return new Response(null, {
+                    status: 302,
+                    headers: { ...CORS, 'Location': coverUrl }
+                });
+            }
         }
 
         // ── Route: OG HTML or redirect ─────────────────────────────────────
@@ -354,8 +250,6 @@ Deno.serve(async (req) => {
             ? '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating) + ' '
             : '';
 
-        // facebookexternalhit = FB link-preview crawler → serve OG HTML
-        // FBAN / FBAV         = FB in-app browser       → real user, redirect
         const ua = req.headers.get('user-agent') || '';
         const isCrawler = !ua
             || /facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|Discordbot|Googlebot|bingbot|Baiduspider|bot|crawler|spider|preview|scraper|fetcher/i.test(ua);
@@ -368,6 +262,9 @@ Deno.serve(async (req) => {
             });
         }
 
+        // OG HTML for crawlers
+        // og:image     → generated PNG card  (Facebook sees the designed layout)
+        // twitter:image → raw book cover     (X keeps its original card, unchanged)
         const html = `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8">
@@ -387,7 +284,7 @@ Deno.serve(async (req) => {
 <meta name="twitter:card"        content="summary_large_image">
 <meta name="twitter:title"       content="${he(ogTitle)}">
 <meta name="twitter:description" content="${he(stars + ogDesc)}">
-<meta name="twitter:image"       content="${esc(imgUrl)}">
+<meta name="twitter:image"       content="${esc(coverUrl)}">
 <meta name="twitter:image:alt"   content="${he('Cover of ' + bookTitle)}">
 
 <link rel="canonical" href="${esc(shareUrl)}">
