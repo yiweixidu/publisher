@@ -1122,6 +1122,7 @@ async function init() {
     await initAuth();
     await Promise.all([loadBooks(), loadNews(), loadReviews()]);
     initQuillEditors();
+    attachAdminNewsEvents();
     bindInactivityEvents();
     translateUI(currentLang);
     checkHashForReview();
