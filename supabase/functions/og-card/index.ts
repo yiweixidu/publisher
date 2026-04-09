@@ -54,7 +54,11 @@ Deno.serve(async (req) => {
         const {data:book} = await sb.from('books')
             .select('id,title,author,cover').eq('id',review.book_id).maybeSingle();
 
-        const slug         = toSlugSimple(book?.title||'');
+        const slug = toSlugSimple(book?.title||'');
+
+        // shareUrl  = the edge-function URL itself (used as og:url so FB never re-fetches the SPA)
+        // canonicalUrl = the real destination on acerbooks.ca (used only for the 302 redirect)
+        const shareUrl     = `${url.origin}${url.pathname}?rid=${rid}`;
         const canonicalUrl = `${SITE}/book/${slug}#review-${rid}`;
 
         // Build absolute cover URL
@@ -70,10 +74,16 @@ Deno.serve(async (req) => {
         const ogDesc    = `${review.username||''}: ${excerpt}`;
         const stars     = review.rating ? '★'.repeat(review.rating)+'☆'.repeat(5-review.rating)+' ' : '';
 
-        // Detect real browsers (not crawlers) by User-Agent
+        // Detect real browsers vs crawlers by User-Agent
+        //
+        // facebookexternalhit = Facebook's link-preview crawler  → serve OG HTML (no redirect)
+        // FBAN / FBAV         = Facebook in-app browser          → real user, do 302 redirect
+        //
+        // Rule: if UA contains a known crawler token, it's a crawler.
+        // Otherwise, if UA contains "Mozilla" it's a real browser.
         const ua = req.headers.get('user-agent') || '';
-        // Only redirect if clearly a real browser (has Mozilla/ but NOT a known crawler)
-        const isCrawler = !ua || /bot|crawler|spider|facebook|twitter|linkedin|whatsapp|telegram|slack|discord|apple|google|bing|baidu|preview|scraper|fetcher/i.test(ua);
+        const isCrawler = !ua
+            || /facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|Discordbot|Googlebot|bingbot|Baiduspider|bot|crawler|spider|preview|scraper|fetcher/i.test(ua);
         const isRealBrowser = !isCrawler && /mozilla/i.test(ua);
 
         if (isRealBrowser) {
@@ -84,13 +94,15 @@ Deno.serve(async (req) => {
             });
         }
 
+        // Crawler — return OG HTML. og:url points to THIS edge-function URL,
+        // not the SPA, so Facebook's scraper won't follow it and hit "Redirecting..."
         const html = `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8">
 <title>${he(ogTitle)}</title>
 
 <meta property="og:type"         content="article">
-<meta property="og:url"          content="${esc(canonicalUrl)}">
+<meta property="og:url"          content="${esc(shareUrl)}">
 <meta property="og:title"        content="${he(ogTitle)}">
 <meta property="og:description"  content="${he(stars+ogDesc)}">
 <meta property="og:image"        content="${esc(coverUrl)}">
@@ -105,7 +117,7 @@ Deno.serve(async (req) => {
 <meta name="twitter:image"       content="${esc(coverUrl)}">
 <meta name="twitter:image:alt"   content="${he('Cover of '+bookTitle)}">
 
-<link rel="canonical" href="${esc(canonicalUrl)}">
+<link rel="canonical" href="${esc(shareUrl)}">
 </head>
 <body>
 <h1 style="font-family:Georgia,serif;padding:40px 20px 8px;color:#1a1a1a">${he(bookTitle)}</h1>
