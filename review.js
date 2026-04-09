@@ -268,7 +268,7 @@ function showShareModal(reviewId, reviewText, reviewUsername, shareUrl, bookTitl
                         <i class="fab fa-facebook-f"></i> Facebook
                     </button>
                     <button class="share-option" data-platform="twitter">
-                        <i class="fab fa-x-twitter"></i> X
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.736-8.857L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> X
                     </button>
                     <button class="share-option" data-platform="email">
                         <i class="fas fa-envelope"></i> Email
