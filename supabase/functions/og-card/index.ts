@@ -303,10 +303,13 @@ Deno.serve(async (req) => {
         const { data: book } = await sb.from('books')
             .select('id,title,author,cover').eq('id', review.book_id).maybeSingle();
 
-        const slug         = toSlugSimple(book?.title || '');
-        const shareUrl     = `${url.origin}${url.pathname}?rid=${rid}`;
+        const slug = toSlugSimple(book?.title || '');
+        // Supabase edge functions internally strip /functions/v1 from pathname
+        // and may use http:// — reconstruct the correct public HTTPS URL explicitly
+        const FUNC_BASE    = `https://${url.hostname}/functions/v1/og-card`;
+        const shareUrl     = `${FUNC_BASE}?rid=${rid}`;
         const canonicalUrl = `${SITE}/book/${slug}#review-${rid}`;
-        const imgUrl       = `${url.origin}${url.pathname}?rid=${rid}&img=1`;
+        const imgUrl       = `${FUNC_BASE}?rid=${rid}&img=1`;
 
         const rawCover = book?.cover || '';
         const coverUrl = rawCover.startsWith('http') ? rawCover
