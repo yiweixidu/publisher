@@ -1,19 +1,41 @@
 <!DOCTYPE html>
+<!--
+    =====================================================
+    index.html
+    Publisher E-commerce Platform
+    =====================================================
+    Authors:
+      Lewei Rong            — All existing HTML structure
+                              (Navbar, Pages, Modals,
+                               Cart, Checkout, Admin pages)
+      Ana-Laurya Lefrancois — MANAGE ORDERS nav link
+                              + adminOrdersPage (Card 8)
+    =====================================================
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acer Books · Montréal independent publisher</title>
     <link rel="icon" type="image/png" href="/zhijian/Image_20260305124426_25_399.png">
+    <!-- Font Awesome — icons used throughout UI -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts — Inter (body) + Lora (editorial) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- Quill rich-text editor styles — used in book and news admin forms -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 </head>
 <body>
+
+    <!-- =====================================================
+         MAIN CONTENT — Public homepage
+         Author: Lewei Rong
+         ===================================================== -->
     <div class="container">
         <div id="mainContent">
-            <!-- Navbar -->
+
+            <!-- Navbar — always visible, switches between user and admin links -->
             <nav class="navbar">
                 <div class="logo">
                     <a href="#"><img src="/zhijian/Image_20260305124426_25_399.png" alt="Acer Books"></a>
@@ -24,52 +46,61 @@
                     <span></span>
                 </div>
                 <div class="nav-links" id="navLinks">
+
                     <!-- ========== 普通用户导航 ========== -->
                     <a href="#" id="navHome" data-i18n="navHome" class="nav-user-link">HOME</a>
                     <a href="#" id="navBooks" data-i18n="navBooks" class="nav-user-link">BOOKS</a>
                     <a href="#" id="navAbout" data-i18n="navAbout" class="nav-user-link">ABOUT</a>
                     <a href="#" id="navNews" data-i18n="navNews" class="nav-user-link">NEWS</a>
-                    
+
                     <!-- ========== 购物车 ========== -->
                     <div class="cart-icon nav-user-link" id="cartIcon">
                         <i class="fas fa-shopping-bag"></i>
                         <span class="cart-badge">0</span>
                     </div>
-                    
+
                     <!-- ========== 用户账户 ========== -->
                     <div id="userSection" class="user-info nav-user-link"></div>
-                    
+
                     <!-- ========== Admin模式导航 (新增，初始隐藏) ========== -->
+                    <!-- Shown only when admin is logged in — toggled via auth.js -->
                     <div id="adminNavContainer" class="admin-nav-container" style="display: none; gap: 1rem; align-items: center;">
+
                         <!-- MANAGE BOOKS -->
                         <a href="#" id="adminManageBooksLink" class="admin-nav-link" data-i18n="adminNavManageBooks">
                             <i class="fas fa-book"></i> MANAGE BOOKS
                         </a>
-                        
+
                         <!-- MANAGE NEWS -->
                         <a href="#" id="adminManageNewsLink" class="admin-nav-link" data-i18n="adminNavManageNews">
                             <i class="fas fa-newspaper"></i> MANAGE NEWS
                         </a>
-                        
+
                         <!-- MANAGE USERS (新增) -->
                         <a href="#" id="adminManageUsersLink" class="admin-nav-link" data-i18n="adminNavManageUsers">
                             <i class="fas fa-users"></i> MANAGE USERS
                         </a>
-                        
+
                         <!-- MANAGE COMMENTS (新增) -->
                         <a href="#" id="adminManageCommentsLink" class="admin-nav-link" data-i18n="adminNavManageComments">
                             <i class="fas fa-comments"></i> MANAGE COMMENTS
                         </a>
-                        
+
+                        <!-- MANAGE ORDERS — Ana-Laurya Lefrancois (Card 8) -->
+                        <!-- Wired to showAdminOrdersPage() in admin.js via auth.js nav binding -->
+                        <a href="#" id="adminManageOrdersLink" class="admin-nav-link">
+                            <i class="fas fa-box"></i> MANAGE ORDERS
+                        </a>
+
                         <!-- 分隔符 -->
                         <div class="admin-nav-divider"></div>
-                        
+
                         <!-- LOGOUT按钮 -->
                         <button id="adminLogoutBtn" class="btn-outline-red admin-logout" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
                             <i class="fas fa-sign-out-alt"></i> LOGOUT
                         </button>
                     </div>
-                    
+
                     <!-- ========== Admin开关（始终显示）========== -->
                     <div class="admin-toggle hidden" id="adminToggle">
                         <span id="adminToggleText" style="font-size:0.8rem;">Admin</span>
@@ -78,7 +109,7 @@
                 </div>
             </nav>
 
-            <!-- Hero -->
+            <!-- Hero — main landing banner with CTA -->
             <div class="hero">
                 <div class="hero-image"></div>
                 <div class="hero-content">
@@ -92,14 +123,14 @@
                 </div>
             </div>
 
-            <!-- Featured books -->
+            <!-- Featured books grid — rendered by renderBooks() in ui.js -->
             <div id="sectionBooks" class="section-heading">
                 <h2 data-i18n="sectionRecent">recent & recommended</h2>
                 <a href="#" class="view-link" id="booksViewAllLink" data-i18n="viewAll">view all <i class="fas fa-chevron-right"></i></a>
             </div>
             <div id="bookGrid" class="book-grid home-grid"></div>
 
-            <!-- About panel -->
+            <!-- About panel — publisher bio and contact CTA -->
             <div id="sectionAbout" class="about-panel">
                 <div class="about-text">
                     <h3 data-i18n="aboutTitle">Acer Books · founded by Tao Zhijian, PhD</h3>
@@ -110,14 +141,14 @@
                 <div class="about-photo"></div>
             </div>
 
-            <!-- News grid -->
+            <!-- News teaser grid — rendered by renderNews() in ui.js -->
             <div id="sectionNews" class="section-heading">
                 <h2 data-i18n="sectionNews">news & events</h2>
                 <a href="#" class="view-link" id="newsMoreLink" data-i18n="moreNews">more</a>
             </div>
             <div id="newsGrid" class="news-grid"></div>
 
-            <!-- Footer -->
+            <!-- Footer — copyright, language switcher, newsletter link -->
             <footer>
                 <div data-i18n="footerAddr">© 2025 Acer Books — 5470 rue Saint-Laurent, Montreal</div>
                 <div class="footer-lang-switch">
@@ -132,6 +163,10 @@
         </div>
     </div>
 
+    <!-- =====================================================
+         BOOKS PAGE — Full catalog with filters and pagination
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="booksPage" style="display: none;">
         <div class="container">
             <div class="page-header">
@@ -139,7 +174,7 @@
                 <button class="btn-outline-red" id="backToHomeFromBooks" data-i18n="backToHome"><i class="fas fa-arrow-left"></i> Back to Home</button>
             </div>
 
-            <!-- Filter Bar -->
+            <!-- Filter Bar — language, author, series, view toggle -->
             <div class="books-filter-bar">
                 <div class="books-filter-row">
                     <div class="books-search-wrap">
@@ -176,6 +211,10 @@
         </div>
     </div>
 
+    <!-- =====================================================
+         BOOK DETAIL PAGE — Full book info with tabs
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="bookDetailPage" style="display: none;">
         <div class="detail-container">
             <button class="detail-back-btn" id="backToBooks"><i class="fas fa-arrow-left"></i> Back to All Books</button>
@@ -191,7 +230,7 @@
                         <span id="detailHcBadge" class="hc-badge" style="display:none;">HARDCOVER</span>
                     </div>
                     <div id="detailAvailability" class="detail-availability"></div>
-                    <!-- Format selector (shown when hardcover price exists) -->
+                    <!-- Format selector — shown only when hardcover price exists -->
                     <div class="format-selector" id="detailFormatSelector" style="display:none;">
                         <button class="format-btn active" data-fmt="paperback" data-i18n="paperback">Paperback</button>
                         <button class="format-btn" data-fmt="hardcover" data-i18n="hardcover">Hardcover</button>
@@ -200,6 +239,7 @@
                         <button class="btn-primary" id="detailAddToCart"><i class="fas fa-shopping-cart"></i> ADD TO CART</button>
                         <button class="btn-secondary" id="detailAddToWishList"><i class="fas fa-heart"></i> ADD TO WISH LIST</button>
                     </div>
+                    <!-- Tabs — description, author bio, product details, reviews -->
                     <div class="detail-tabs">
                         <div class="detail-tab active" data-tab="description">DESCRIPTION</div>
                         <div class="detail-tab" data-tab="author">ABOUT THE AUTHOR</div>
@@ -226,7 +266,10 @@
         </div>
     </div>
 
-    <!-- Book Detail Modal -->
+    <!-- =====================================================
+         BOOK DETAIL MODAL — Quick view overlay
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="bookModal" class="modal-overlay">
         <div class="modal-content">
             <span class="modal-close" id="modalClose"><i class="fas fa-times"></i></span>
@@ -241,7 +284,7 @@
                     <span id="modalHcBadge" class="hc-badge" style="display:none;">HARDCOVER</span>
                 </div>
                 <div class="modal-availability" id="modalAvailability">At Distributor - We Can Usually Get It in 3-8 Days! NON-RETURNABLE - Arrival Times Vary, Often 1-2 Weeks</div>
-                <!-- Format selector (shown when hardcover price exists) -->
+                <!-- Format selector — shown only when hardcover price exists -->
                 <div class="format-selector" id="modalFormatSelector" style="display:none;">
                     <button class="format-btn active" data-fmt="paperback" data-i18n="paperback">Paperback</button>
                     <button class="format-btn" data-fmt="hardcover" data-i18n="hardcover">Hardcover</button>
@@ -279,7 +322,10 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
+    <!-- =====================================================
+         LOGIN MODAL
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="loginOverlay" class="login-overlay">
         <div class="login-modal">
             <span class="login-close" id="loginClose"><i class="fas fa-times"></i></span>
@@ -298,7 +344,10 @@
         </div>
     </div>
 
-    <!-- Sign Up Modal -->
+    <!-- =====================================================
+         SIGN UP MODAL
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="signupOverlay" class="login-overlay">
         <div class="login-modal">
             <span class="login-close" id="signupClose"><i class="fas fa-times"></i></span>
@@ -321,14 +370,16 @@
         </div>
     </div>
 
-
-    <!-- Shopping Cart Modal -->
+    <!-- =====================================================
+         SHOPPING CART MODAL
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="cartModal" class="modal-overlay">
         <div class="modal-content cart-modal-content">
             <span class="modal-close" id="cartModalClose"><i class="fas fa-times"></i></span>
             <h2 class="cart-title" data-i18n="cartTitle">Your Shopping Cart</h2>
             <div id="cartItemsContainer" class="cart-items-container">
-                <!-- Cart items will be rendered here dynamically -->
+                <!-- Cart items rendered dynamically by renderCartModal() in cart.js -->
             </div>
             <div class="cart-summary">
                 <div class="summary-row">
@@ -360,13 +411,17 @@
         </div>
     </div>
 
-    <!-- Checkout Modal — Multi-Step -->
+    <!-- =====================================================
+         CHECKOUT MODAL — Multi-step (Shipping, Delivery,
+         Payment, Review)
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="checkoutModal" class="modal-overlay">
         <div class="modal-content checkout-modal-content">
             <span class="modal-close" id="checkoutModalClose"><i class="fas fa-times"></i></span>
             <h2 class="checkout-title" data-i18n="checkoutTitle">Checkout</h2>
 
-            <!-- Progress Bar -->
+            <!-- Progress Bar — 4 steps -->
             <div class="co-progress">
                 <div class="co-step-dot active" data-step="1"><span>1</span><small data-i18n="checkoutStepShipping">Shipping</small></div>
                 <div class="co-line"></div>
@@ -424,14 +479,14 @@
                 </div>
             </div>
 
-            <!-- Step 3: Payment -->
+            <!-- Step 3: Payment — Card or PayPal -->
             <div class="co-panel hidden" id="coStep3">
                 <div class="payment-method-tabs">
                     <button class="pay-tab active" data-method="card"><i class="fas fa-credit-card"></i> <span data-i18n="payCard">Card</span></button>
                     <button class="pay-tab" data-method="paypal"><i class="fab fa-paypal"></i> PayPal</button>
                 </div>
 
-                <!-- Card panel -->
+                <!-- Card panel — Stripe-ready, activate via STRIPE_PK in constants.js -->
                 <div id="payCardPanel" class="pay-panel">
                     <div class="gateway-notice">
                         <i class="fas fa-lock"></i>
@@ -454,7 +509,7 @@
                     </div>
                 </div>
 
-                <!-- PayPal panel -->
+                <!-- PayPal panel — activate via PAYPAL_CLIENT_ID in constants.js -->
                 <div id="payPaypalPanel" class="pay-panel hidden">
                     <div class="gateway-notice paypal-notice">
                         <i class="fab fa-paypal"></i>
@@ -474,7 +529,7 @@
                 </div>
             </div>
 
-            <!-- Step 4: Review & Place Order -->
+            <!-- Step 4: Order review — rendered by _renderCoReview() in main.js -->
             <div class="co-panel hidden" id="coStep4">
                 <div id="coReviewContent" class="co-review"></div>
                 <div id="coReviewError" class="payment-error"></div>
@@ -486,20 +541,26 @@
         </div>
     </div>
 
-    <!-- Order Confirmation Modal -->
+    <!-- =====================================================
+         ORDER CONFIRMATION MODAL
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="confirmationModal" class="modal-overlay">
         <div class="modal-content confirmation-modal-content">
             <span class="modal-close" id="confirmationModalClose"><i class="fas fa-times"></i></span>
             <h2 class="confirmation-title" data-i18n="thankYou">Thank You for Your Order!</h2>
             <div id="orderSummary" class="order-summary">
-                <!-- Order summary will be displayed here -->
+                <!-- Order summary rendered dynamically after checkout completes -->
             </div>
             <button id="printReceiptBtn" class="btn-outline-red"><span data-i18n="printReceipt">Print Receipt</span></button>
             <button id="continueShoppingConfirmBtn" class="btn-primary"><span data-i18n="continueShopping">Continue Shopping</span></button>
         </div>
     </div>
 
-    <!-- News List Page -->
+    <!-- =====================================================
+         NEWS LIST PAGE — Full news grid
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="newsListPage" style="display: none;">
         <div class="container">
             <div class="page-header">
@@ -512,7 +573,10 @@
         </div>
     </div>
 
-    <!-- News Detail Page -->
+    <!-- =====================================================
+         NEWS DETAIL PAGE — Individual article view
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="newsDetailPage" style="display: none;">
         <div class="detail-container">
             <button class="detail-back-btn" id="backToNewsList" data-i18n="backToNews"><i class="fas fa-arrow-left"></i> Back to News</button>
@@ -526,7 +590,10 @@
         </div>
     </div>
 
-    <!-- Admin Books Manager Page -->
+    <!-- =====================================================
+         ADMIN: MANAGE BOOKS PAGE
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="adminBooksPage" style="display: none;">
     <div class="container">
         <div class="page-header">
@@ -548,30 +615,33 @@
         <button id="addNewBookBtn" class="btn-primary"><i class="fas fa-plus"></i> <span data-i18n="addNewBook">Add New Book</span></button>
         </div>
 
-        <!-- Books List -->
+        <!-- Books List — rendered by renderAdminBookList() in admin.js -->
         <div id="adminBooksList" class="admin-books-list"></div>
     </div>
     </div>
 
-    <!-- Book Form Modal (Add/Edit) -->
+    <!-- =====================================================
+         BOOK FORM MODAL — Add / Edit book
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="bookFormModal" class="modal-overlay">
         <div class="modal-content form-modal-content">
             <span class="modal-close" id="bookFormModalClose"><i class="fas fa-times"></i></span>
             <h2 id="formModalTitle" data-i18n="addNewBook">Add New Book</h2>
             <form id="bookForm">
-            <!-- Hidden field for book id (empty for new) -->
+            <!-- Hidden field for book id — empty for new books -->
             <input type="hidden" id="bookId" value="">
             <!-- Row 1: Title & Author -->
             <div class="form-row">
                 <input type="text" id="formTitle" placeholder="Title *" required data-i18n-placeholder="titlePlaceholder">
                 <input type="text" id="formAuthor" placeholder="Author *" required data-i18n-placeholder="authorPlaceholder">
             </div>
-            <!-- Row 2：Categories, ISBN -->
+            <!-- Row 2: Categories, ISBN -->
             <div class="form-row">
                 <input type="text" id="formCategories" placeholder="Categories (comma separated)" data-i18n-placeholder="categoriesPlaceholder">
                 <input type="text" id="formIsbn" placeholder="ISBN" data-i18n-placeholder="isbnPlaceholder">
             </div>
-            <!-- Row 3：Publisher, Publication Date -->
+            <!-- Row 3: Publisher, Publication Date -->
             <div class="form-row">
                 <input type="text" id="formPublisher" placeholder="Publisher" data-i18n-placeholder="publisherPlaceholder">
                 <input type="text" id="formPubDate" placeholder="Publication Date (e.g. 2024-03-17)" data-i18n-placeholder="pubDatePlaceholder">
@@ -623,7 +693,7 @@
                 </select>
             </div>
 
-            <!-- Rich text editors (description & author bio) -->
+            <!-- Rich text editors — Quill instances initialised in initQuillEditors() -->
             <div class="form-group">
                 <label data-i18n="description">Description</label>
                 <div id="descriptionEditor" style="height: 200px;"></div>
@@ -636,14 +706,14 @@
                 <textarea id="formAuthorBio" style="display:none;"></textarea>
             </div>
 
-            <!-- Cover image upload -->
+            <!-- Cover image upload — stored in Supabase Storage bucket 'book-covers' -->
             <div class="form-group">
                 <label data-i18n="coverImage">Cover Image</label>
                 <input type="file" id="formCover" accept="image/*">
                 <div id="coverPreview" class="image-preview"></div>
             </div>
 
-            <!-- Interior previews (multiple images) -->
+            <!-- Interior previews — multiple files, stored in 'book-covers/interior' -->
             <div class="form-group">
                 <label data-i18n="interiorPreviews">Interior Previews</label>
                 <input type="file" id="formInterior" accept="image/*" multiple>
@@ -658,7 +728,10 @@
         </div>
     </div>
 
-    <!-- Admin News Manager Page -->
+    <!-- =====================================================
+         ADMIN: MANAGE NEWS PAGE
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="adminNewsPage" style="display: none;">
         <div class="container">
             <div class="page-header">
@@ -670,11 +743,15 @@
                     </button>
                 </div>
             </div>
+            <!-- News list — rendered by renderAdminNewsList() in admin.js -->
             <div id="adminNewsList" class="admin-news-list"></div>
         </div>
     </div>
 
-    <!-- News Form Modal -->
+    <!-- =====================================================
+         NEWS FORM MODAL — Add / Edit news item
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="newsFormModal" class="modal-overlay">
         <div class="modal-content form-modal-content">
             <span class="modal-close" id="newsFormModalClose"><i class="fas fa-times"></i></span>
@@ -723,7 +800,10 @@
         </div>
     </div>
 
-    <!-- Contact Modal -->
+    <!-- =====================================================
+         CONTACT MODAL
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="contactModal" class="modal-overlay">
         <div class="modal-content contact-modal-content">
             <span class="modal-close" id="contactModalClose"><i class="fas fa-times"></i></span>
@@ -760,12 +840,16 @@
         </div>
     </div>
 
-    <!-- Account Dashboard Modal -->
+    <!-- =====================================================
+         ACCOUNT DASHBOARD MODAL — Profile, Orders,
+         Wishlist, Addresses
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="accountModal" class="login-overlay">
         <div class="account-modal-content">
             <button class="acc-modal-close" id="accountModalClose" aria-label="Close"><i class="fas fa-times"></i></button>
 
-            <!-- Left sidebar -->
+            <!-- Left sidebar — avatar, name, tab navigation -->
             <div class="acc-sidebar">
                 <div class="acc-header">
                     <div class="acc-avatar"><span id="accAvatarInitial">?</span></div>
@@ -780,10 +864,10 @@
                 </nav>
             </div>
 
-            <!-- Right content -->
+            <!-- Right content — tab panes -->
             <div class="acc-body">
 
-                <!-- Profile -->
+                <!-- Profile tab -->
                 <div class="acc-pane active" id="acc-profile">
                     <p class="acc-section-title">Personal Information</p>
                     <div class="acc-form-group">
@@ -809,19 +893,19 @@
                     <div id="profileMsg" class="acc-msg"></div>
                 </div>
 
-                <!-- Orders -->
+                <!-- Orders tab — rendered by account.js -->
                 <div class="acc-pane" id="acc-orders">
                     <p class="acc-section-title">Order History</p>
                     <div id="orderHistoryList"></div>
                 </div>
 
-                <!-- Wishlist -->
+                <!-- Wishlist tab -->
                 <div class="acc-pane" id="acc-wishlist">
                     <p class="acc-section-title">Saved Books</p>
                     <div id="wishlistItems"></div>
                 </div>
 
-                <!-- Addresses -->
+                <!-- Addresses tab -->
                 <div class="acc-pane" id="acc-addresses">
                     <p class="acc-section-title">Saved Addresses</p>
                     <div id="savedAddressesList"></div>
@@ -863,7 +947,10 @@
         </div>
     </div>
 
-    <!-- Password Reset Modal -->
+    <!-- =====================================================
+         PASSWORD RESET MODAL
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="resetPasswordOverlay" class="login-overlay">
         <div class="login-modal">
             <span class="login-close" id="resetPasswordClose"><i class="fas fa-times"></i></span>
@@ -878,8 +965,10 @@
         </div>
     </div>
 
-
-    <!-- Admin: Manage Users -->
+    <!-- =====================================================
+         ADMIN: MANAGE USERS PAGE
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="adminUsersPage" style="display:none;">
         <div class="container">
             <div class="page-header">
@@ -899,11 +988,15 @@
                 </select>
             </div>
             <div id="adminUsersBanner" class="anr-sub-banner" style="margin-bottom:1rem;"></div>
+            <!-- User list — rendered by renderAdminUsersList() in admin.js -->
             <div id="adminUsersList" class="admin-users-list"></div>
         </div>
     </div>
 
-    <!-- Admin: Manage Comments -->
+    <!-- =====================================================
+         ADMIN: MANAGE COMMENTS PAGE
+         Author: Lewei Rong
+         ===================================================== -->
     <div id="adminCommentsPage" style="display:none;">
         <div class="container">
             <div class="page-header">
@@ -918,12 +1011,59 @@
                 <input type="text" id="searchComments" placeholder="Search by book, reviewer, or text…" style="flex:1;">
             </div>
             <div id="adminCommentsBanner" class="anr-sub-banner" style="margin-bottom:1rem;"></div>
+            <!-- Comments list — rendered by renderAdminCommentsList() in admin.js -->
             <div id="adminCommentsList" class="admin-comments-list"></div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- =====================================================
+         ADMIN: MANAGE ORDERS PAGE
+         Author: Ana-Laurya Lefrancois — Card 8
+         Container for renderAdminOrderList() in admin.js.
+         Search filters by customer name or order ID.
+         Status filter maps to CHECK constraint in orders table.
+         ===================================================== -->
+    <div id="adminOrdersPage" style="display:none;">
+        <div class="container">
+            <div class="page-header">
+                <h2>Manage Orders</h2>
+                <div class="page-header-actions">
+                    <button class="btn-outline-red" id="backToHomeFromAdminOrders">
+                        <i class="fas fa-arrow-left"></i> Back to Home
+                    </button>
+                </div>
+            </div>
+            <div class="admin-controls">
+                <!-- Search by customer name or order ID prefix -->
+                <input type="text" id="searchOrders"
+                    placeholder="Search by customer name or order ID…"
+                    style="flex:1;">
+                <!-- Status filter — values match CHECK constraint in orders table -->
+                <select id="filterOrderStatus" class="books-filter-select">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="refunded">Refunded</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <!-- Summary banner — order counts by status -->
+            <div id="adminOrdersBanner" class="anr-sub-banner" style="margin-bottom:1rem;"></div>
+            <!-- Order list — rendered by renderAdminOrderList() in admin.js -->
+            <div id="adminOrdersList" class="admin-orders-list"></div>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         SCRIPTS
+         Author: Lewei Rong
+         Quill loaded before main.js so editors are available
+         when initQuillEditors() runs on page init.
+         ===================================================== -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script type="module" src="main.js"></script>
+
 </body>
 </html>

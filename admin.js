@@ -1,5 +1,21 @@
+// ============================================
 // admin.js
-import { books, newsItems, saveBooks, deleteBook, saveNews, deleteNews, loadBooks, loadNews } from './data.js';
+// Publisher E-commerce Platform
+// ============================================
+// Authors:
+//   Lewei Rong            — All existing admin functionality
+//                           (Books, News, Users, Comments,
+//                            Toast, Upload, Quill editors)
+//   Ana-Laurya Lefrancois — Orders section only (Card 8)
+// ============================================
+
+// ── Imports ──────────────────────────────────────────────────────────────────
+// Author: Lewei Rong
+// Ana-Laurya Lefrancois added: orders, loadOrders, loadOrderItems,
+//                              updateOrderStatus, decreaseStock (Card 8)
+import { books, newsItems, saveBooks, deleteBook, saveNews, deleteNews, loadBooks, loadNews,
+         orders, loadOrders, loadOrderItems, updateOrderStatus, decreaseStock
+} from './data.js';
 import { langPack } from './i18n.js';
 import { adminMode, currentAccessToken } from './auth.js';
 import { currentLang } from './i18n.js';
@@ -8,7 +24,12 @@ import { navigateTo } from './routing.js';
 import { supabase } from './supabaseClient.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './constants.js';
 
-// DOM elements
+// ============================================
+// DOM ELEMENTS
+// Author: Lewei Rong
+// ============================================
+
+// Cached DOM references — grabbed once at load to avoid repeated querySelector calls
 const adminBooksPage = document.getElementById('adminBooksPage');
 const adminBooksList = document.getElementById('adminBooksList');
 const searchInput = document.getElementById('searchBooks');
@@ -44,7 +65,7 @@ const newsTitleFr = document.getElementById('newsTitleFr');
 const newsSummaryEn = document.getElementById('newsSummaryEn');
 const newsSummaryFr = document.getElementById('newsSummaryFr');
 
-// Quill editors for books
+// Quill rich-text editor instances — initialised lazily in initQuillEditors()
 let descriptionQuill, bioQuill;
 // Quill editors for news content
 let newsContentEditorEn = null;
@@ -91,11 +112,16 @@ function initNewsQuillEditors() {
     }
 }
 
-// State
+// State — tracks current search/sort values for the book list
 let adminSearchTerm = '';
 let adminSortBy = 'title';
 
-// ── Toast helper ────────────────────────────────────────────────────────────
+// ============================================
+// SHARED HELPERS
+// Author: Lewei Rong
+// ============================================
+
+// Displays a timed toast notification — success (green) or error (red)
 function showToast(msg, type = 'success') {
     const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
     const color = type === 'success' ? '#4caf50' : '#ff0000';
@@ -119,7 +145,8 @@ function showToast(msg, type = 'success') {
     }, 2800);
 }
 
-// Helper: upload file to Supabase Storage and return public URL
+// Uploads a file to Supabase Storage and returns the public URL
+// Uses raw fetch with Bearer token — workaround for RLS quirks on storage uploads
 async function uploadFile(file, bucket, pathPrefix) {
     console.log(`uploadFile: bucket=${bucket}, pathPrefix=${pathPrefix}, file=${file.name}, size=${file.size}`);
     const fileExt = file.name.split('.').pop();
@@ -152,7 +179,28 @@ async function uploadFile(file, bucket, pathPrefix) {
     return publicUrl;
 }
 
-// ---------- Admin Books Page ----------
+// XSS escape helper — sanitizes user content before injecting into innerHTML
+function _esc(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>'"]/g, m =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+}
+
+// Hides all admin and public pages — called before showing any admin page
+// Ana-Laurya Lefrancois added 'adminOrdersPage' (Card 8)
+function _hideAllAdminPages() {
+    ['mainContent','booksPage','bookDetailPage','newsListPage','newsDetailPage',
+     'adminBooksPage','adminNewsPage','adminUsersPage','adminCommentsPage',
+     'adminOrdersPage'] // Ana-Laurya Lefrancois — Card 8
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+}
+
+// ============================================
+// BOOKS (Admin)
+// Author: Lewei Rong
+// ============================================
+
+// Shows the admin books page and hides all other content
 export function showAdminBooksPage() {
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('booksPage').style.display = 'none';
@@ -170,6 +218,7 @@ export function hideAdminBooksPage() {
     document.getElementById('mainContent').style.display = 'block';
 }
 
+// Renders the book list with current search/sort state — re-called after any mutation
 export async function renderAdminBookList() {
     await loadBooks();
 
@@ -244,22 +293,29 @@ export async function renderAdminBookList() {
     });
 }
 
+// Called by search input — updates state and re-renders
 export function setAdminSearchTerm(term) {
     adminSearchTerm = term.toLowerCase();
     renderAdminBookList();
 }
 
+// Called by sort select — updates state and re-renders
 export function setAdminSortBy(sortBy) {
     adminSortBy = sortBy;
     renderAdminBookList();
 }
 
-// Helper: get language checkboxes
+// Returns all language checkbox inputs — used for book form language selection
 function getLangCheckboxes() {
     return document.querySelectorAll('input[name="langChoice"]');
 }
 
-// ---------- Book Form Modal ----------
+// ============================================
+// BOOK FORM MODAL
+// Author: Lewei Rong
+// ============================================
+
+// Opens the book add/edit modal — pre-populates fields if editing an existing book
 export function openBookFormModal(book = null) {
     // Remove any leftover success message from previous save
     const oldMsg = document.getElementById('bookSaveSuccessMsg');
@@ -323,6 +379,7 @@ export function openBookFormModal(book = null) {
     bookFormModal.classList.add('active');
 }
 
+// Initialises Quill rich-text editors and binds the book form submit handler
 export function initQuillEditors() {
     if (!document.querySelector('#descriptionEditor')) return;
 
@@ -347,8 +404,10 @@ export function initQuillEditors() {
     });
 }
 
+// Guard flag — prevents double-submits on slow connections
 let isSavingBook = false;
 
+// Collects book form data, handles image uploads, and saves to Supabase
 async function saveBookFromForm() {
     if (isSavingBook) return;
     isSavingBook = true;
@@ -442,7 +501,7 @@ async function saveBookFromForm() {
         bookData.id = 'b' + Date.now() + Math.random().toString(36).substr(2, 6);
     }
 
-    // 4. Save to Supabase
+    // 4. Save to Supabase — raw fetch used, same RLS workaround as data.js saveBooks()
     if (!currentAccessToken) {
         showToast('Not authenticated. Please log in again.', 'error');
         isSavingBook = false;
@@ -476,7 +535,7 @@ async function saveBookFromForm() {
         return;
     }
 
-    // 5. Success: show message above Save button
+    // 5. Success: show inline message above Save button instead of toast
     if (saveOk) {
         const oldMsg = document.getElementById('bookSaveSuccessMsg');
         if (oldMsg) oldMsg.remove();
@@ -506,7 +565,7 @@ async function saveBookFromForm() {
         if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
     }
 
-    // 6. Refresh lists in background
+    // 6. Refresh lists in background — failure here is non-critical
     try {
         await renderAdminBookList();
         if (document.getElementById('mainContent').style.display === 'block') await renderBooks();
@@ -516,6 +575,7 @@ async function saveBookFromForm() {
     }
 }
 
+// Wraps FileReader in a Promise for async/await compatibility
 function readFileAsDataURL(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -525,7 +585,12 @@ function readFileAsDataURL(file) {
     });
 }
 
-// ---------- Add News (Admin) ----------
+// ============================================
+// NEWS (Admin)
+// Author: Lewei Rong
+// ============================================
+
+// Binds the legacy inline news form events (homepage toolbox)
 export function attachNewsEvents() {
     newsImageUpload?.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -578,7 +643,7 @@ export function attachNewsEvents() {
     });
 }
 
-// ---------- Admin News Management ----------
+// Shows the dedicated admin news management page
 export function showAdminNewsPage() {
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('booksPage').style.display = 'none';
@@ -594,6 +659,7 @@ export function hideAdminNewsPage() {
     document.getElementById('adminNewsPage').style.display = 'none';
 }
 
+// Renders the news list with subscriber count banner, publish toggle, and send newsletter button
 export async function renderAdminNewsList() {
     await loadNews();
     const sorted = [...newsItems].sort((a, b) => {
@@ -722,6 +788,7 @@ export async function renderAdminNewsList() {
     });
 }
 
+// Opens the news add/edit form modal — pre-populates fields if editing
 export function openNewsFormModal(item = null) {
     const newsForm = document.getElementById('newsForm');
     const preview = document.getElementById('newsImagePreview');
@@ -776,6 +843,7 @@ export function openNewsFormModal(item = null) {
     modal.classList.add('active');
 }
 
+// Converts a human-readable display date string to ISO format for Supabase
 function parseDisplayDateToEventDate(dateStr) {
     let date = new Date(dateStr);
     if (!isNaN(date)) {
@@ -784,6 +852,7 @@ function parseDisplayDateToEventDate(dateStr) {
     return '';
 }
 
+// Collects news form data, handles image upload, and saves to Supabase
 async function saveNewsFromForm() {
     console.log('saveNewsFromForm called');
     const id = document.getElementById('newsId').value;
@@ -872,6 +941,7 @@ async function saveNewsFromForm() {
     }
 }
 
+// Binds all event listeners for the admin news page and form modal
 export function attachAdminNewsEvents() {
     console.log('attachAdminNewsEvents called');
     document.getElementById('addNewsAdminBtn')?.addEventListener('click', () => {
@@ -912,21 +982,12 @@ export function attachAdminNewsEvents() {
     });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared helpers
-// ─────────────────────────────────────────────────────────────────────────────
-function _esc(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>'"]/g, m =>
-        ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
-}
-function _hideAllAdminPages() {
-    ['mainContent','booksPage','bookDetailPage','newsListPage','newsDetailPage',
-     'adminBooksPage','adminNewsPage','adminUsersPage','adminCommentsPage']
-    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-}
+// ============================================
+// USERS (Admin)
+// Author: Lewei Rong
+// ============================================
 
-// ── MANAGE USERS ─────────────────────────────────────────────────────────────
+// Shows the admin users page with search and role filter
 export function showAdminUsersPage() {
     _hideAllAdminPages();
     const page = document.getElementById('adminUsersPage');
@@ -939,6 +1000,7 @@ export function showAdminUsersPage() {
     renderAdminUsersList();
 }
 
+// Renders the user list with subscriber status, role badges, and role toggle/delete actions
 export async function renderAdminUsersList() {
     const listEl=document.getElementById('adminUsersList'), bannerEl=document.getElementById('adminUsersBanner');
     if (!listEl) return;
@@ -992,7 +1054,12 @@ export async function renderAdminUsersList() {
     } catch(err) { console.error(err); listEl.innerHTML=`<p class="acc-empty" style="color:#cc0000;">Error: ${err.message}</p>`; }
 }
 
-// ── MANAGE COMMENTS ───────────────────────────────────────────────────────────
+// ============================================
+// COMMENTS (Admin)
+// Author: Lewei Rong
+// ============================================
+
+// Shows the admin comments/reviews moderation page
 export function showAdminCommentsPage() {
     _hideAllAdminPages();
     const page=document.getElementById('adminCommentsPage');
@@ -1003,6 +1070,8 @@ export function showAdminCommentsPage() {
     renderAdminCommentsList();
 }
 
+// Renders all reviews and their nested comments with delete controls
+// Uses DELETE + INSERT workaround for comment deletion due to RLS UPDATE restrictions
 export async function renderAdminCommentsList() {
     const listEl=document.getElementById('adminCommentsList'), bannerEl=document.getElementById('adminCommentsBanner');
     if (!listEl) return;
@@ -1098,4 +1167,372 @@ export async function renderAdminCommentsList() {
             });
         });
     } catch(err){ console.error(err); listEl.innerHTML=`<p class="acc-empty" style="color:#cc0000;">Error: ${err.message}</p>`; }
+}
+
+// ============================================
+// ORDERS (Admin)
+// Author: Ana-Laurya Lefrancois — Card 8
+// ============================================
+
+// Shows the admin orders page — hides all others first
+// Follows Lewei's showAdminUsersPage() pattern exactly
+export function showAdminOrdersPage() {
+    _hideAllAdminPages();
+    const page = document.getElementById('adminOrdersPage');
+    if (page) page.style.display = 'block';
+
+    // Clone inputs before re-binding to avoid duplicate event listeners on re-open
+    const search = document.getElementById('searchOrders');
+    if (search) {
+        const fresh = search.cloneNode(true);
+        search.replaceWith(fresh);
+        fresh.addEventListener('input', renderAdminOrderList);
+    }
+    const filter = document.getElementById('filterOrderStatus');
+    if (filter) {
+        const fresh = filter.cloneNode(true);
+        filter.replaceWith(fresh);
+        fresh.addEventListener('change', renderAdminOrderList);
+    }
+
+    document.getElementById('backToHomeFromAdminOrders')?.addEventListener('click', () => {
+        if (page) page.style.display = 'none';
+        navigateTo('/');
+    });
+
+    renderAdminOrderList();
+}
+
+// Hides the orders page — called by _hideAllAdminPages and back button
+export function hideAdminOrdersPage() {
+    const page = document.getElementById('adminOrdersPage');
+    if (page) page.style.display = 'none';
+}
+
+/**
+ * Renders the full order list in the admin orders page.
+ * Fetches all orders, applies search and status filter,
+ * then builds a table with inline status update, detail
+ * expand, and invoice print.
+ * Follows Lewei's renderAdminNewsList() and renderAdminUsersList() patterns.
+ *
+ * @returns {Promise<void>}
+ */
+export async function renderAdminOrderList() {
+    const listEl   = document.getElementById('adminOrdersList');
+    const bannerEl = document.getElementById('adminOrdersBanner');
+    if (!listEl) return;
+
+    // Show loading state while fetching — mirrors Lewei's user/comment list pattern
+    listEl.innerHTML = '<p class="acc-loading"><i class="fas fa-spinner fa-spin"></i>&nbsp;Loading orders…</p>';
+
+    try {
+        await loadOrders();
+
+        // Apply search and status filters
+        const searchTerm   = (document.getElementById('searchOrders')?.value || '').toLowerCase();
+        const statusFilter = document.getElementById('filterOrderStatus')?.value || '';
+
+        let filtered = orders.filter(o => {
+            const matchesSearch = !searchTerm ||
+                (o.shipping_name || '').toLowerCase().includes(searchTerm) ||
+                (o.id || '').toLowerCase().includes(searchTerm);
+            const matchesStatus = !statusFilter || o.status === statusFilter;
+            return matchesSearch && matchesStatus;
+        });
+
+        // Most recent orders first
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        // Summary banner — total count + key status breakdown
+        if (bannerEl) {
+            const pending    = orders.filter(o => o.status === 'pending').length;
+            const processing = orders.filter(o => o.status === 'processing').length;
+            const shipped    = orders.filter(o => o.status === 'shipped').length;
+            bannerEl.innerHTML = `
+                <i class="fas fa-box"></i>
+                <strong>${orders.length}</strong> order${orders.length !== 1 ? 's' : ''}
+                &nbsp;·&nbsp;<strong>${pending}</strong> pending
+                &nbsp;·&nbsp;<strong>${processing}</strong> processing
+                &nbsp;·&nbsp;<strong>${shipped}</strong> shipped
+            `;
+        }
+
+        if (!filtered.length) {
+            listEl.innerHTML = '<p class="acc-empty">No orders match this filter.</p>';
+            return;
+        }
+
+        // Status badge class map — extends Lewei's published/draft pattern from news
+        const statusClass = {
+            pending:    'status-pending',
+            processing: 'status-processing',
+            shipped:    'status-shipped',
+            delivered:  'status-delivered',
+            refunded:   'status-refunded',
+            cancelled:  'status-cancelled'
+        };
+
+        listEl.innerHTML = filtered.map(order => {
+            const date = order.created_at
+                ? new Date(order.created_at).toLocaleDateString('en-CA', {
+                    year: 'numeric', month: 'short', day: 'numeric'
+                  })
+                : '—';
+
+            return `
+            <div class="admin-order-row" data-id="${_esc(order.id)}">
+                <div class="aor-left">
+                    <div class="aor-id">#${_esc(order.id.substring(0, 8))}…</div>
+                    <div class="aor-name">${_esc(order.shipping_name || 'Guest')}</div>
+                    <div class="aor-date">${date}</div>
+                </div>
+                <div class="aor-mid">
+                    <div class="aor-total">$${parseFloat(order.total || 0).toFixed(2)}</div>
+                    <div class="aor-method">${_esc(order.payment_method || '—')}</div>
+                </div>
+                <div class="aor-right">
+                    <span class="status-badge ${statusClass[order.status] || 'draft'}">${_esc(order.status)}</span>
+                    <select class="order-status-select anr-btn" data-id="${_esc(order.id)}">
+                        <option value="pending"    ${order.status === 'pending'    ? 'selected' : ''}>Pending</option>
+                        <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
+                        <option value="shipped"    ${order.status === 'shipped'    ? 'selected' : ''}>Shipped</option>
+                        <option value="delivered"  ${order.status === 'delivered'  ? 'selected' : ''}>Delivered</option>
+                        <option value="refunded"   ${order.status === 'refunded'   ? 'selected' : ''}>Refunded</option>
+                        <option value="cancelled"  ${order.status === 'cancelled'  ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                    <button class="anr-btn expand-order-btn" data-id="${_esc(order.id)}">
+                        <i class="fas fa-chevron-down"></i> Details
+                    </button>
+                    <button class="anr-btn print-invoice-btn" data-id="${_esc(order.id)}" title="Print invoice">
+                        <i class="fas fa-print"></i>
+                    </button>
+                </div>
+                <div class="aor-detail-panel" id="detail-${_esc(order.id)}" style="display:none;"></div>
+            </div>`;
+        }).join('');
+
+        // ── Inline status update ─────────────────────────────────────────────
+        // Fires immediately on change — no save button needed
+        // Same instant-feedback UX as Lewei's news toggle-status pattern
+        listEl.querySelectorAll('.order-status-select').forEach(select => {
+            select.addEventListener('change', async () => {
+                const orderId   = select.dataset.id;
+                const newStatus = select.value;
+                try {
+                    await updateOrderStatus(orderId, newStatus);
+
+                    // Auto-decrease stock when payment confirmed — status moves to processing
+                    if (newStatus === 'processing') {
+                        const items = await loadOrderItems(orderId);
+                        for (const item of items) {
+                            if (item.book_id) await decreaseStock(item.book_id, item.quantity);
+                        }
+                    }
+
+                    showToast(`Order updated to "${newStatus}"`);
+                    await renderAdminOrderList();
+                } catch (err) {
+                    console.error('Status update error:', err);
+                    showToast('Update failed: ' + err.message, 'error');
+                }
+            });
+        });
+
+        // ── Expand order detail panel ────────────────────────────────────────
+        // Loads line items from order_items on first expand — lazy fetch
+        listEl.querySelectorAll('.expand-order-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const orderId = btn.dataset.id;
+                const panel   = document.getElementById(`detail-${orderId}`);
+                if (!panel) return;
+
+                // Toggle closed if already open
+                if (panel.style.display === 'block') {
+                    panel.style.display = 'none';
+                    btn.innerHTML = '<i class="fas fa-chevron-down"></i> Details';
+                    return;
+                }
+
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                try {
+                    const items = await loadOrderItems(orderId);
+                    const order = orders.find(o => o.id === orderId);
+
+                    const itemsHtml = items.length
+                        ? items.map(item => `
+                            <div class="aor-item-row">
+                                <span class="aor-item-title">${_esc(item.title_at_purchase)}</span>
+                                <span class="aor-item-qty">× ${item.quantity}</span>
+                                <span class="aor-item-price">$${parseFloat(item.price_at_purchase).toFixed(2)}</span>
+                            </div>`).join('')
+                        : '<p class="acc-empty">No line items found.</p>';
+
+                    panel.innerHTML = `
+                        <div class="aor-detail-inner">
+                            <div class="aor-detail-section">
+                                <strong>Shipping Address</strong>
+                                <p>${_esc(order?.shipping_name || '')}</p>
+                                <p>${_esc(order?.shipping_address || '')}</p>
+                                <p>${_esc(order?.shipping_city || '')}${order?.shipping_province ? ', ' + _esc(order.shipping_province) : ''} ${_esc(order?.shipping_postal || '')}</p>
+                                <p>${_esc(order?.shipping_country || '')}</p>
+                            </div>
+                            <div class="aor-detail-section">
+                                <strong>Items</strong>
+                                ${itemsHtml}
+                            </div>
+                            <div class="aor-detail-section">
+                                <strong>Totals</strong>
+                                <div class="aor-totals">
+                                    <div class="aor-total-row"><span>Subtotal</span><span>$${parseFloat(order?.subtotal || 0).toFixed(2)}</span></div>
+                                    <div class="aor-total-row"><span>Shipping</span><span>$${parseFloat(order?.shipping_cost || 0).toFixed(2)}</span></div>
+                                    <div class="aor-total-row"><span>Tax</span><span>$${parseFloat(order?.tax || 0).toFixed(2)}</span></div>
+                                    <div class="aor-total-row aor-total-final"><span>Total</span><span>$${parseFloat(order?.total || 0).toFixed(2)}</span></div>
+                                </div>
+                            </div>
+                        </div>`;
+
+                    panel.style.display = 'block';
+                    btn.innerHTML = '<i class="fas fa-chevron-up"></i> Close';
+                } catch (err) {
+                    console.error('Load order items error:', err);
+                    showToast('Could not load order details: ' + err.message, 'error');
+                    btn.innerHTML = '<i class="fas fa-chevron-down"></i> Details';
+                }
+            });
+        });
+
+        // ── Print invoice ────────────────────────────────────────────────────
+        // Opens a formatted print window — no external library needed
+        listEl.querySelectorAll('.print-invoice-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const orderId = btn.dataset.id;
+                const order   = orders.find(o => o.id === orderId);
+                if (!order) return;
+
+                try {
+                    const items = await loadOrderItems(orderId);
+                    const itemsHtml = items.map(item =>
+                        `<tr>
+                            <td>${_esc(item.title_at_purchase)}</td>
+                            <td style="text-align:center;">${item.quantity}</td>
+                            <td style="text-align:right;">$${parseFloat(item.price_at_purchase).toFixed(2)}</td>
+                            <td style="text-align:right;">$${(item.price_at_purchase * item.quantity).toFixed(2)}</td>
+                        </tr>`
+                    ).join('');
+
+                    const date = new Date(order.created_at).toLocaleDateString('en-CA', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    });
+
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                        <html><head>
+                            <title>Invoice #${order.id.substring(0, 8)}</title>
+                            <style>
+                                body { font-family: Georgia, serif; padding: 2rem; color: #1a1a1a; }
+                                h1 { color: #ff0000; margin-bottom: 0.25rem; }
+                                .sub { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
+                                table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+                                th { background: #f5f5f5; padding: 0.5rem; text-align: left; border-bottom: 2px solid #ddd; }
+                                td { padding: 0.5rem; border-bottom: 1px solid #eee; }
+                                .totals { margin-left: auto; width: 280px; }
+                                .totals td { border: none; }
+                                .total-final { font-weight: bold; font-size: 1.1rem; color: #ff0000; }
+                                .footer { margin-top: 3rem; text-align: center; color: #999; font-size: 0.8rem; }
+                            </style>
+                        </head><body>
+                            <h1>Acer Books</h1>
+                            <div class="sub">Invoice #${_esc(order.id.substring(0,8))} · ${date}</div>
+                            <p><strong>Ship to:</strong> ${_esc(order.shipping_name)}, ${_esc(order.shipping_address)}, ${_esc(order.shipping_city)} ${_esc(order.shipping_postal || '')}</p>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th style="text-align:center;">Qty</th>
+                                        <th style="text-align:right;">Unit Price</th>
+                                        <th style="text-align:right;">Line Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${itemsHtml}</tbody>
+                            </table>
+                            <table class="totals">
+                                <tr><td>Subtotal</td><td style="text-align:right;">$${parseFloat(order.subtotal).toFixed(2)}</td></tr>
+                                <tr><td>Shipping</td><td style="text-align:right;">$${parseFloat(order.shipping_cost).toFixed(2)}</td></tr>
+                                <tr><td>Tax</td><td style="text-align:right;">$${parseFloat(order.tax).toFixed(2)}</td></tr>
+                                <tr class="total-final"><td>Total</td><td style="text-align:right;">$${parseFloat(order.total).toFixed(2)}</td></tr>
+                            </table>
+                            <div class="footer">Acer Books · Montréal · acerbooks.ca</div>
+                            <script>window.onload = function() { window.print(); window.close(); }<\/script>
+                        </body></html>`);
+                    printWindow.document.close();
+                } catch (err) {
+                    console.error('Print invoice error:', err);
+                    showToast('Could not generate invoice: ' + err.message, 'error');
+                }
+            });
+        });
+
+    } catch (err) {
+        console.error('renderAdminOrderList error:', err);
+        listEl.innerHTML = `<p class="acc-empty" style="color:#cc0000;">Error loading orders: ${_esc(err.message)}</p>`;
+    }
+}
+
+// ============================================
+// CUSTOMER ORDER HISTORY HELPER
+// Author: Ana-Laurya Lefrancois — Card 11
+// ============================================
+
+/**
+ * Loads and renders order history for a specific customer
+ * inside an expandable panel in the admin users list.
+ * Called when admin clicks "Order History" on a user row.
+ * Uses loadOrders() from data.js — filters by customer_id client-side.
+ *
+ * @param {string} userId - UUID of the customer to look up.
+ * @param {HTMLElement} panel - The detail panel element to render into.
+ * @returns {Promise<void>}
+ */
+export async function renderCustomerOrderHistory(userId, panel) {
+    panel.innerHTML = '<p class="acc-loading"><i class="fas fa-spinner fa-spin"></i>&nbsp;Loading orders…</p>';
+    try {
+        await loadOrders();
+        // Filter orders belonging to this customer
+        const customerOrders = orders.filter(o => o.customer_id === userId);
+
+        if (!customerOrders.length) {
+            panel.innerHTML = '<p class="acc-empty">No orders found for this customer.</p>';
+            return;
+        }
+
+        // Sort most recent first
+        customerOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        panel.innerHTML = `
+            <div class="aor-detail-inner">
+                <strong style="display:block;margin-bottom:.5rem;">
+                    Order History (${customerOrders.length} order${customerOrders.length !== 1 ? 's' : ''})
+                </strong>
+                ${customerOrders.map(order => {
+                    const date = order.created_at
+                        ? new Date(order.created_at).toLocaleDateString('en-CA', {
+                            year: 'numeric', month: 'short', day: 'numeric'
+                          })
+                        : '—';
+                    return `
+                    <div class="aor-item-row" style="border-bottom:0.5px solid var(--color-border-tertiary);padding:.4rem 0;">
+                        <span class="aor-item-title">#${_esc(order.id.substring(0,8))}…</span>
+                        <span class="aor-item-qty">${date}</span>
+                        <span class="status-badge status-${order.status || 'pending'}" style="font-size:10px;">
+                            ${_esc(order.status || 'pending')}
+                        </span>
+                        <span class="aor-item-price">$${parseFloat(order.total || 0).toFixed(2)}</span>
+                    </div>`;
+                }).join('')}
+            </div>`;
+    } catch (err) {
+        console.error('renderCustomerOrderHistory error:', err);
+        panel.innerHTML = `<p class="acc-empty" style="color:#cc0000;">Error: ${_esc(err.message)}</p>`;
+    }
 }
