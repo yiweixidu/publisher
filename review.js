@@ -260,7 +260,9 @@ async function getReviewShareUrl(review, book) {
 }
 
 // 自定义分享弹窗
-function showShareModal(reviewId, reviewText, reviewUsername, shareUrl) {
+// shareUrl     = og-card URL  (FB / X — shows designed card)
+// canonicalUrl = acerbooks.ca book page URL (WeChat / Email — real book link)
+function showShareModal(reviewId, reviewText, reviewUsername, shareUrl, bookTitle, canonicalUrl) {
     // 移除已有的弹窗
     const existingModal = document.getElementById('customShareModal');
     if (existingModal) existingModal.remove();
@@ -277,10 +279,10 @@ function showShareModal(reviewId, reviewText, reviewUsername, shareUrl) {
                         <i class="fab fa-facebook-f"></i> Facebook
                     </button>
                     <button class="share-option" data-platform="twitter">
-                        <i class="fab fa-twitter"></i> X (Twitter)
+                        <i class="fab fa-x-twitter"></i> X
                     </button>
-                    <button class="share-option" data-platform="instagram">
-                        <i class="fab fa-instagram"></i> Instagram
+                    <button class="share-option" data-platform="email">
+                        <i class="fas fa-envelope"></i> Email
                     </button>
                     <button class="share-option" data-platform="wechat">
                         <i class="fab fa-weixin"></i> WeChat
@@ -306,30 +308,38 @@ function showShareModal(reviewId, reviewText, reviewUsername, shareUrl) {
             const platform = btn.dataset.platform;
             let shareLink = '';
             const encodedUrl = encodeURIComponent(shareUrl);
-            const encodedText = encodeURIComponent(reviewText.substring(0, 200));
 
             switch (platform) {
                 case 'facebook':
+                    // FB: og-card URL → shows designed card with cover + review
                     shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
                     window.open(shareLink, '_blank', 'width=600,height=400');
                     break;
                 case 'twitter':
-                    shareLink = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+                    // X: og-card URL → X reads og tags and shows designed card
+                    shareLink = `https://x.com/intent/post?url=${encodedUrl}`;
                     window.open(shareLink, '_blank', 'width=600,height=400');
                     break;
-                case 'instagram':
-                    // Instagram 没有直接的分享 URL，复制链接并提示
-                    navigator.clipboard.writeText(shareUrl).then(() => {
-                        alert('Link copied! Please open Instagram and paste to share.');
-                    }).catch(() => {
-                        alert('Please copy the link: ' + shareUrl);
-                    });
+                case 'email': {
+                    // Email: canonical book URL so recipient lands on acerbooks.ca
+                    const wechatUrl = canonicalUrl || shareUrl;
+                    const subject = encodeURIComponent(
+                        `${bookTitle ? bookTitle + ' — ' : ''}Reader Review | Acer Books`
+                    );
+                    const excerpt = reviewText.substring(0, 300) + (reviewText.length > 300 ? '…' : '');
+                    const body = encodeURIComponent(
+                        `${reviewUsername} reviewed "${bookTitle || 'a book'}" on Acer Books:\n\n"${excerpt}"\n\nRead the full review:\n${wechatUrl}`
+                    );
+                    window.location.href = `mailto:?subject=${subject}&body=${body}`;
                     break;
+                }
                 case 'wechat':
-                    navigator.clipboard.writeText(shareUrl).then(() => {
+                    // WeChat: canonical book URL (acerbooks.ca/book/slug#review-id)
+                    // WeChat reads og tags from the book page and shows a link card
+                    navigator.clipboard.writeText(canonicalUrl || shareUrl).then(() => {
                         alert('Link copied! Please open WeChat and paste to a chat or Moments.');
                     }).catch(() => {
-                        alert('Please copy the link: ' + shareUrl);
+                        prompt('Copy this link and paste in WeChat:', canonicalUrl || shareUrl);
                     });
                     break;
             }
@@ -356,24 +366,32 @@ async function attachEventsToContainer(container, bookId, currentLang, currentUs
             btn.disabled = true;
 
             let shareUrl;
+            let canonicalUrl;
             try {
                 const { books: allBooks } = await import('./data.js');
                 const book = allBooks.find(b => b.id === review.book_id);
                 shareUrl = await getReviewShareUrl(review, book);
+                // Canonical book page URL for WeChat / Email
+                const { toSlugAsync } = await import('./routing.js');
+                const slug = book ? await toSlugAsync(book.title) : 'book';
+                canonicalUrl = `${window.location.origin}/book/${slug}#review-${reviewId}`;
             } catch(err) {
                 console.warn('getReviewShareUrl failed:', err);
-                // Fallback: plain anchor URL
+                // Fallback: use canonical URL for both
                 const { toSlugAsync } = await import('./routing.js');
                 const { books: allBooks } = await import('./data.js');
                 const book = allBooks.find(b => b.id === review.book_id);
                 const slug = book ? await toSlugAsync(book.title) : 'book';
-                shareUrl = `${window.location.origin}/book/${slug}#review-${reviewId}`;
+                canonicalUrl = `${window.location.origin}/book/${slug}#review-${reviewId}`;
+                shareUrl = canonicalUrl;
             } finally {
                 if (icon) icon.className = origClass;
                 btn.disabled = false;
             }
 
-            showShareModal(reviewId, review.text, review.username, shareUrl);
+            const { books: allBooks2 } = await import('./data.js');
+            const book2 = allBooks2.find(b => b.id === review.book_id);
+            showShareModal(reviewId, review.text, review.username, shareUrl, book2?.title || '', canonicalUrl);
         });
     });
 
