@@ -67,8 +67,50 @@ const newsSummaryFr = document.getElementById('newsSummaryFr');
 
 // Quill rich-text editor instances — initialised lazily in initQuillEditors()
 let descriptionQuill, bioQuill;
-// Quill editors for news content — initialised lazily in openNewsFormModal()
-let newsContentEditorEn, newsContentEditorFr;
+// Quill editors for news content
+let newsContentEditorEn = null;
+let newsContentEditorFr = null;
+
+// 销毁已有的 Quill 实例（清空容器 DOM，因为 Quill 无官方销毁方法）
+function destroyNewsQuillEditors() {
+    if (newsContentEditorEn) {
+        const containerEn = document.getElementById('newsContentEditorEn');
+        if (containerEn) containerEn.innerHTML = '';
+        newsContentEditorEn = null;
+    }
+    if (newsContentEditorFr) {
+        const containerFr = document.getElementById('newsContentEditorFr');
+        if (containerFr) containerFr.innerHTML = '';
+        newsContentEditorFr = null;
+    }
+}
+
+// 初始化 Quill 编辑器（强制重新创建）
+function initNewsQuillEditors() {
+    const editorEn = document.getElementById('newsContentEditorEn');
+    const editorFr = document.getElementById('newsContentEditorFr');
+    if (!editorEn || !editorFr) {
+        console.error('Quill containers not found in DOM');
+        return false;
+    }
+    editorEn.style.height = '250px';
+    editorFr.style.height = '250px';
+    try {
+        newsContentEditorEn = new Quill('#newsContentEditorEn', {
+            theme: 'snow',
+            modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
+        });
+        newsContentEditorFr = new Quill('#newsContentEditorFr', {
+            theme: 'snow',
+            modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
+        });
+        console.log('Quill editors initialized successfully');
+        return true;
+    } catch (e) {
+        console.error('Quill initialization error:', e);
+        return false;
+    }
+}
 
 // State — tracks current search/sort values for the book list
 let adminSearchTerm = '';
@@ -770,16 +812,9 @@ export function openNewsFormModal(item = null) {
     preview.style.backgroundImage = '';
     preview.style.height = '0';
 
-    if (!newsContentEditorEn && document.getElementById('newsContentEditorEn')) {
-        newsContentEditorEn = new Quill('#newsContentEditorEn', {
-            theme: 'snow',
-            modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
-        });
-        newsContentEditorFr = new Quill('#newsContentEditorFr', {
-            theme: 'snow',
-            modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link']] }
-        });
-    }
+    // 每次打开弹窗都销毁旧实例并重新创建，确保编辑器正常显示
+    destroyNewsQuillEditors();
+    initNewsQuillEditors();
 
     if (item) {
         newsId.value = item.id || '';
@@ -827,11 +862,11 @@ async function saveNewsFromForm() {
     const summaryEn = document.getElementById('newsSummaryEnInput').value.trim();
     const summaryFr = document.getElementById('newsSummaryFrInput').value.trim();
     const status = document.getElementById('newsStatus').value;
-    const contentEn = newsContentEditorEn?.root.innerHTML || '';
-    const contentFr = newsContentEditorFr?.root.innerHTML || '';
+    const contentEn = newsContentEditorEn ? newsContentEditorEn.root.innerHTML : '';
+    const contentFr = newsContentEditorFr ? newsContentEditorFr.root.innerHTML : '';
     const imageFile = document.getElementById('newsImageInput').files[0];
 
-    console.log('Form values:', { displayDate, titleEn, titleFr, summaryEn, summaryFr, status, hasImage: !!imageFile });
+    console.log('Form values:', { displayDate, titleEn, titleFr, summaryEn, summaryFr, status, hasImage: !!imageFile, contentEnLength: contentEn.length });
 
     if (!displayDate || !titleEn || !titleFr || !summaryEn || !summaryFr) {
         console.log('Validation failed: missing fields');
