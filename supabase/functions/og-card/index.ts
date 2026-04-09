@@ -107,11 +107,12 @@ Deno.serve(async (req) => {
 
 <link rel="canonical" href="${esc(canonicalUrl)}">
 <meta http-equiv="refresh" content="0;url=${esc(canonicalUrl)}">
-<style>body{font-family:Georgia,serif;text-align:center;padding:60px 20px;color:#333}a{color:#cc0000}</style>
 </head>
-<body>
-<p>Loading&#8230; <a href="${esc(canonicalUrl)}">Click here if not redirected.</a></p>
-<script>window.location.replace('${canonicalUrl.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}');</script>
+<body onload="window.location.href=this.dataset.u" data-u="${esc(canonicalUrl)}">
+<script>window.location.href="${esc(canonicalUrl)}";</script>
+<p style="font-family:Georgia,serif;text-align:center;padding:60px 20px">
+<a href="${esc(canonicalUrl)}" style="color:#cc0000;font-size:18px;text-decoration:none">
+&#8594; Click here to view this review on Acer Books</a></p>
 </body></html>`;
 
         return new Response(new TextEncoder().encode(html), {
