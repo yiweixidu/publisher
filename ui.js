@@ -40,11 +40,15 @@ const booksGridAll = document.getElementById('booksGrid');
 const detailPage = document.getElementById('bookDetailPage');
 const booksPage = document.getElementById('booksPage');
 
+// ── News pagination state ───────────────────────────────────────────────────
+let newsCurrentPage = 1;
+const NEWS_PER_PAGE = 6;   // 每页显示6条新闻
+
 export let currentModalBook = null;
 export let currentNewsItem = null;
-export let currentModalFormat = 'paperback'; // tracks selected format in modal/detail
+export let currentModalFormat = 'paperback';
 
-// Fix relative cover paths (DB stores e.g. "zhijian/image.jpg" → "/zhijian/image.jpg")
+// Fix relative cover paths
 function normalizeCover(cover) {
     if (!cover) return '';
     if (cover.startsWith('http') || cover.startsWith('/') || cover.startsWith('data:')) return cover;
@@ -85,14 +89,7 @@ function initModalTabs() {
 
 document.addEventListener('DOMContentLoaded', initModalTabs);
 
-// ============================================
-// Language Switcher — Dynamic Content Handler
-// FR #7 — Language Switcher | Card 18
-// Acer Books — Publisher E-commerce Platform
-// Contributor: Ana-Laurya Fay
-// Date: 2026-03-29
-// ============================================
-
+// Language Switcher
 function handleLanguageChange(event) {
     const lang = event.detail;
     translateUI(lang);
@@ -100,7 +97,10 @@ function handleLanguageChange(event) {
     renderBooks();
     if (modalOverlay?.classList.contains('active')) updateModalLanguage();
     if (cartModal?.classList.contains('active')) renderCartModal();
-    if (newsListPage && newsListPage.style.display === 'block') renderAllNews();
+    if (newsListPage && newsListPage.style.display === 'block') {
+        newsCurrentPage = 1;           // 重置页码
+        renderAllNews();
+    }
     if (newsDetailPage && newsDetailPage.style.display === 'block' && currentNewsItem) renderNewsDetail(currentNewsItem);
     if (detailPage && detailPage.style.display === 'block' && currentModalBook) {
         updateDetailLanguage(currentModalBook);
@@ -131,9 +131,7 @@ function generateBookCardHTML(book, adminMode, currentLang) {
     const deleteBtn = adminMode ? `<button class="delete-book" data-id="${book.id}"><i class="fas fa-trash-alt"></i></button>` : '';
     const pbPrice = book.price ? parseFloat(book.price) : null;
     const hcPrice = book.price_hardcover ? parseFloat(book.price_hardcover) : null;
-    // Determine default display price and format
     const defaultPrice  = pbPrice ?? hcPrice ?? 0;
-    const defaultFormat = pbPrice ? 'paperback' : 'hardcover';
     const priceRow = `
         <div class="book-price-row">
             <span class="book-price" id="card-price-${book.id}">$${defaultPrice.toFixed(2)}</span>
@@ -233,10 +231,8 @@ export async function renderBooks() {
     }
 }
 
-// booksActiveCategory holds exact series name stored in DB
+// Books page state (unchanged)
 let booksActiveCategory = 'all';
-
-// ── Books-page state ────────────────────────────────────────────────────────
 const BOOKS_PER_PAGE = 12;
 let booksCurrentPage  = 1;
 let booksViewMode     = 'grid';
@@ -310,7 +306,6 @@ function generateBookListRowHTML(book) {
     const title  = currentLang==='fr'&&book.title_fr  ? book.title_fr  : book.title;
     const author = currentLang==='fr'&&book.author_fr ? book.author_fr : book.author;
     const cover  = normalizeCover(book.cover);
-    // Add wishlist button for list view as well
     const wishlistBtn = `<button class="wishlist-icon-btn" data-wishlist-bookid="${book.id}" title="Add to wishlist"><i class="far fa-heart"></i></button>`;
     return `
         <div class="book-list-row" data-id="${book.id}">
@@ -459,7 +454,7 @@ export async function renderAllBooks() {
     }
 }
 
-// ---------- News functions (unchanged) ----------
+// ---------- News functions (with pagination) ----------
 function generateNewsItemHTML(item, adminMode, currentLang) {
     const title = (item.title && typeof item.title === 'object') ? (item.title[currentLang] || item.title.en || '') : item.title || '';
     const summary = (item.summary && typeof item.summary === 'object') ? (item.summary[currentLang] || item.summary.en || '') : item.summary || '';
@@ -486,6 +481,36 @@ function attachNewsDeleteEvents(container, renderCallback) {
             await saveNews(newNews);
             renderCallback();
             if (currentNewsItem && currentNewsItem.id === id) navigateTo('/news');
+        });
+    });
+}
+
+// 新闻分页渲染函数
+function renderNewsPagination(totalPages) {
+    const paginationEl = document.getElementById('newsPagination');
+    if (!paginationEl) return;
+    if (totalPages <= 1) {
+        paginationEl.innerHTML = '';
+        return;
+    }
+    let html = `<button class="page-btn" ${newsCurrentPage===1?'disabled':''} data-page="${newsCurrentPage-1}"><i class="fas fa-chevron-left"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        if (totalPages > 7 && i > 2 && i < totalPages-1 && Math.abs(i - newsCurrentPage) > 1) {
+            if (i === 3 || i === totalPages-2) html += `<span class="page-ellipsis">…</span>`;
+            continue;
+        }
+        html += `<button class="page-btn ${i === newsCurrentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+    }
+    html += `<button class="page-btn" ${newsCurrentPage===totalPages?'disabled':''} data-page="${newsCurrentPage+1}"><i class="fas fa-chevron-right"></i></button>`;
+    paginationEl.innerHTML = html;
+
+    paginationEl.querySelectorAll('.page-btn:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', () => {
+            newsCurrentPage = parseInt(btn.dataset.page, 10);
+            renderAllNews();
+            // 滚动到新闻列表顶部
+            const newsListPage = document.getElementById('newsListPage');
+            if (newsListPage) newsListPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
 }
@@ -536,9 +561,27 @@ export async function renderAllNews() {
             const dateB = b.event_date ? new Date(b.event_date) : 0;
             return dateB - dateA;
         });
+
+        const totalItems = sorted.length;
+        const totalPages = Math.ceil(totalItems / NEWS_PER_PAGE) || 1;
+        if (newsCurrentPage > totalPages) newsCurrentPage = 1;
+        const start = (newsCurrentPage - 1) * NEWS_PER_PAGE;
+        const pageNews = sorted.slice(start, start + NEWS_PER_PAGE);
+
         let html = '';
-        sorted.forEach(item => { html += generateNewsItemHTML(item, false, currentLang); });
+        pageNews.forEach(item => { html += generateNewsItemHTML(item, false, currentLang); });
         if (allNewsGrid) allNewsGrid.innerHTML = html;
+
+        // 添加结果计数（可选）
+        const countEl = document.getElementById('newsResultCount');
+        if (countEl) {
+            countEl.textContent = currentLang === 'fr'
+                ? `${pageNews.length} actualité${pageNews.length !== 1 ? 's' : ''} sur ${totalItems}`
+                : `Showing ${pageNews.length} of ${totalItems} news article${totalItems !== 1 ? 's' : ''}`;
+        }
+
+        renderNewsPagination(totalPages);
+
         document.querySelectorAll('#allNewsGrid .news-item').forEach(card => {
             card.addEventListener('click', () => {
                 const id = card.dataset.id;
@@ -632,7 +675,6 @@ export function renderBookDetail(book) {
             : ` (${langPack[currentLang].paperback  || 'Paperback'})`;
         alert(langPack[currentLang].itemAddedToCart + fmtLabel);
     };
-    // Set wishlist button attribute
     const detailWishlistBtn = document.getElementById('detailAddToWishList');
     if (detailWishlistBtn) {
         detailWishlistBtn.dataset.wishlistBookid = book.id;
@@ -712,13 +754,11 @@ export function updateDetailLanguage(book) {
 
 export function openModal(book) {
     currentModalBook = book;
-    // If no paperback, default to hardcover
     currentModalFormat = book.price ? 'paperback' : 'hardcover';
     const cover = normalizeCover(book.cover);
     if (modalCover) modalCover.style.backgroundImage = cover ? `url('${cover}')` : '';
     if (modalTitle) modalTitle.innerText = (currentLang === 'fr' && book.title_fr) ? book.title_fr : book.title;
     if (modalAuthor) modalAuthor.innerText = (currentLang === 'fr' && book.author_fr) ? book.author_fr : book.author;
-    // Show appropriate price
     const displayPrice = book.price
         ? parseFloat(book.price).toFixed(2)
         : (book.price_hardcover ? parseFloat(book.price_hardcover).toFixed(2) : '—');
@@ -741,14 +781,12 @@ export function openModal(book) {
         if (firstPane) firstPane.classList.add('active');
     }
     if (modalAddToCart) modalAddToCart.dataset.bookId = book.id;
-    // Set wishlist button attribute
     if (modalAddToWishList) {
         modalAddToWishList.dataset.wishlistBookid = book.id;
     }
     
     const modalHcBadge = document.getElementById('modalHcBadge');
     if (book.price_hardcover && book.price) {
-        // Both PB and HC exist — show toggle badge
         if (modalHcBadge) {
             modalHcBadge.style.display = '';
             modalHcBadge.style.cursor = 'pointer';
@@ -768,17 +806,14 @@ export function openModal(book) {
             });
         }
     } else if (book.price_hardcover && !book.price) {
-        // HC only — show static badge (already active), no toggle needed
         if (modalHcBadge) {
             modalHcBadge.style.display = '';
             modalHcBadge.style.cursor = 'default';
             modalHcBadge.classList.add('hc-badge--active');
-            // Remove old listeners
             const freshModal = modalHcBadge.cloneNode(true);
             modalHcBadge.parentNode.replaceChild(freshModal, modalHcBadge);
         }
     } else {
-        // No HC at all — hide badge
         if (modalHcBadge) modalHcBadge.style.display = 'none';
     }
     if (modalOverlay) modalOverlay.classList.add('active');
