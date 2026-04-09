@@ -70,11 +70,13 @@ Deno.serve(async (req) => {
         const ogDesc    = `${review.username||''} reviewed: ${excerpt}`;
         const stars     = review.rating ? '★'.repeat(review.rating)+'☆'.repeat(5-review.rating)+' ' : '';
 
-        // Detect crawlers by User-Agent — serve OG HTML to crawlers, 302 to real browsers
+        // Detect real browsers (not crawlers) by User-Agent
         const ua = req.headers.get('user-agent') || '';
-        const isCrawler = /twitterbot|facebookexternalhit|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|applebot|googlebot|bingbot|duckduckbot|baiduspider/i.test(ua);
+        // Only redirect if clearly a real browser (has Mozilla/ but NOT a known crawler)
+        const isCrawler = !ua || /bot|crawler|spider|facebook|twitter|linkedin|whatsapp|telegram|slack|discord|apple|google|bing|baidu|preview|scraper|fetcher/i.test(ua);
+        const isRealBrowser = !isCrawler && /mozilla/i.test(ua);
 
-        if (!isCrawler) {
+        if (isRealBrowser) {
             // Real user — 302 redirect directly to the book review page
             return new Response(null, {
                 status: 302,
