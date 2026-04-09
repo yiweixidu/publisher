@@ -2201,7 +2201,7 @@ select.checkout-input {
     align-self: flex-start;
 }
 
-/* Add News Button 样式 */
+/* Add News Button */
 #addNewsBtn {
     background-color: white !important;
     color: #999 !important;
@@ -2719,3 +2719,36 @@ select.checkout-input {
 
 /* Stars inside admin comment cards */
 .admin-comment-card .review-stars { margin: 2px 0 4px; }
+
+/* ========== CHECKOUT: fix input flex-stretch (root cause fix) ==========
+   .form-group.half uses flex-direction:column, and its children inherit
+   flex-grow:1 which makes inputs stretch to fill the row height.
+   Solution: disable flex-grow on inputs + lock height. */
+.checkout-modal-content .form-row {
+    align-items: flex-start !important;
+}
+.checkout-modal-content .form-group.half {
+    align-self: flex-start !important;
+    flex-direction: column !important;
+}
+.checkout-modal-content .form-group.half input,
+.checkout-modal-content .form-group.half select,
+.checkout-modal-content .checkout-input,
+#coStep1 input,
+#coStep1 select,
+#coStep3 input,
+#coStep3 select,
+#shipFirstName, #shipLastName,
+#shipCity, #shipProvince, #shipPostal, #shipCountry,
+#cardName, #cardNumber, #expiry, #cvv {
+    flex: none !important;
+    flex-grow: 0 !important;
+    height: 38px !important;
+    min-height: unset !important;
+    max-height: 38px !important;
+    padding: 0.3rem 0.8rem !important;
+    line-height: 1.2 !important;
+    font-size: 0.9rem !important;
+    box-sizing: border-box !important;
+    align-self: auto !important;
+}
