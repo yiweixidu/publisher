@@ -66,8 +66,8 @@ Deno.serve(async (req) => {
         // Build OG content
         const bookTitle = book?.title || 'Book Review';
         const ogTitle   = `${bookTitle} — Reader Review | Acer Books`;
-        const excerpt   = (review.text||'').replace(/\s+/g,' ').substring(0,200);
-        const ogDesc    = `${review.username||''} reviewed: ${excerpt}`;
+        const excerpt   = (review.text||'').replace(/\s+/g,' ').substring(0,500);
+        const ogDesc    = `${review.username||''}: ${excerpt}`;
         const stars     = review.rating ? '★'.repeat(review.rating)+'☆'.repeat(5-review.rating)+' ' : '';
 
         // Detect real browsers (not crawlers) by User-Agent
@@ -106,13 +106,12 @@ Deno.serve(async (req) => {
 <meta name="twitter:image:alt"   content="${he('Cover of '+bookTitle)}">
 
 <link rel="canonical" href="${esc(canonicalUrl)}">
-<meta http-equiv="refresh" content="0;url=${esc(canonicalUrl)}">
 </head>
-<body onload="window.location.href=this.dataset.u" data-u="${esc(canonicalUrl)}">
-<script>window.location.href="${esc(canonicalUrl)}";</script>
-<p style="font-family:Georgia,serif;text-align:center;padding:60px 20px">
-<a href="${esc(canonicalUrl)}" style="color:#cc0000;font-size:18px;text-decoration:none">
-&#8594; Click here to view this review on Acer Books</a></p>
+<body>
+<h1 style="font-family:Georgia,serif;padding:40px 20px 8px;color:#1a1a1a">${he(bookTitle)}</h1>
+<p style="font-family:Georgia,serif;padding:0 20px;color:#666;font-style:italic">by ${he(book?.author||'')}</p>
+<p style="font-family:Georgia,serif;padding:16px 20px;color:#333;line-height:1.7">${he(review.text||'')}</p>
+<p style="padding:0 20px"><a href="${esc(canonicalUrl)}" style="color:#cc0000">Read on Acer Books &#8594;</a></p>
 </body></html>`;
 
         return new Response(new TextEncoder().encode(html), {
