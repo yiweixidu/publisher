@@ -8,13 +8,16 @@
 //                            handleRoute, all admin routes)
 //   Ana-Laurya Lefrancois — /admin/orders route (Card 8)
 //                           + adminOrdersPage hide (Card 8)
+//                           /admin/static-pages route (Card 10)
+//                           + adminStaticPagesPage hide (Card 10)
 // ============================================
 
 import { newsItems } from './data.js';
 import { books } from './data.js';
 import { renderBooks, renderAllBooks, renderBookDetail, renderNews, renderAllNews, renderNewsDetail, resetMetaTags, updateMetaTags } from './ui.js';
-// Ana-Laurya Lefrancois added showAdminOrdersPage import (Card 8)
-import { showAdminBooksPage, showAdminNewsPage, showAdminUsersPage, showAdminCommentsPage, showAdminOrdersPage } from './admin.js';
+// Ana-Laurya Lefrancois added showAdminOrdersPage (Card 8)
+// Ana-Laurya Lefrancois added showAdminStaticPagesPage (Card 10)
+import { showAdminBooksPage, showAdminNewsPage, showAdminUsersPage, showAdminCommentsPage, showAdminOrdersPage, showAdminStaticPagesPage } from './admin.js';
 import { BASE_PATH } from './constants.js';
 import { adminMode } from './auth.js';
 
@@ -97,6 +100,8 @@ export function navigateTo(path) {
 // Ana-Laurya Lefrancois added:
 //   - adminOrdersPage to hide-all list (Card 8)
 //   - /admin/orders route (Card 8)
+//   - adminStaticPagesPage to hide-all list (Card 10)
+//   - /admin/static-pages route (Card 10)
 // ============================================
 
 export async function handleRoute() {
@@ -104,28 +109,30 @@ export async function handleRoute() {
     const basePattern = new RegExp('^' + BASE_PATH.replace(/\/+$/, '') + '/?');
     path = path.replace(basePattern, '') || '/';
 
-    const mainContent       = document.getElementById('mainContent');
-    const booksPage         = document.getElementById('booksPage');
-    const detailPage        = document.getElementById('bookDetailPage');
-    const newsListPage      = document.getElementById('newsListPage');
-    const newsDetailPage    = document.getElementById('newsDetailPage');
-    const adminBooksPage    = document.getElementById('adminBooksPage');
-    const adminNewsPage     = document.getElementById('adminNewsPage');
-    const adminUsersPage    = document.getElementById('adminUsersPage');
-    const adminCommentsPage = document.getElementById('adminCommentsPage');
-    const adminOrdersPage   = document.getElementById('adminOrdersPage'); // Ana-Laurya — Card 8
+    const mainContent          = document.getElementById('mainContent');
+    const booksPage            = document.getElementById('booksPage');
+    const detailPage           = document.getElementById('bookDetailPage');
+    const newsListPage         = document.getElementById('newsListPage');
+    const newsDetailPage       = document.getElementById('newsDetailPage');
+    const adminBooksPage       = document.getElementById('adminBooksPage');
+    const adminNewsPage        = document.getElementById('adminNewsPage');
+    const adminUsersPage       = document.getElementById('adminUsersPage');
+    const adminCommentsPage    = document.getElementById('adminCommentsPage');
+    const adminOrdersPage      = document.getElementById('adminOrdersPage');      // Ana-Laurya — Card 8
+    const adminStaticPagesPage = document.getElementById('adminStaticPagesPage'); // Ana-Laurya — Card 10
 
     // Hide all pages before showing the matched route
-    mainContent.style.display    = 'none';
-    booksPage.style.display      = 'none';
-    detailPage.style.display     = 'none';
-    if (newsListPage)       newsListPage.style.display       = 'none';
-    if (newsDetailPage)     newsDetailPage.style.display     = 'none';
-    if (adminBooksPage)     adminBooksPage.style.display     = 'none';
-    if (adminNewsPage)      adminNewsPage.style.display      = 'none';
-    if (adminUsersPage)     adminUsersPage.style.display     = 'none';
-    if (adminCommentsPage)  adminCommentsPage.style.display  = 'none';
-    if (adminOrdersPage)    adminOrdersPage.style.display    = 'none'; // Ana-Laurya — Card 8
+    mainContent.style.display          = 'none';
+    booksPage.style.display            = 'none';
+    detailPage.style.display           = 'none';
+    if (newsListPage)          newsListPage.style.display          = 'none';
+    if (newsDetailPage)        newsDetailPage.style.display        = 'none';
+    if (adminBooksPage)        adminBooksPage.style.display        = 'none';
+    if (adminNewsPage)         adminNewsPage.style.display         = 'none';
+    if (adminUsersPage)        adminUsersPage.style.display        = 'none';
+    if (adminCommentsPage)     adminCommentsPage.style.display     = 'none';
+    if (adminOrdersPage)       adminOrdersPage.style.display       = 'none'; // Ana-Laurya — Card 8
+    if (adminStaticPagesPage)  adminStaticPagesPage.style.display  = 'none'; // Ana-Laurya — Card 10
 
     if (path === '/' || path === '') {
         mainContent.style.display = 'block';
@@ -261,6 +268,21 @@ export async function handleRoute() {
         }
         showAdminOrdersPage();
         document.title = 'Manage Orders | Acer Books';
+
+    // ── /admin/static-pages — Ana-Laurya Lefrancois (Card 10) ────────────────
+    // Same auth guard pattern as all other admin routes — redirects to home
+    // if not in admin mode. Calls showAdminStaticPagesPage() from admin.js.
+    } else if (path === 'admin/static-pages') {
+        if (!adminMode) {
+            history.replaceState(null, '', BASE_PATH);
+            mainContent.style.display = 'block';
+            await Promise.all([renderBooks(), renderNews()]);
+            resetMetaTags();
+            window.dispatchEvent(new CustomEvent('routeChanged'));
+            return;
+        }
+        showAdminStaticPagesPage();
+        document.title = 'Manage Pages | Acer Books';
 
     } else {
         navigateTo('/');
