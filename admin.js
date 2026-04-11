@@ -6,7 +6,9 @@
 //   Lewei Rong            — All existing admin functionality
 //                           (Books, News, Users, Comments,
 //                            Toast, Upload, Quill editors)
-//   Ana-Laurya Lefrancois — Orders section only (Card 8)
+//   Ana-Laurya Lefrancois — Orders section (Card 8)
+//                           Customer order history (Card 11)
+//                           Static Page Editor (Card 10)
 // ============================================
 
 // ── Imports ──────────────────────────────────────────────────────────────────
@@ -188,10 +190,12 @@ function _esc(str) {
 
 // Hides all admin and public pages — called before showing any admin page
 // Ana-Laurya Lefrancois added 'adminOrdersPage' (Card 8)
+// Ana-Laurya Lefrancois added 'adminStaticPagesPage' (Card 10)
 function _hideAllAdminPages() {
     ['mainContent','booksPage','bookDetailPage','newsListPage','newsDetailPage',
      'adminBooksPage','adminNewsPage','adminUsersPage','adminCommentsPage',
-     'adminOrdersPage'] // Ana-Laurya Lefrancois — Card 8
+     'adminOrdersPage',       // Ana-Laurya Lefrancois — Card 8
+     'adminStaticPagesPage']  // Ana-Laurya Lefrancois — Card 10
     .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
 }
 
@@ -1534,5 +1538,208 @@ export async function renderCustomerOrderHistory(userId, panel) {
     } catch (err) {
         console.error('renderCustomerOrderHistory error:', err);
         panel.innerHTML = `<p class="acc-empty" style="color:#cc0000;">Error: ${_esc(err.message)}</p>`;
+    }
+}
+
+// ============================================
+// STATIC PAGES (Admin)
+// Author: Ana-Laurya Lefrancois — Card 10
+// ============================================
+
+// Shows the static pages editor — hides all others first
+// Follows Lewei's showAdminUsersPage() pattern exactly
+export function showAdminStaticPagesPage() {
+    _hideAllAdminPages();
+    const page = document.getElementById('adminStaticPagesPage');
+    if (page) page.style.display = 'block';
+
+    document.getElementById('backToHomeFromAdminStaticPages')?.addEventListener('click', () => {
+        if (page) page.style.display = 'none';
+        navigateTo('/');
+    });
+
+    renderAdminStaticPagesList();
+}
+
+// Hides the static pages editor — called by _hideAllAdminPages and back button
+export function hideAdminStaticPagesPage() {
+    const page = document.getElementById('adminStaticPagesPage');
+    if (page) page.style.display = 'none';
+}
+
+/**
+ * Fetches all static pages from Supabase and renders
+ * them as clickable edit cards in the admin panel.
+ * Follows renderAdminOrderList() pattern.
+ *
+ * @returns {Promise<void>}
+ */
+export async function renderAdminStaticPagesList() {
+    const listEl = document.getElementById('adminStaticPagesList');
+    if (!listEl) return;
+
+    listEl.innerHTML = '<p class="acc-loading"><i class="fas fa-spinner fa-spin"></i>&nbsp;Loading pages…</p>';
+
+    try {
+        const { data: pages, error } = await supabase
+            .from('static_pages')
+            .select('*')
+            .order('slug', { ascending: true });
+        if (error) throw error;
+
+        if (!pages.length) {
+            listEl.innerHTML = '<p class="acc-empty">No static pages found.</p>';
+            return;
+        }
+
+        listEl.innerHTML = pages.map(page => {
+            const modified = page.last_modified
+                ? new Date(page.last_modified).toLocaleDateString('en-CA', {
+                    year: 'numeric', month: 'short', day: 'numeric'
+                  })
+                : '—';
+            return `
+            <div class="admin-static-page-row" data-slug="${_esc(page.slug)}">
+                <div class="asp-left">
+                    <div class="asp-title">${_esc(page.title)}</div>
+                    <div class="asp-slug">/${_esc(page.slug)}</div>
+                    <div class="asp-modified">Last modified: ${modified}</div>
+                </div>
+                <div class="asp-right">
+                    <button class="anr-btn edit-static-page-btn" data-slug="${_esc(page.slug)}">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+
+        // Wire edit buttons — opens the form modal pre-populated
+        listEl.querySelectorAll('.edit-static-page-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = pages.find(p => p.slug === btn.dataset.slug);
+                if (page) openStaticPageFormModal(page);
+            });
+        });
+
+    } catch (err) {
+        console.error('renderAdminStaticPagesList error:', err);
+        listEl.innerHTML = `<p class="acc-empty" style="color:#cc0000;">Error: ${_esc(err.message)}</p>`;
+    }
+}
+
+/**
+ * Opens the static page edit modal pre-populated with existing content.
+ * Initialises a fresh Quill editor for rich-text editing.
+ * Reuses uploadFile() for optional banner image upload.
+ *
+ * @param {Object} page - Static page record from Supabase.
+ */
+export function openStaticPageFormModal(page) {
+    const modal   = document.getElementById('staticPageFormModal');
+    const titleEl = document.getElementById('spFormTitle');
+    const slugEl  = document.getElementById('spFormSlug');
+    const preview = document.getElementById('spBannerPreview');
+    if (!modal || !titleEl || !slugEl) return;
+
+    titleEl.value = page.title || '';
+    slugEl.value  = page.slug  || '';
+
+    // Show existing banner if available
+    if (preview) {
+        preview.style.backgroundImage = page.banner_url ? `url('${page.banner_url}')` : '';
+        preview.style.height = page.banner_url ? '120px' : '0';
+    }
+
+    // Initialise fresh Quill — clear container first since Quill has no official destroy method
+    const editorEl = document.getElementById('spContentEditor');
+    if (editorEl) {
+        editorEl.innerHTML = '';
+        const spQuill = new Quill('#spContentEditor', {
+            theme: 'snow',
+            modules: { toolbar: [
+                ['bold', 'italic', 'underline'],
+                [{ 'header': [2, 3, false] }],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['link']
+            ]}
+        });
+        spQuill.root.innerHTML = page.content || '';
+
+        // Clone save button before re-binding to prevent duplicate listeners
+        const saveBtn = document.getElementById('spSaveBtn');
+        if (saveBtn) {
+            const freshBtn = saveBtn.cloneNode(true);
+            saveBtn.replaceWith(freshBtn);
+            freshBtn.addEventListener('click', async () => {
+                await saveStaticPage(page.slug, titleEl.value.trim(), spQuill.root.innerHTML);
+            });
+        }
+    }
+
+    // Banner upload — show preview immediately on file select
+    const bannerInput = document.getElementById('spBannerUpload');
+    if (bannerInput) {
+        const freshInput = bannerInput.cloneNode(true);
+        bannerInput.replaceWith(freshInput);
+        freshInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && preview) {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    preview.style.backgroundImage = `url('${ev.target.result}')`;
+                    preview.style.height = '120px';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    modal.classList.add('active');
+}
+
+/**
+ * Saves updated static page content to Supabase.
+ * Updates last_modified timestamp on every save.
+ * Handles optional banner image upload via uploadFile().
+ *
+ * @param {string} slug - Page slug — unique identifier for the row.
+ * @param {string} title - Updated page title.
+ * @param {string} content - HTML content from Quill editor.
+ * @returns {Promise<void>}
+ * @throws {Error} If the Supabase update fails.
+ */
+async function saveStaticPage(slug, title, content) {
+    const saveBtn = document.getElementById('spSaveBtn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+
+    try {
+        // Handle optional banner upload before saving
+        let bannerUrl = null;
+        const bannerFile = document.getElementById('spBannerUpload')?.files[0];
+        if (bannerFile) bannerUrl = await uploadFile(bannerFile, 'static-pages', 'banners');
+
+        const updateData = {
+            title,
+            content,
+            last_modified: new Date().toISOString()
+        };
+        if (bannerUrl) updateData.banner_url = bannerUrl;
+
+        const { error } = await supabase
+            .from('static_pages')
+            .update(updateData)
+            .eq('slug', slug);
+        if (error) throw error;
+
+        showToast('Page saved successfully!');
+        document.getElementById('staticPageFormModal')?.classList.remove('active');
+        await renderAdminStaticPagesList();
+
+    } catch (err) {
+        console.error('saveStaticPage error:', err);
+        showToast('Save failed: ' + err.message, 'error');
+    } finally {
+        // Re-enable save button regardless of success or failure
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> Save'; }
     }
 }
