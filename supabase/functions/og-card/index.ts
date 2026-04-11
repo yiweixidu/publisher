@@ -134,17 +134,23 @@ async function generateImage(p) {
     await ensureAssets();
 
     const coverData    = await fetchCoverDataUrl(p.coverUrl);
-    const stars        = p.rating>0?'★'.repeat(p.rating)+'☆'.repeat(5-p.rating):'';
     const authorText   = p.author?`by ${trunc(p.author,65)}`:'';
     const titleLines   = wrapText(p.title, 648, 26, true).slice(0,2);
     const FF           = cjkFont?'Inter, Noto Sans SC, sans-serif':'Inter, sans-serif';
     const PX           = 476; // text panel left edge
 
-    // Vertical layout — calculate space remaining for excerpt
+    // Reviewer profile row: avatar circle + name + date
+    const reviewerName = trunc(p.username||'Reader', 30);
+    const initial      = (p.username||'R').charAt(0).toUpperCase();
+    const dateStr      = p.timestamp
+        ? new Date(p.timestamp).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'})
+        : '';
+
+    // Vertical layout
     let cy=78; cy+=34;
     const titleY=cy; cy+=titleLines.length*36+14;
     const authorY=cy; cy+=authorText?30:8;
-    const starsY=stars?cy+6:-1; cy+=stars?36:0; cy+=6;
+    const profileY=cy+14; cy+=40; cy+=6;        // reviewer row
     const exBorderY=cy, exY=cy+6;
 
     // ── Dynamic font-size: largest font where full text fits in available height ─
@@ -215,12 +221,14 @@ async function generateImage(p) {
                 font-size="13" fill="#999999">${x(authorText)}</text>`
             :'',
 
-        // Stars
-        stars&&starsY>0
-            ?`<text x="${PX}" y="${starsY}"
-                font-family="Inter,sans-serif"
-                font-size="20" fill="#ff0000" letter-spacing="4">${x(stars)}</text>`
-            :'',
+        // Reviewer profile row: red circle avatar + name + date
+        `<circle cx="${PX+14}" cy="${profileY}" r="14" fill="#ff0000"/>`,
+        `<text x="${PX+14}" y="${profileY+5}"
+            font-family="Inter,sans-serif" font-size="13" font-weight="700"
+            fill="#ffffff" text-anchor="middle">${x(initial)}</text>`,
+        `<text x="${PX+36}" y="${profileY+5}"
+            font-family="${FF}" font-size="13" font-weight="700"
+            fill="#1a1a1a">${x(reviewerName + (dateStr ? '   ·   ' + dateStr : ''))}</text>`,
 
         // Excerpt red left border
         excerptLines.length>0
@@ -301,11 +309,12 @@ Deno.serve(async (req) => {
         if (url.searchParams.has('img')) {
             try {
                 const png = await generateImage({
-                    title:   book?.title||'Book Review',
-                    author:  book?.author||'',
-                    excerpt: (review.text||'').replace(/\s+/g,' '),
+                    title:     book?.title||'Book Review',
+                    author:    book?.author||'',
+                    excerpt:   (review.text||'').replace(/\s+/g,' '),
                     coverUrl,
-                    rating:  Number(review.rating)||0,
+                    username:  review.username||'',
+                    timestamp: review.timestamp||review.created_at||'',
                 });
                 return new Response(png,{
                     headers:{...CORS,'Content-Type':'image/png','Cache-Control':'public,max-age=86400'},
