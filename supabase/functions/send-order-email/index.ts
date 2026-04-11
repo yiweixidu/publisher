@@ -24,7 +24,7 @@
 //   SUPABASE_ANON_KEY
 // ============================================
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Same CORS headers as send-newsletter — required for browser fetch calls
 const corsHeaders = {
