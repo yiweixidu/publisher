@@ -3,12 +3,15 @@
 // Publisher E-commerce Platform
 // ============================================
 // Authors:
-//   Lewei Rong            — Books, News, Reviews
+//   Lewei Rong            — Books, News, Reviews,
+//                           Auth Helpers
 //   Ana-Laurya Lefrancois — Orders (Card 8)
+//                           Order email trigger (Card 15)
 // ============================================
 
 import { supabase } from './supabaseClient.js';
 import { currentAccessToken } from './auth.js';
+import { SUPABASE_URL } from './constants.js'; // Ana-Laurya — Card 15
 
 // Exported arrays (initially empty, filled by load functions)
 export let books = [];
@@ -231,6 +234,10 @@ export async function loadOrderItems(orderId) {
  * orders and order_items tables. Throws on failure so the
  * checkout UI can surface the error to the user.
  *
+ * Ana-Laurya Lefrancois — Card 15: triggers order confirmation
+ * email via send-order-email Edge Function after successful save.
+ * Email failure is non-fatal — order is still saved if email fails.
+ *
  * @param {Object} order - Order data from the checkout form.
  * @param {Object[]} items - Line items: [{book_id, title, quantity, price}].
  * @returns {Promise<Object>} The saved order record.
@@ -262,6 +269,15 @@ export async function saveOrder(order, items = []) {
 
     // Update local cache so admin view reflects new order immediately
     orders = [...orders, savedOrder];
+
+    // ── Card 15: Trigger order confirmation email ─────────────────────────────
+    // Fire-and-forget — email failure must not block checkout completion.
+    // Calls send-order-email Edge Function with type 'order_confirmation'.
+    // Uses latest session token — same pattern as sendNewsletterEmail() in newsletter.js.
+    _sendOrderEmail('order_confirmation', savedOrder.id).catch(err => {
+        console.warn('Order confirmation email failed (non-fatal):', err.message);
+    });
+
     return savedOrder;
 }
 
@@ -310,6 +326,47 @@ export async function decreaseStock(bookId, quantity) {
         .update({ stock: newStock })
         .eq('id', bookId);
     if (updateError) throw updateError;
+}
+
+// ============================================
+// EMAIL HELPERS
+// Author: Ana-Laurya Lefrancois — Card 15
+// ============================================
+
+/**
+ * Calls the send-order-email Supabase Edge Function.
+ * Follows sendNewsletterEmail() pattern from newsletter.js exactly —
+ * fetches fresh session token, calls Edge Function with Bearer auth.
+ *
+ * @param {'order_confirmation'|'shipping_confirmation'} type - Email type to send.
+ * @param {string} orderId - UUID of the order to email about.
+ * @param {string} [trackingNumber] - Optional tracking number for shipping emails.
+ * @returns {Promise<number>} Number of emails successfully sent.
+ * @throws {Error} If the Edge Function call fails.
+ */
+export async function _sendOrderEmail(type, orderId, trackingNumber) {
+    // Always get the latest session token — same as newsletter.js
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+        throw new Error('No active session — cannot send order email.');
+    }
+
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-order-email`, {
+        method: 'POST',
+        headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ type, orderId, trackingNumber })
+    });
+
+    if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(`send-order-email Edge Function error ${resp.status}: ${txt}`);
+    }
+
+    const json = await resp.json();
+    return json.sent ?? 0;
 }
 
 // ============================================
