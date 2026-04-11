@@ -7,8 +7,8 @@
 //                           (login, logout, signup,
 //                            session management, admin
 //                            nav wiring, inactivity timer)
-//   Ana-Laurya Lefrancois — MANAGE ORDERS nav link
-//                           wiring (Card 8)
+//   Ana-Laurya Lefrancois — MANAGE ORDERS nav link (Card 8)
+//                           MANAGE STATIC PAGES nav link (Card 10)
 // ============================================
 
 import { langPack } from './i18n.js';
@@ -246,6 +246,7 @@ export async function initAuth() {
 // ADMIN NAV LINK WIRING
 // Author: Lewei Rong
 // Ana-Laurya Lefrancois added MANAGE ORDERS binding (Card 8)
+// Ana-Laurya Lefrancois added MANAGE STATIC PAGES binding (Card 10)
 // ============================================
 
 // Shows admin nav links when in admin mode, hides them otherwise.
@@ -307,6 +308,17 @@ export function updateAdminNavLink() {
             document.getElementById('adminManageOrdersLink')?.addEventListener('click', (e) => {
                 e.preventDefault();
                 navigateTo('/admin/orders');
+            });
+        }
+
+        // MANAGE STATIC PAGES — Ana-Laurya Lefrancois (Card 10)
+        // Same clone + rebind pattern as all other admin nav links above
+        const staticPagesLink = document.getElementById('adminManageStaticPagesLink');
+        if (staticPagesLink) {
+            staticPagesLink.replaceWith(staticPagesLink.cloneNode(true));
+            document.getElementById('adminManageStaticPagesLink')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo('/admin/static-pages');
             });
         }
 
