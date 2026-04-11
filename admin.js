@@ -9,6 +9,7 @@
 //   Ana-Laurya Lefrancois — Orders section (Card 8)
 //                           Customer order history (Card 11)
 //                           Static Page Editor (Card 10)
+//                           Shipping email trigger (Card 15)
 // ============================================
 
 // ── Imports ──────────────────────────────────────────────────────────────────
@@ -1333,7 +1334,15 @@ export async function renderAdminOrderList() {
                             if (item.book_id) await decreaseStock(item.book_id, item.quantity);
                         }
                     }
-
+                    // Card 15: Trigger shipping confirmation email when admin marks as shipped.
+                    // Fire-and-forget — email failure must not block the status update UI.
+                    // Follows same non-fatal pattern as saveOrder() in data.js.
+                    if (newStatus === 'shipped') {
+                        const { _sendOrderEmail } = await import('./data.js');
+                        _sendOrderEmail('shipping_confirmation', orderId).catch(err => {
+                            console.warn('Shipping email failed (non-fatal):', err.message);
+                        });
+                    }
                     showToast(`Order updated to "${newStatus}"`);
                     await renderAdminOrderList();
                 } catch (err) {
