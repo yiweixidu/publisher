@@ -407,3 +407,4 @@ function resetAdminInactivityTimer() {
         }, 300000); // 5 minutes
     }
 }
+
