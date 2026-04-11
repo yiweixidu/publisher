@@ -9,7 +9,7 @@ A bilingual (EN/FR) e-commerce platform for Acer Books, a Montréal-based indepe
 | Contributor | Scope |
 |---|---|
 | **Lewei Rong** | Core architecture, books, news, reviews, auth, admin (books/news/users/comments), routing, UI, cart, checkout, i18n, CSS |
-| **Ana-Laurya Lefrancois** | Order Management System (Card 8), Customer Management (Card 11), Security & Reliability documentation (Card 20), Static Page Editor (Card 10), language switcher dynamic re-render (Card 18) |
+| **Ana-Laurya Lefrancois** | Order Management System (Card 8), Customer Management (Card 11), Security & Reliability documentation (Card 20), Static Page Editor (Card 10), Language switcher dynamic re-render (Card 18), Email Notifications — Edge Function + templates (Card 15), Performance & Scalability audit (Card 19) |
 
 ---
 
@@ -34,8 +34,8 @@ publisher/
 ├── index.html          # Single-page app shell — all pages and modals
 ├── main.js             # Entry point — event listeners and app init
 ├── auth.js             # Supabase Auth — login, logout, signup, session
-├── admin.js            # Admin pages — books, news, users, comments, orders
-├── data.js             # Supabase data layer — all CRUD functions
+├── admin.js            # Admin pages — books, news, users, comments, orders, static pages
+├── data.js             # Supabase data layer — all CRUD functions + email triggers
 ├── ui.js               # Public page rendering — books, news, book detail
 ├── routing.js          # Client-side routing — navigateTo, handleRoute
 ├── cart.js             # Shopping cart — localStorage persistence
@@ -48,8 +48,9 @@ publisher/
 ├── style.css           # Global styles
 └── supabase/
     └── functions/
-        ├── og-card/        # Edge Function — review share card image generation
-        └── send-newsletter/ # Edge Function — newsletter email dispatch
+        ├── og-card/          # Edge Function — review share card image generation
+        ├── send-newsletter/  # Edge Function — newsletter email dispatch
+        └── send-order-email/ # Edge Function — order confirmation + shipping emails
 ```
 
 ---
@@ -77,6 +78,7 @@ publisher/
 - Manage users — view profiles, role management, subscriber status
 - Manage comments — moderate reviews and comments
 - Manage orders — view all orders, update status, expand line items, print invoices
+- Manage static pages — edit About and FAQ pages with Quill rich-text editor
 - Customer management — view order history per customer
 
 ---
@@ -133,6 +135,76 @@ To update: change the version number in the `<script>` or `<link>` tag in `index
 
 ---
 
+## Performance & Scalability
+
+> Card 19 — Performance & Scalability (NFR)
+> Audit and documentation by Ana-Laurya Lefrancois
+
+### Page Load Time
+Target: **< 3 seconds** on a standard connection.
+
+Achieved through:
+- GitHub Pages serves all static assets (HTML, CSS, JS) from edge locations globally via Cloudflare CDN — no origin server round-trips for static files
+- All third-party libraries (Font Awesome, Quill.js, Google Fonts) loaded from CDN (`cdnjs.cloudflare.com`, `cdn.quilljs.com`) with HTTP/2 multiplexing
+- Book cover images served from **Supabase Storage** which uses a CDN-backed object store — images are not bundled into the repository
+- JavaScript loaded as ES Modules — only the modules needed for the current route are imported
+
+### Image Optimization
+- Book cover `<img>` elements use `loading="lazy"` (added by Ana-Laurya Lefrancois, Card 19) — images below the fold are not fetched until the user scrolls to them, reducing initial page payload
+- News images use CSS `background-image` with `background-size: cover` — no oversized image downloads
+- Cover images are uploaded and stored in Supabase Storage; recommended compression before upload: max 800px wide, < 200KB per image
+
+### CDN for Static Assets
+
+| Asset type | CDN used |
+|---|---|
+| HTML / CSS / JS | GitHub Pages + Cloudflare (automatic) |
+| Book cover images | Supabase Storage (CDN-backed) |
+| Font Awesome icons | cdnjs.cloudflare.com |
+| Quill.js editor | cdn.quilljs.com |
+| Google Fonts | fonts.googleapis.com |
+
+All external CDN URLs use pinned versions to prevent unexpected breaking changes.
+
+### localStorage → Backend Database
+The card description notes the demo used `localStorage` — this has been fully resolved. All persistent data is stored in **Supabase PostgreSQL**:
+
+| Data type | Storage |
+|---|---|
+| Books catalog | `books` table — Supabase PostgreSQL |
+| News & events | `news` table — Supabase PostgreSQL |
+| Reviews & comments | `reviews` table — Supabase PostgreSQL |
+| User profiles | `profiles` table — Supabase PostgreSQL |
+| Orders & line items | `orders` + `order_items` tables — Supabase PostgreSQL |
+| Static page content | `static_pages` table — Supabase PostgreSQL |
+| Newsletter subscribers | `subscribers` table — Supabase PostgreSQL |
+| Shopping cart | `localStorage` — intentional, cart is session-scoped and does not need server persistence |
+
+The only remaining use of `localStorage` is the shopping cart — this is intentional. Cart data is inherently session-scoped and does not need to survive across devices or server restarts.
+
+### Caching Strategies
+Two layers of in-memory caching are in place:
+
+**Client-side array cache (`data.js`)** — `books`, `newsItems`, `orders`, and `reviews` are loaded once per session into module-level arrays. Subsequent renders read from these arrays without hitting Supabase again, reducing API calls significantly during a browsing session.
+
+**Supabase query cache** — The Supabase JS client uses connection pooling (via PgBouncer on the Pro plan) and HTTP keep-alive, reducing per-query overhead.
+
+For future scaling, consider adding a **service worker** to cache static assets and API responses for offline support.
+
+### Concurrency & Scalability
+Target: **500 concurrent users**.
+
+| Layer | Scalability |
+|---|---|
+| Frontend (GitHub Pages) | Unlimited — static files served from CDN edge nodes globally |
+| API (Supabase REST) | Supabase free tier handles ~500 concurrent connections via PgBouncer pooling |
+| Database (PostgreSQL) | Supabase's managed PostgreSQL is designed for thousands of books and orders — no schema changes needed to scale the catalog |
+| Edge Functions | Supabase Edge Functions run on Deno Deploy — auto-scaled, no cold-start limit on free tier for low-traffic functions |
+
+**Load testing** — formal load testing (e.g. with [k6](https://k6.io) or [Locust](https://locust.io)) is recommended before the site goes to full production. The Supabase free tier (Nano plan) supports light traffic; upgrade to Pro for higher concurrency guarantees and connection pooling at scale.
+
+---
+
 ## Database Schema
 
 ### Core Tables (Author: Lewei Rong)
@@ -146,7 +218,10 @@ To update: change the version number in the `<script>` or `<link>` tag in `index
 - `orders` — one record per customer checkout, with snapshotted shipping address and financials
 - `order_items` — line items per order with price and title snapshotted at purchase time
 
-See `create-orders-tables-final.sql` (attached to Card 8 on Trello) for the full schema with RLS policies.
+### Static Pages Table (Author: Ana-Laurya Lefrancois — Card 10)
+- `static_pages` — editable content pages (About, FAQ) with slug, title, content, banner, and last_modified timestamp
+
+See `create-orders-tables-final.sql` (attached to Card 8 on Trello) for the full orders schema with RLS policies.
 
 ---
 
@@ -180,6 +255,8 @@ Deployed automatically via GitHub Actions to GitHub Pages on every push to `mast
 | `feat/card11-customer-management` | Ana-Laurya — Customer Management (Card 11) |
 | `feat/card20-security` | Ana-Laurya — Security & Reliability (Card 20) |
 | `feat/card10-static-page-editor` | Ana-Laurya — Static Page Editor (Card 10) |
+| `feat/card15-email-notifications` | Ana-Laurya — Email Notifications (Card 15) |
+| `feat/card19-performance` | Ana-Laurya — Performance & Scalability (Card 19) |
 
 ---
 
@@ -189,3 +266,5 @@ Deployed automatically via GitHub Actions to GitHub Pages on every push to `mast
 - **Automated backups** — Requires Supabase Pro plan upgrade.
 - **Shipping calculator** — Currently fixed rates. Real-time carrier API integration is planned (Card 14).
 - **Orders schema** — `create-orders-tables-final.sql` is ready but pending alignment with Lewei's existing `orders` table before running in production.
+- **Email sender domain** — Order confirmation and shipping emails currently use `onboarding@resend.dev` as the sender. Update `FROM_EMAIL` Supabase secret to `noreply@acerbooks.ca` once the domain is verified in Resend.
+- **Load testing** — Formal concurrency testing not yet performed. Recommended before full production launch.
