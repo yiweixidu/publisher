@@ -266,5 +266,6 @@ Deployed automatically via GitHub Actions to GitHub Pages on every push to `mast
 - **Automated backups** — Requires Supabase Pro plan upgrade.
 - **Shipping calculator** — Currently fixed rates. Real-time carrier API integration is planned (Card 14).
 - **Orders schema** — `create-orders-tables-final.sql` is ready but pending alignment with Lewei's existing `orders` table before running in production.
-- **Email sender domain** — Order confirmation and shipping emails currently use `onboarding@resend.dev` as the sender. Update `FROM_EMAIL` Supabase secret to `noreply@acerbooks.ca` once the domain is verified in Resend.
+- **Email sender domain** — Order confirmation and shipping emails send from `newsletter@acerbooks.ca` via Resend.
 - **Load testing** — Formal concurrency testing not yet performed. Recommended before full production launch.
+
