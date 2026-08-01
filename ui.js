@@ -676,9 +676,14 @@ export function renderBookDetail(book) {
     const detailWishlistBtn = document.getElementById('detailAddToWishList');
     if (detailWishlistBtn) {
         detailWishlistBtn.dataset.wishlistBookid = book.id;
-        detailWishlistBtn.onclick = () => {
-            alert(langPack[currentLang].addedToWishList);
-        };
+        detailWishlistBtn.onclick = async () => {
+        // Same flow as the modal wishlist button in main.js
+        const { currentUser, openLoginModal } = await import('./auth.js');
+        if (!currentUser) { openLoginModal('user'); return; }
+        const { toggleWishlist, updateWishlistButtons } = await import('./account.js');
+        toggleWishlist(book);
+        updateWishlistButtons();
+    };
     }
     setupDetailTabs();
 }
