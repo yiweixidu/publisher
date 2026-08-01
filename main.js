@@ -998,16 +998,6 @@ modalAddToCart?.addEventListener('click', () => {
     window.open(getAmazonUrl(currentModalBook), '_blank', 'noopener');
 });
 
-
-modalAddToWishList?.addEventListener('click', () => {
-    if (!currentModalBook) return;
-    if (!currentUser) { openLoginModal('user'); return; }
-    import('./account.js').then(({ toggleWishlist, updateWishlistButtons }) => {
-        toggleWishlist(currentModalBook);
-        updateWishlistButtons();
-    });
-});
-
 // Account modal close
 document.getElementById('accountModalClose')?.addEventListener('click', () => {
     import('./account.js').then(({ closeAccountDashboard }) => closeAccountDashboard());
