@@ -19,6 +19,7 @@ import {
 import { renderReviews, renderDetailReviews, checkHashForReview } from './review.js';
 import { navigateTo, handleRoute } from './routing.js';
 import { loadBooks, loadNews, loadReviews, newsItems } from './data.js';
+import { getAmazonUrl } from './amazon.js';
 
 // DOM elements (same as original)
 const adminSwitch = document.getElementById('adminSwitch');
@@ -991,14 +992,12 @@ modalOverlay?.addEventListener('click', e => {
     if (e.target === modalOverlay) modalOverlay.classList.remove('active');
 });
 
+// Full Amazon redirect mode — opens the book's Amazon page in a new tab
 modalAddToCart?.addEventListener('click', () => {
     if (!currentModalBook) return;
-    import('./ui.js').then(({ currentModalFormat }) => {
-        addToCart(currentModalBook, currentModalFormat);
-        alert(`${currentModalBook.title} added to cart!`);
-        renderCartModal();
-    });
+    window.open(getAmazonUrl(currentModalBook), '_blank', 'noopener');
 });
+
 
 modalAddToWishList?.addEventListener('click', () => {
     if (!currentModalBook) return;
