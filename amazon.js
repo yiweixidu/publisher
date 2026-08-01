@@ -29,5 +29,13 @@ export function getAmazonUrl(book) {
         url = asin
             ? `${AMAZON_BASE}/dp/${asin}`
             : `${AMAZON_BASE}/s?k=${encodeURIComponent(digits)}`;  // search fallback
+    } else {
+        // No link, no ISBN — search by title + author
+        url = `${AMAZON_BASE}/s?k=${encodeURIComponent(book.title + ' ' + (book.author || ''))}`;
     }
+    // Append affiliate tag if configured
+    if (AMAZON_AFFILIATE_TAG) {
+        url += (url.includes('?') ? '&' : '?') + 'tag=' + AMAZON_AFFILIATE_TAG;
+    }
+    return url;   // ← the line that was missing
 }
