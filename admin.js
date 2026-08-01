@@ -45,6 +45,7 @@ const formTitle = document.getElementById('formTitle');
 const formAuthor = document.getElementById('formAuthor');
 const formCategories = document.getElementById('formCategories');
 const formIsbn = document.getElementById('formIsbn');
+const formAmazonUrl = document.getElementById('formAmazonUrl');
 const formPublisher = document.getElementById('formPublisher');
 const formPubDate = document.getElementById('formPubDate');
 const formPages = document.getElementById('formPages');
@@ -340,6 +341,7 @@ export function openBookFormModal(book = null) {
         formAuthor.value = book.author || '';
         formCategories.value = book.categories ? book.categories.join(', ') : '';
         formIsbn.value = book.isbn || '';
+        formAmazonUrl.value = book.amazon_url || '';
         formPublisher.value = book.publisher || '';
         formPubDate.value = book.pub_date || '';
         formPages.value = book.pages || '';
@@ -449,6 +451,7 @@ async function saveBookFromForm() {
             return base;
         })(),
         isbn: formIsbn.value.trim(),
+        amazon_url: formAmazonUrl.value.trim() || null, 
         publisher: formPublisher.value.trim(),
         pub_date: formPubDate.value.trim(),
         pages: parseInt(formPages.value) || null,

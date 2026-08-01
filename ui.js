@@ -6,6 +6,7 @@ import { addToCart } from './cart.js';
 import { renderReviews, renderDetailReviews } from './review.js';
 import { navigateTo, toSlug, toSlugAsync } from './routing.js';
 import { renderCartModal } from './cart.js';
+import { getAmazonUrl } from './amazon.js';
 
 // DOM elements
 const grid = document.getElementById('bookGrid');
@@ -668,12 +669,9 @@ export function renderBookDetail(book) {
     } else {
         if (detailHcBadge) detailHcBadge.style.display = 'none';
     }
+    // Full Amazon redirect mode — opens the book's Amazon page in a new tab
     document.getElementById('detailAddToCart').onclick = () => {
-        addToCart(book, currentModalFormat);
-        const fmtLabel = currentModalFormat === 'hardcover'
-            ? ` (${langPack[currentLang].hardcover || 'Hardcover'})`
-            : ` (${langPack[currentLang].paperback  || 'Paperback'})`;
-        alert(langPack[currentLang].itemAddedToCart + fmtLabel);
+        window.open(getAmazonUrl(book), '_blank', 'noopener');
     };
     const detailWishlistBtn = document.getElementById('detailAddToWishList');
     if (detailWishlistBtn) {
@@ -838,7 +836,7 @@ export function updateModalLanguage() {
         modalPrice.innerText = `$${p}`;
     }
     if (modalAvailability) modalAvailability.innerText = langPack[currentLang].availability;
-    if (modalAddToCart) modalAddToCart.innerHTML = `<i class="fas fa-shopping-cart"></i> ${langPack[currentLang].addToCart}`;
+    if (modalAddToCart) modalAddToCart.innerHTML = `<i class="fab fa-amazon"></i> ${langPack[currentLang].buyOnAmazon}`;
     if (modalAddToWishList) modalAddToWishList.innerHTML = `<i class="fas fa-heart"></i> ${langPack[currentLang].addToWishList}`;
     const tabElements = document.querySelectorAll('.modal-tab');
     if (tabElements.length >= 4) {

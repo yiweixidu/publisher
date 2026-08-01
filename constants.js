@@ -62,3 +62,15 @@ export const DATA_KEYS = {
     REVIEWS: 'acerReviews',
     ADMIN:   'acerAdmins'
 };
+
+// ============================================
+// AMAZON REDIRECT
+// Author: Lewei Rong
+// ============================================
+
+// Amazon marketplace base — .ca for Canadian customers
+export const AMAZON_BASE = 'https://www.amazon.ca';
+
+// Amazon Associates tracking ID — issued by Amazon after registration.
+// Empty string = affiliate tracking disabled (links still work normally).
+export const AMAZON_AFFILIATE_TAG = '';

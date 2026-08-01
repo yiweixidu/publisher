@@ -133,6 +133,7 @@ export const langPack = {
         statusDraft: 'Draft',
         publish: 'Publish',
         unpublish: 'Unpublish',
+        buyOnAmazon: 'Buy on Amazon',
         // FR #1 filter bar
         filterAllLanguages: 'All Languages',
         filterAllAuthors: 'All Authors',
@@ -315,6 +316,7 @@ export const langPack = {
         statusDraft: "Brouillon",
         publish: "Publier",
         unpublish: "Dépublier",
+        buyOnAmazon: 'Acheter sur Amazon',
         // FR #1 filter bar
         filterAllLanguages: 'Toutes les langues',
         filterAllAuthors: 'Tous les auteurs',

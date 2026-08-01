@@ -56,7 +56,7 @@
                     <a href="#" id="navNews" data-i18n="navNews" class="nav-user-link">NEWS</a>
 
                     <!-- ========== 购物车 ========== -->
-                    <div class="cart-icon nav-user-link" id="cartIcon">
+                    <div class="cart-icon nav-user-link" id="cartIcon" style="display:none;">
                         <i class="fas fa-shopping-bag"></i>
                         <span class="cart-badge">0</span>
                     </div>
@@ -158,7 +158,7 @@
 
             <!-- Footer — copyright, language switcher, newsletter link -->
             <footer>
-                <div class="footer-address" data-i18n="footerAddr">© 2025 Acer Books — 5470 rue Saint-Laurent, Montreal</div>
+                <div class="footer-address" data-i18n="footerAddr">© 2026 Acer Books — 5470 rue Saint-Laurent, Montreal</div>
                 <div class="footer-lang-switch">
                     <a href="#" id="langEn" class="footer-lang active">EN</a>
                     <span class="footer-lang-sep">|</span>
@@ -244,7 +244,7 @@
                         <button class="format-btn" data-fmt="hardcover" data-i18n="hardcover">Hardcover</button>
                     </div>
                     <div class="detail-actions">
-                        <button class="btn-primary" id="detailAddToCart"><i class="fas fa-shopping-cart"></i> ADD TO CART</button>
+                        <button class="btn-primary amazon-buy-btn" id="detailAddToCart"><i class="fab fa-amazon"></i> BUY ON AMAZON</button>
                         <button class="btn-secondary" id="detailAddToWishList"><i class="fas fa-heart"></i> ADD TO WISH LIST</button>
                     </div>
                     <!-- Tabs — description, author bio, product details, reviews -->
@@ -298,7 +298,7 @@
                     <button class="format-btn" data-fmt="hardcover" data-i18n="hardcover">Hardcover</button>
                 </div>
                 <div class="modal-actions">
-                    <button class="btn-primary" id="modalAddToCart"><i class="fas fa-shopping-cart"></i> ADD TO CART</button>
+                    <button class="btn-primary amazon-buy-btn" id="modalAddToCart"><i class="fab fa-amazon"></i> BUY ON AMAZON</button>
                     <button class="btn-secondary" id="modalAddToWishList"><i class="fas fa-heart"></i> ADD TO WISH LIST</button>
                 </div>
                 <div class="modal-tabs">
@@ -649,12 +649,18 @@
                 <input type="text" id="formCategories" placeholder="Categories (comma separated)" data-i18n-placeholder="categoriesPlaceholder">
                 <input type="text" id="formIsbn" placeholder="ISBN" data-i18n-placeholder="isbnPlaceholder">
             </div>
-            <!-- Row 3: Publisher, Publication Date -->
+            <!-- Row 3: Amazon product link — filled by business owner, optional -->
+            <div class="form-row">
+                <input type="url" id="formAmazonUrl"
+                    placeholder="Amazon Link (e.g. https://www.amazon.ca/dp/0123456789)"
+                    data-i18n-placeholder="amazonUrlPlaceholder">
+            </div>
+            <!-- Row 4: Publisher, Publication Date -->
             <div class="form-row">
                 <input type="text" id="formPublisher" placeholder="Publisher" data-i18n-placeholder="publisherPlaceholder">
                 <input type="text" id="formPubDate" placeholder="Publication Date (e.g. 2024-03-17)" data-i18n-placeholder="pubDatePlaceholder">
             </div>
-            <!-- Pages + Language 行 -->
+            <!-- Row 5: Pages + Language 行 -->
             <div class="form-row">
                 <div class="form-group half">
                     <label for="formPages" data-i18n="pagesPlaceholder">Pages</label>
@@ -669,7 +675,7 @@
                     </div>
                 </div>
             </div>
-            <!-- Row 5: Paperback Price + Hardcover Price -->
+            <!-- Row 6: Paperback Price + Hardcover Price -->
             <div class="form-row">
                 <div class="form-group half">
                     <label class="form-field-label">Paperback Price (CAD)
@@ -684,7 +690,7 @@
                     <input type="number" step="0.01" id="formPriceHardcover" placeholder="e.g. 28.99" min="0">
                 </div>
             </div>
-            <!-- Row 6: Acer Series + Stock Status -->
+            <!-- Row 7: Acer Series + Stock Status -->
             <div class="form-row">
                 <select id="formAcerSeries" class="form-select">
                     <option value="">— Acer Series —</option>
