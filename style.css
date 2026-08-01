@@ -11,6 +11,11 @@ h1,h2,h3,h4 { font-family:'Lora',serif; font-weight:500; letter-spacing:-0.02em;
 .btn-outline-red:hover { background:#ff0000; color:white; }
 .navbar { display:flex; justify-content:space-between; align-items:center; padding:1.5rem 0; border-bottom:1px solid #eaeaea; }
 .logo img { height:60px; width:auto; }
+/* Brand block — icon on the left, wordmark + tagline on the right */
+.logo-link { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.logo-text { display: flex; flex-direction: column; align-items: center; }
+.logo-title { color: #1f3a68; font-family: 'Lora', serif; font-size: 1.5rem; font-weight: 700; line-height: 1.1; white-space: nowrap; }
+.logo-tagline { color: #1f3a68; font-family: 'Lora', serif; font-size: 0.72rem; letter-spacing: 0.06em; margin-top: 2px; white-space: nowrap; }
 .nav-links { display:flex; gap:2.5rem; align-items:center; }
 .nav-links a { text-decoration:none; color:#2d2d2d; font-weight:500; }
 .nav-links a:hover { color:#ff0000; }
@@ -201,6 +206,8 @@ footer { margin-top:4rem; padding:2rem 0; border-top:1px solid #eaeaea; display:
 @media (max-width: 850px) {
     .navbar { flex-direction: column; align-items: stretch; padding: 1rem;}
     .logo img { height: 50px; margin-bottom: 0.5rem;}
+    .logo-title   { font-size: 1.1rem; }
+    .logo-tagline { display: none; }   /* 小屏只留图标+店名,藏副标题 */
     .nav-links { flex-wrap: wrap; gap: 0.8rem; justify-content: center; margin-top: 0.5rem; }
     .lang-cart { margin-left: 0; justify-content: center; }
     .admin-toggle { margin-left: 0; justify-content: center; }

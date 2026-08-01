@@ -2,7 +2,7 @@
 export const langPack = {
     en: {
         navHome: 'HOME', navBooks: 'BOOKS', navAbout: 'ABOUT', navNews: 'NEWS',
-        heroPart1: 'Where poetry', heroAccent: 'meets', heroPart2: 'the lens',
+        heroPart1: 'Poetry, Fiction, Art, Cultures', heroAccent: '', heroPart2: '',
         heroDesc: 'Montreal-based independent publisher — Acer Series, translation, and visual arts.',
         heroBtn: 'discover our books  ',
         sectionRecent: 'recent & recommended',
@@ -181,7 +181,7 @@ export const langPack = {
 
     fr: {
         navHome: 'ACCUEIL', navBooks: 'LIVRES', navAbout: 'À PROPOS', navNews: 'ACTUALITÉS',
-        heroPart1: 'Où la poésie', heroAccent: 'rencontre', heroPart2: "l'objectif",
+        heroPart1: 'Poésie, Fiction, Art, Cultures', heroAccent: '', heroPart2: "",
         heroDesc: 'Maison d’édition indépendante montréalaise — série Acer, traduction et arts visuels.',
         heroBtn: 'découvrir nos livres  ',
         sectionRecent: 'récents & recommandés',
