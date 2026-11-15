@@ -3,7 +3,7 @@ export const langPack = {
     en: {
         navHome: 'HOME', navBooks: 'BOOKS', navAbout: 'ABOUT', navNews: 'NEWS',
         heroPart1: 'Poetry, Fiction, Art, Cultures', heroAccent: '', heroPart2: '',
-        heroDesc: 'Montreal-based independent publisher and much more.',
+        heroDesc: 'Montreal-based independent publisher',
         heroBtn: 'discover our books  ',
         sectionRecent: 'recent & recommended',
         viewAll: 'view all  ',
@@ -183,7 +183,7 @@ export const langPack = {
     fr: {
         navHome: 'ACCUEIL', navBooks: 'LIVRES', navAbout: 'À PROPOS', navNews: 'ACTUALITÉS',
         heroPart1: 'Poésie, Fiction, Art, Cultures', heroAccent: '', heroPart2: "",
-        heroDesc: 'Éditeur indépendant basé à Montréal et bien plus encore.',
+        heroDesc: 'Éditeur indépendant basé à Montréal',
         heroBtn: 'découvrir nos livres  ',
         sectionRecent: 'récents & recommandés',
         viewAll: 'voir tout  ',
