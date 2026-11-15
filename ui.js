@@ -296,11 +296,12 @@ function applyBooksFilters(allBooks) {
 }
 
 // ── Books page sorting ───────────────────────────────────────────────────────
-// Sort keys (booksSortFilter values): title | author | language | pub_date | price_asc | price_desc
+// Sort keys (booksSortFilter values): title | author | pub_date | price_asc | price_desc
+// Any other value (e.g. an old ?sort=... link) falls back to title.
 // Business rule: in alphabetical sorts, Children's Art books are listed after all other books.
 // Price and date sorts are not affected by this rule.
 const CHILDREN_CATEGORY    = "Children's Art";
-const CHILDREN_LAST_SORTS  = ['title', 'author', 'language'];
+const CHILDREN_LAST_SORTS  = ['title', 'author'];
 
 function isChildrenBook(book) {
     return (book.categories || []).includes(CHILDREN_CATEGORY);
@@ -384,9 +385,6 @@ function compareBooks(a, b, sort) {
     if (sort === 'author') {
         return compareText(bookAuthorFor(a), bookAuthorFor(b)) || compareText(bookTitleFor(a), bookTitleFor(b));
     }
-    if (sort === 'language') {
-        return compareText(a.language || '', b.language || '') || compareText(bookTitleFor(a), bookTitleFor(b));
-    }
     if (sort === 'pub_date') {
         return new Date(b.pub_date || 0) - new Date(a.pub_date || 0);   // newest first
     }
@@ -449,7 +447,10 @@ function syncBooksFilterUI() {
     if (si) si.value = booksActiveFilters.search;
     if (lf) lf.value = booksActiveFilters.lang;
     if (catFilter) catFilter.value = booksActiveCategory;
-    if (sf) sf.value = booksActiveFilters.sort || 'title';
+    if (sf) {
+        sf.value = booksActiveFilters.sort || 'title';
+        if (!sf.value) sf.value = 'title';   // unknown value from an old URL, e.g. ?sort=language
+    }
     
     if (af) {
         const authors = [...new Set(books.map(b=>(currentLang==='fr'?(b.author_fr||b.author):b.author)).filter(Boolean))].sort(compareText);   // same A–Z (pinyin) order as the book list
