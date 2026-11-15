@@ -323,9 +323,55 @@ function bookPriceFor(book) {
     return Number.isFinite(hc) ? hc : null;
 }
 
-// Explicit locale so the order does not depend on the visitor's browser language
+// ── Alphabetical comparison with pinyin ──────────────────────────────────────
+// Chinese characters are compared by their pinyin, so Chinese and English/French
+// titles share one A–Z order (e.g. 从 "cong" < Oxbow < 上 "shang" < Une < 心 "xin").
+// pinyin-pro is loaded once from the same CDN as routing.js; if it fails to load,
+// Chinese text is still sorted by pinyin, but placed before Latin text.
+const HAN_CHAR = /[㐀-鿿豈-﫿]/;
+let pinyinFn = null;
+let pinyinLoadTried = false;
+const sortKeyCache = new Map();
+
+async function loadPinyinForSort() {
+    if (pinyinLoadTried) return;
+    pinyinLoadTried = true;
+    try {
+        const mod = await import('https://esm.sh/pinyin-pro@3');
+        pinyinFn = mod.pinyin;
+        sortKeyCache.clear();
+    } catch (e) {
+        console.warn('pinyin-pro load failed, falling back to zh collation:', e);
+    }
+}
+
+// "上松鸡山: 云城" → "shang song ji shan : yun cheng"; Latin text is only lower-cased
+function toSortKey(text) {
+    if (sortKeyCache.has(text)) return sortKeyCache.get(text);
+    let key = text.toLowerCase();
+    if (pinyinFn && HAN_CHAR.test(text)) {
+        const chars = Array.from(text);
+        const syllables = pinyinFn(text, { toneType: 'none', type: 'array' });   // one item per character, polyphones resolved in context
+        if (syllables.length === chars.length) {
+            key = chars.map((ch, i) => HAN_CHAR.test(ch) ? syllables[i] + ' ' : ch).join('').toLowerCase();
+        }
+    }
+    sortKeyCache.set(text, key);
+    return key;
+}
+
+// Ignore punctuation and spaces, e.g. "（唐）飞龙" sorts as "tang fei long"
+const sortCollators = {};
+function getSortCollator() {
+    const locale = pinyinFn ? currentLang : 'zh';
+    if (!sortCollators[locale]) {
+        sortCollators[locale] = new Intl.Collator(locale, { sensitivity: 'base', ignorePunctuation: true, numeric: true });
+    }
+    return sortCollators[locale];
+}
+
 function compareText(x, y) {
-    return x.localeCompare(y, currentLang);
+    return getSortCollator().compare(toSortKey(x), toSortKey(y));
 }
 
 function compareBooks(a, b, sort) {
@@ -406,7 +452,7 @@ function syncBooksFilterUI() {
     if (sf) sf.value = booksActiveFilters.sort || 'title';
     
     if (af) {
-        const authors = [...new Set(books.map(b=>(currentLang==='fr'?(b.author_fr||b.author):b.author)).filter(Boolean))].sort();
+        const authors = [...new Set(books.map(b=>(currentLang==='fr'?(b.author_fr||b.author):b.author)).filter(Boolean))].sort(compareText);   // same A–Z (pinyin) order as the book list
         af.innerHTML = `<option value="">${langPack[currentLang].filterAllAuthors||'All Authors'}</option>`;
         authors.forEach(a => { af.innerHTML += `<option value="${a}" ${a===booksActiveFilters.author?'selected':''}>${a}</option>`; });
     }
@@ -463,6 +509,7 @@ export function resetBooksPageState() {
 export async function renderAllBooks() {
     try {
         if (books.length === 0) await loadBooks();
+        await loadPinyinForSort();   // needed by compareText() for the sort and the author dropdown
         if (!booksEventsAttached) { getBooksFromURL(); attachBooksEvents(); booksEventsAttached = true; }
         syncBooksFilterUI();
 
