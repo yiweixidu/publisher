@@ -132,7 +132,7 @@
                         <span class="accent-red" data-i18n="heroAccent"></span>
                         <span data-i18n="heroPart2"></span>
                     </h1>
-                    <p data-i18n="heroDesc">Montreal-based independent publisher — red maple series, translation, and visual arts.</p>
+                    <p data-i18n="heroDesc">Montreal-based independent publisher and much more.</p>
                     <button class="btn-red" data-i18n="heroBtn">discover our books <i class="fas fa-arrow-right"></i></button>
                 </div>
             </div>
@@ -149,7 +149,7 @@
                 <div class="about-text">
                     <h3 data-i18n="aboutTitle">Acer Books · founded by Tao Zhijian, PhD</h3>
                     <p data-i18n="aboutP1">Translator, scholar, and member of the Chinese Writers Association in Quebec. After publishing the acclaimed <em>The Waste Land / The Love Song</em> and <em>English Poems in Chinese Poetic Forms</em>, Tao launched Acer Books to bridge cultures through finely crafted editions. Every cover reflects an artist's eye — many photographs you see here are his own.</p>
-                    <p><i class="fas fa-map-pin accent-red"></i> <span data-i18n="aboutP2">Montreal · distributed worldwide including Harvard Book Store, Hatchards, and Amazon.</span></p>
+                    <p><i class="fas fa-map-pin accent-red"></i> <span data-i18n="aboutP2">Montreal · distributed worldwide: Amazon, Harvard Book Store, Oxford U Press, Hatchards, Barns&Noble, Kraina Ksiazek, and 纪伊国屋, to name just a few.</span></p>
                     <button class="btn-outline-red" data-i18n="aboutBtn">contact us <i class="fas fa-user"></i></button>
                 </div>
                 <div class="about-photo"></div>
@@ -211,6 +211,15 @@
                         <option value="Acer Essays">Acer Essays</option>
                         <option value="Acer Poetry">Acer Poetry</option>
                         <option value="Children's Art">Children's Art</option>
+                    </select>
+                    <!-- Sort selector — read in attachBooksEvents(), synced in syncBooksFilterUI(), applied in compareBooks() (ui.js) -->
+                    <select id="booksSortFilter" class="books-filter-select">
+                        <option value="title" data-i18n="sortTitle">Sort by Title</option>
+                        <option value="author" data-i18n="sortAuthor">Sort by Author</option>
+                        <option value="language" data-i18n="sortLanguage">Sort by Language</option>
+                        <option value="pub_date" data-i18n="sortNewest">Newest First</option>
+                        <option value="price_asc" data-i18n="sortPriceAsc">Price: Low → High</option>
+                        <option value="price_desc" data-i18n="sortPriceDesc">Price: High → Low</option>
                     </select>
                     <div class="books-view-toggle">
                         <button id="booksGridViewBtn" class="view-btn active" title="Grid view"><i class="fas fa-th"></i></button>

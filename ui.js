@@ -291,16 +291,65 @@ function applyBooksFilters(allBooks) {
     const pMin = parseFloat(priceMin), pMax = parseFloat(priceMax);
     if (!isNaN(pMin)) list = list.filter(b => parseFloat(b.price) >= pMin);
     if (!isNaN(pMax)) list = list.filter(b => parseFloat(b.price) <= pMax);
-    list.sort((a, b) => {
-        if (sort === 'author')     { return (currentLang==='fr'?(a.author_fr||a.author):a.author||'').localeCompare(currentLang==='fr'?(b.author_fr||b.author):b.author||''); }
-        if (sort === 'price_asc')  return parseFloat(a.price) - parseFloat(b.price);
-        if (sort === 'price_desc') return parseFloat(b.price) - parseFloat(a.price);
-        if (sort === 'pub_date')   return new Date(b.pub_date||0) - new Date(a.pub_date||0);
-        const ta = currentLang==='fr'?(a.title_fr||a.title):a.title||'';
-        const tb = currentLang==='fr'?(b.title_fr||b.title):b.title||'';
-        return ta.localeCompare(tb);
-    });
+    list.sort((a, b) => compareBooks(a, b, sort || 'title'));
     return list;
+}
+
+// ── Books page sorting ───────────────────────────────────────────────────────
+// Sort keys (booksSortFilter values): title | author | language | pub_date | price_asc | price_desc
+// Business rule: in alphabetical sorts, Children's Art books are listed after all other books.
+// Price and date sorts are not affected by this rule.
+const CHILDREN_CATEGORY    = "Children's Art";
+const CHILDREN_LAST_SORTS  = ['title', 'author', 'language'];
+
+function isChildrenBook(book) {
+    return (book.categories || []).includes(CHILDREN_CATEGORY);
+}
+
+function bookTitleFor(book) {
+    return (currentLang === 'fr' ? (book.title_fr || book.title) : book.title) || '';
+}
+
+function bookAuthorFor(book) {
+    return (currentLang === 'fr' ? (book.author_fr || book.author) : book.author) || '';
+}
+
+// Paperback price, falling back to hardcover (same as the price shown on the card).
+// Returns null when neither is a valid number (e.g. empty or NaN in the database).
+function bookPriceFor(book) {
+    const pb = parseFloat(book.price);
+    if (Number.isFinite(pb)) return pb;
+    const hc = parseFloat(book.price_hardcover);
+    return Number.isFinite(hc) ? hc : null;
+}
+
+// Explicit locale so the order does not depend on the visitor's browser language
+function compareText(x, y) {
+    return x.localeCompare(y, currentLang);
+}
+
+function compareBooks(a, b, sort) {
+    // 1. Children's books last (alphabetical sorts only)
+    if (CHILDREN_LAST_SORTS.includes(sort)) {
+        const diff = isChildrenBook(a) - isChildrenBook(b);   // false(0) before true(1)
+        if (diff !== 0) return diff;
+    }
+    // 2. Selected sort; ties fall back to title
+    if (sort === 'author') {
+        return compareText(bookAuthorFor(a), bookAuthorFor(b)) || compareText(bookTitleFor(a), bookTitleFor(b));
+    }
+    if (sort === 'language') {
+        return compareText(a.language || '', b.language || '') || compareText(bookTitleFor(a), bookTitleFor(b));
+    }
+    if (sort === 'pub_date') {
+        return new Date(b.pub_date || 0) - new Date(a.pub_date || 0);   // newest first
+    }
+    if (sort === 'price_asc' || sort === 'price_desc') {
+        const pa = bookPriceFor(a), pb = bookPriceFor(b);
+        if (pa === null || pb === null) return (pa === null) - (pb === null);   // missing price last
+        return sort === 'price_asc' ? pa - pb : pb - pa;
+    }
+    return compareText(bookTitleFor(a), bookTitleFor(b));   // default: title A–Z
 }
 
 function generateBookListRowHTML(book) {
@@ -349,10 +398,12 @@ function syncBooksFilterUI() {
     const lf = document.getElementById('booksLangFilter');
     const af = document.getElementById('booksAuthorFilter');
     const catFilter = document.getElementById('booksCatFilter');
-    
+    const sf = document.getElementById('booksSortFilter');
+
     if (si) si.value = booksActiveFilters.search;
     if (lf) lf.value = booksActiveFilters.lang;
     if (catFilter) catFilter.value = booksActiveCategory;
+    if (sf) sf.value = booksActiveFilters.sort || 'title';
     
     if (af) {
         const authors = [...new Set(books.map(b=>(currentLang==='fr'?(b.author_fr||b.author):b.author)).filter(Boolean))].sort();
@@ -373,6 +424,7 @@ function attachBooksEvents() {
     const langFilter = document.getElementById('booksLangFilter');
     const authorFilter = document.getElementById('booksAuthorFilter');
     const catFilter = document.getElementById('booksCatFilter');
+    const sortFilter = document.getElementById('booksSortFilter');
     const gridBtn = document.getElementById('booksGridViewBtn');
     const listBtn = document.getElementById('booksListViewBtn');
 
@@ -383,7 +435,7 @@ function attachBooksEvents() {
             author:   authorFilter?.value || '',
             priceMin: '',
             priceMax: '',
-            sort:     'title',
+            sort:     sortFilter?.value || 'title',
         };
         booksActiveCategory = catFilter?.value || 'all';
         booksCurrentPage = 1;
@@ -395,7 +447,8 @@ function attachBooksEvents() {
     langFilter?.addEventListener('change', updateFilters);
     authorFilter?.addEventListener('change', updateFilters);
     catFilter?.addEventListener('change', updateFilters);
-    
+    sortFilter?.addEventListener('change', updateFilters);
+
     gridBtn?.addEventListener('click', () => { booksViewMode = 'grid'; pushBooksToURL(); renderAllBooks(); });
     listBtn?.addEventListener('click', () => { booksViewMode = 'list'; pushBooksToURL(); renderAllBooks(); });
 }
