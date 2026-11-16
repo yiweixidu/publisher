@@ -318,7 +318,7 @@ Atlantis abrite une civilisation oubliée, énigmatique et obscure. Là se déro
 
 ## Acer Poetry (2)
 
-### 枫吟唐韵--芸香诗社诗词选第二辑 Taditional Chinese Poetry from Yunxiang Club II
+### 枫吟唐韵--芸香诗社诗词选第二辑 Traditional Chinese Poetry from Yunxiang Club II
 
 - Author: 马新云 Ma Xinyun et al
 - Language: 中文
@@ -327,7 +327,7 @@ Atlantis abrite une civilisation oubliée, énigmatique et obscure. Là se déro
 - Pages: 246
 - Price: CAD 22.00 paperback
 - Availability: In Stock
-- Book page: https://acerbooks.ca/book/taditional-chinese-poetry-from-yunxiang-club-ii
+- Book page: https://acerbooks.ca/book/traditional-chinese-poetry-from-yunxiang-club-ii
 - Search on Amazon: https://www.amazon.ca/s?k=978-1-0692408-2-8
 
 诗集所选十二位诗人的古体诗词，品类多样。内涵丰富 ：或怀乡思亲、咏海外人生，或关怀现实时事、歌咏大自然，或唱和友人丶题画配景，形式上从古体诗的四言五言七言诗到近体的五七言绝句、律诗，还有长中短调的词作。各种诗词形式齐备，古风味浓郁，注重平仄押韵，讲究对仗工整，追求意境悠远，可谓古瓶装美酒，旧体出新意，读来别有滋味。可以看出他们深厚的古典文学修养。
