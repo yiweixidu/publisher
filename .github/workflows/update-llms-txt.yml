@@ -2,11 +2,14 @@
 # .github/workflows/update-llms-txt.yml
 # Author: Lewei Rong
 #
-# Regenerates books.md and llms.txt from the Supabase `books` table
-# (scripts/generate-llms.mjs) and commits them when a book changed.
+# Regenerates the crawler- and LLM-readable files from the Supabase
+# `books` table (scripts/generate-llms.mjs) and commits them when they changed:
+#   book/<slug>.html, books.html, sitemap.xml, books.md, llms.txt
+#   (+ robots.txt and .nojekyll the first time)
 #
-# Runs: every day at 07:17 UTC, and on demand from the Actions tab
-#       ("Update llms.txt" → "Run workflow").
+# Runs: every day at 07:17 UTC (books edited in Manage Books),
+#       when index.html or the script is pushed (pages are built from index.html),
+#       and on demand from the Actions tab ("Update llms.txt" → "Run workflow").
 #
 # Repository secrets required (Settings → Secrets and variables → Actions):
 #   SUPABASE_URL       — same value as SUPABASE_URL in constants.js
@@ -17,10 +20,19 @@ name: Update llms.txt
 on:
   schedule:
     - cron: '17 7 * * *'
+  push:
+    paths:
+      - 'index.html'
+      - 'scripts/generate-llms.mjs'
   workflow_dispatch:
 
 permissions:
   contents: write
+
+# Never run two updates at the same time (both would try to push)
+concurrency:
+  group: update-llms-txt
+  cancel-in-progress: false
 
 jobs:
   generate:
@@ -38,7 +50,7 @@ jobs:
       - name: Install pinyin-pro
         run: npm install --no-save --no-package-lock pinyin-pro@3
 
-      - name: Generate books.md and llms.txt
+      - name: Generate pages, sitemap, books.md and llms.txt
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -46,12 +58,13 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add books.md llms.txt .nojekyll
+          git add -A book
+          git add books.html sitemap.xml books.md llms.txt robots.txt .nojekyll
           if git diff --cached --quiet; then
-            echo "No catalogue changes."
+            echo "No changes."
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Update books.md and llms.txt from Supabase"
+          git commit -m "Update static book pages, sitemap and llms.txt from Supabase"
           git push
