@@ -8,7 +8,7 @@
 // KEY FIX: fontBuffers must be Uint8Array[], NOT ArrayBuffer[]
 // That was the cause of "[object ArrayBuffer]" error.
 
-import { createClient }    from '@supabase/supabase-js';
+import { createClient }    from 'npm:@supabase/supabase-js@2';
 import { Resvg, initWasm } from 'npm:@resvg/resvg-wasm@2.6.0';
 
 const CORS = {
@@ -245,7 +245,7 @@ async function generateImage(p) {
         // Publisher email — bottom left, dark gray
         `<text x="${PX}" y="608"
             font-family="Inter,sans-serif"
-            font-size="12" fill="#555555">acerbookscanada@gmail.ca</text>`,
+            font-size="12" fill="#555555">acerbookscanada@gmail.com</text>`,
 
         `</svg>`,
     ].filter(Boolean).join('\n');

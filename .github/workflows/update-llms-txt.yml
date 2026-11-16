@@ -1,0 +1,57 @@
+# =====================================================
+# .github/workflows/update-llms-txt.yml
+# Author: Lewei Rong
+#
+# Regenerates books.md and llms.txt from the Supabase `books` table
+# (scripts/generate-llms.mjs) and commits them when a book changed.
+#
+# Runs: every day at 07:17 UTC, and on demand from the Actions tab
+#       ("Update llms.txt" → "Run workflow").
+#
+# Repository secrets required (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL       — same value as SUPABASE_URL in constants.js
+#   SUPABASE_ANON_KEY  — same value as SUPABASE_ANON_KEY in constants.js
+# =====================================================
+name: Update llms.txt
+
+on:
+  schedule:
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # pinyin-pro gives Chinese-only titles the same /book/<pinyin> URL as routing.js
+      - name: Install pinyin-pro
+        run: npm install --no-save --no-package-lock pinyin-pro@3
+
+      - name: Generate books.md and llms.txt
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: node scripts/generate-llms.mjs
+
+      - name: Commit changes
+        run: |
+          git add books.md llms.txt .nojekyll
+          if git diff --cached --quiet; then
+            echo "No catalogue changes."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update books.md and llms.txt from Supabase"
+          git push
