@@ -1,0 +1,22 @@
+# Acer Books Canada
+
+> Acer Books Canada is an independent publisher based in Montréal, Québec, founded by translator and scholar Tao Zhijian, PhD. It publishes poetry, fiction, essays, literary translation and children's art books in Chinese, English and French, distributed worldwide through Amazon and bookstores including Harvard Book Store, Hatchards, Barnes & Noble, Kraina Książek and Kinokuniya.
+
+- The catalogue has 22 titles in these series: Acer Series (9), Acer Novels (3), Acer Essays (4), Acer Poetry (2), Children's Art (4).
+- Books are purchased on Amazon; each catalogue entry links to its Amazon page.
+- Prices are in Canadian dollars (CAD).
+- Many titles are bilingual (Chinese–English) or trilingual (Chinese–English–French).
+- The website (acerbooks.ca) is in English and French and renders with JavaScript; use the Markdown files below for its content.
+
+## Catalogue
+
+- [Book catalogue](https://acerbooks.ca/books.md): every title with author, language, publication date, series, ISBN, price, description and Amazon link (updated 2026-11-16)
+
+## Publisher
+
+- [About Acer Books](https://acerbooks.ca/about.md): founder, editorial focus and distribution
+
+## Optional
+
+- [All books (website)](https://acerbooks.ca/books): browsable catalogue with search and filters (HTML, needs JavaScript)
+- [News & events (website)](https://acerbooks.ca/news): readings, launches and events (HTML, needs JavaScript)
