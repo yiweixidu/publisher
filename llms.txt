@@ -6,7 +6,7 @@
 - Books are purchased on Amazon; each catalogue entry links to its Amazon page.
 - Prices are in Canadian dollars (CAD).
 - Many titles are bilingual (Chinese–English) or trilingual (Chinese–English–French).
-- The website (acerbooks.ca) is in English and French and renders with JavaScript; use the Markdown files below for its content.
+- The website (acerbooks.ca) is in English and French; the Markdown files below have the same information as plain text.
 
 ## Catalogue
 
@@ -18,5 +18,5 @@
 
 ## Optional
 
-- [All books (website)](https://acerbooks.ca/books): browsable catalogue with search and filters (HTML, needs JavaScript)
-- [News & events (website)](https://acerbooks.ca/news): readings, launches and events (HTML, needs JavaScript)
+- [All books (website)](https://acerbooks.ca/books): browsable catalogue with search and filters
+- [News & events (website)](https://acerbooks.ca/news): readings, launches and events (needs JavaScript)

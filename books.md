@@ -2,7 +2,7 @@
 
 > All 22 titles published by Acer Books Canada, an independent publisher in Montréal, Québec. Prices are in Canadian dollars (CAD). Books are sold on Amazon; each entry links to its Amazon page or an Amazon search.
 
-Generated from the publisher's database on 2026-11-16. Book pages on acerbooks.ca need JavaScript; this file has the same information as plain text.
+Generated from the publisher's database on 2026-11-16.
 
 ## Acer Series (9)
 
